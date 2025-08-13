@@ -1,0 +1,688 @@
+:root {
+    --bg-primary: #1e1e2e;
+    --bg-secondary: #313244;
+    --bg-secondary-max: #463d2a;
+    --text-bright: #f4f5f9;
+    --text-primary: #cdd6f4;
+    --text-muted: #a6adc6;
+    --text-extra-muted: #7d8397;
+    --text-dark: #020931;
+    --text-selected-color: #f7ff1f;
+    --button-text: #252836;
+    --accent-primary: #4a90e2;
+    --accent-secondary: #589ff2;
+    --accent-tertiary: #2d6cb7;
+    --border-color: #45475a;
+    --success-color: #a6e3a1;
+    --warning-color: #ff0e39;
+    --error-color: #f38ba8;
+    --overlay-color: #0f0f17;
+    --selection-color:#9f0000;
+    --line-color: #000000;
+    --max-level-color: #e5e819;
+
+    --menu-background-color: #1e1e2e;
+    --menu-tab-button-color: #23153c;
+    --menu-tab-background-color: #0f0f17;
+    --menu-text-background-color: #ffffff;
+    --text-color: #e0e0e0;
+
+
+    /* World 0: Physical (Deeper, more subtle slate) */
+    --world-0-bg-primary: #1e1e2e;
+    --world-0-bg-secondary: #262639;
+    --world-0-bg-tertiary: #33334d;
+
+    /* World 1: Mana (Deeper, glowing ocean abyss) */
+    --world-1-bg-primary: #0c2b40;
+    --world-1-bg-secondary: #0f3b59;
+    --world-1-bg-tertiary: #15517a;
+
+    /* World 2: Combat (Smoldering embers, dried blood) */
+    --world-2-bg-primary: #3a1919;
+    --world-2-bg-secondary: #512323;
+    --world-2-bg-tertiary: #6d3030;
+
+    /* World 3: Essence (Faint, mystical shadow) */
+    --world-3-bg-primary: #2a1e2e;
+    --world-3-bg-secondary: #3d2b42;
+    --world-3-bg-tertiary: #533b58;
+
+
+    /*--world-0-bg-primary: #1e1e2e;*/
+    /*--world-0-bg-secondary: #313244;*/
+    /*--world-0-bg-tertiary: #45465f;*/
+    /*--world-1-bg-primary: #082535;*/
+    /*--world-1-bg-secondary: #0c4667;*/
+    /*--world-1-bg-tertiary: #11608b;*/
+    /*--world-2-bg-primary: #3c1e1e;*/
+    /*--world-2-bg-secondary: #5a2b2b;*/
+    /*--world-2-bg-tertiary: #7e3c3c;*/
+    /*--world-3-bg-primary: #372339;*/
+    /*--world-3-bg-secondary: #58375b;*/
+    /*--world-3-bg-tertiary: #754979;*/
+
+    --attribute-add-color:#27d318;
+    --attribute-add-bg-color: #85d17e;
+    --attribute-use-exp-color: #7e55e7;
+    --attribute-use-exp-bg-color: #937ec9;
+    --attribute-use-eff-color: #5199ff;
+    --attribute-use-eff-bg-color: #97c1ff;
+    --upgrade-color:#d3d3d3;
+    --upgrade-bought-color:#00ff39;
+    --upgrade-disabled-color:#808080;
+
+    --momentum-color:#007BFF;
+    --momentum-color-dim: #0b64c3;
+    --momentum-color-bg: #0b263f;
+    --exp-color:#7b5fc1;
+    --exp-color-dim: #644f99;
+    --exp-color-bg: #231c36;
+    --mana-color: #0c20d4;
+    --mana-color-dim: #0f1ea3;
+    --mana-color-bg: #070b39;
+    --legacy-color: #db9812;
+    --legacy-color-dim: #a47413;
+    --legacy-color-bg: #5c4003;
+    --doom-color: #781a78;
+    --doom-color-dim: #5c155c;
+    --doom-color-bg: #2e082e;
+    --gold-color: #a99102;
+    --gold-color-dim: #766607;
+    --gold-color-bg: #363107;
+    --conversations-color: #429977;
+    --conversations-color-dim: #36765e;
+    --conversations-color-bg: #162d23;
+    --fear-color: #d2062a;
+    --fear-color-dim: #a30924;
+    --fear-color-bg: #40090f;
+    --fight-color: #FF6600;
+    --fight-color-dim: #b34700;
+    --fight-color-bg: #4d1a00;
+    --bravery-color: #b23c22;
+    --bravery-color-dim: #802e1d;
+    --bravery-color-bg: #391610;
+    --spark-color: #1a9480;
+    --spark-color-dim: #15675a;
+    --spark-color-bg: #0b2e29;
+    --arcana-color: #c620f5;
+    --arcana-color-dim: #a122c4;
+    --arcana-color-bg: #2a0932;
+
+    --wage-color: #ffdd00;
+}
+
+body.lightMode {
+    --bg-primary: #8798d3;
+    --bg-secondary: #bbd6e6;
+    --bg-secondary-max: #bbd6e6;
+    --text-bright: #f4f5f9;
+    --text-primary: #000000;
+    --text-muted: #3a3c56;
+    --text-extra-muted: #50546b;
+    --text-dark: #020931;
+    --text-selected-color: #d0d800;
+    --button-text: #4a4e69;
+    --accent-primary: #3acbf7;
+    --accent-secondary: #4bd5ff;
+    --accent-tertiary: #19a1ca;
+    --border-color: #c4d7f2;
+    --success-color: #a6e3a1;
+    --warning-color: #ffde24;
+    --error-color: #ff9aa2;
+    --overlay-color: rgba(135, 152, 211, 0.8);
+    --selection-color:#67ff5b;
+    --line-color: #ffffff;
+    --max-level-color: #2be343;
+
+    --menu-background-color: #cbe3f7;
+    --menu-tab-button-color: #d7c3f8;
+    --menu-tab-background-color: #e0e0e0;
+    --menu-text-background-color: #ffffff;
+    --text-color: #222222;
+
+    --world-0-bg-primary: #1e1e2e;
+    --world-0-bg-secondary: #313244;
+    --world-0-bg-tertiary: #45465f;
+    --world-1-bg-primary: #1e1e2e;
+    --world-1-bg-secondary: #313244;
+    --world-1-bg-tertiary: #45465f;
+    --world-2-bg-primary: #372339;
+    --world-2-bg-secondary: #58375b;
+    --world-2-bg-tertiary: #754979;
+    --world-3-bg-primary: #372339;
+    --world-3-bg-secondary: #58375b;
+    --world-3-bg-tertiary: #754979;
+
+    --attribute-add-color:#27d318;
+    --attribute-add-bg-color: #85d17e;
+    --attribute-use-exp-color:#7a4fe7;
+    --attribute-use-exp-bg-color: #937ec9;
+    --attribute-use-eff-color: #5199ff;
+    --attribute-use-eff-bg-color: #97c1ff;
+    --upgrade-color:#d3d3d3;
+    --upgrade-bought-color:#00ff39;
+    --upgrade-disabled-color:#808080;
+
+    --momentum-color:#00E1FF;
+    --momentum-color-dim: rgba(0, 225, 255, 0.5);
+    --exp-color:#b79df8;
+    --exp-color-dim: rgba(183, 157, 248, 0.5);
+    --legacy-color: #db9812;
+    --legacy-color-dim: rgba(219, 152, 18, 0.5);
+    --mana-color:#74c7ec;
+    --mana-color-dim: rgba(116, 199, 236, 0.5);
+    --gold-color:#FFD700;
+    --gold-color-dim: rgba(255, 215, 0, 0.5);
+    --conversations-color: #c8fff4;
+    --conversations-color-dim: rgba(200, 255, 244, 0.5);
+    --fear-color: #d2062a;
+    --fear-color-dim: #a30924;
+    --arcana-color:#c620f5;
+    --arcana-color-dim: rgba(198, 32, 245, 0.5);
+
+    --wage-color: #ffdd00;
+}
+
+body {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    font-family: Arial, sans-serif;
+    color: var(--text-primary);
+    font-size: 14px;
+    height: 100%;
+    margin: 0;
+    background-color: var(--bg-primary);
+    cursor: default;
+}
+
+.hyperVisible {
+    text-shadow:1px 1px 2px var(--text-dark);
+    color: var(--text-bright);
+}
+
+.disabled {
+    opacity:.5;
+    cursor:default;
+    pointer-events:none;
+}
+
+.hidden {
+    opacity:0;
+    cursor:default;
+    pointer-events:none;
+}
+
+.gone {
+    display:none !important;
+}
+
+.block {
+    display:block;
+}
+
+.showthatH:hover .showthisH {
+    display:block;
+}
+.showthat:hover .showthis, .showthat:hover .showthisUp, .showthat2:hover .showthis2 {
+    display:block;
+}
+.showthis, .showthisUp, .showthis2, .showthisH {
+    display:none;
+    position:absolute;
+    background-color: var(--bg-secondary);
+    border:1px solid var(--border-color);
+    padding:3px 5px;
+    border-radius:4px;
+    margin-top:5px;
+    z-index:999;
+    text-align:left;
+    color: var(--text-primary);
+}
+.showthisUp {
+    bottom:105%;
+}
+
+.showthis2 {
+    z-index:1000;
+    min-width:400px;
+}
+
+.backgroundWhenHover:hover {
+    background:var(--bg-primary);
+}
+
+.fullScreenGrey {
+    position:fixed;
+    top:0;
+    left:0;
+    right:0;
+    bottom:0;
+    background:rgba(0,0,0,0.7);
+    align-items:center;
+    justify-content:center;
+    z-index:10000;
+    display:flex;
+}
+
+.centerMenuBox {
+    background:var(--bg-secondary);
+    padding:20px;
+    border-radius:6px;
+    max-width:1200px;
+    min-width:600px;
+    width:90%;
+    text-align:center;
+    position:relative;
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    max-height:90vh;
+}
+
+.title {
+    font-size:20px;
+    font-weight:bold;
+    display:block;
+    text-align:center;
+}
+.smallTitle {
+    font-size: 14px;
+    font-weight: bold;
+    display: block;
+    text-align: center;
+}
+.menuTitle {
+    font-size:20px;
+}
+
+
+.large {
+    font-size:20px;
+}
+.medium {
+    font-size:14px;
+}
+.small {
+    font-size:12px;
+}
+.bold {
+    font-weight:bold;
+}
+
+.abs {
+    position:absolute;
+}
+
+.superLargeIcon {
+    width:30px;
+    height:30px;
+}
+.largeIcon {
+    width:20px;
+    height:20px;
+}
+.smallIcon {
+    width:16px;
+    height:16px;
+}
+
+input, label {
+    cursor:pointer;
+}
+input {
+    margin-right:0;
+}
+.buttonPressed {
+    padding: 1px 5px;
+    text-align: center;
+    vertical-align:center;
+    min-width:9px;
+    cursor: pointer;
+    outline: none;
+    color: var(--bg-primary);
+    border: none;
+    border-radius: 6px;
+    margin-bottom:2px;
+    background-color: var(--success-color);
+    box-shadow: 0 1px var(--border-color);
+    transform: translateY(0px);
+}
+.buttonPressed.active {
+    background-color: var(--success-color);
+    opacity: 0.9;
+}
+
+.button {
+    padding:3px 6px;
+    text-align: center;
+    vertical-align:center;
+    min-width:9px;
+    cursor: pointer;
+    outline: none;
+    color:var(--text-primary);
+    background-color: var(--accent-primary);
+    border: 2px solid var(--accent-secondary);
+    border-radius: 6px;
+    margin-bottom:2px;
+    font-weight:bold;
+}
+
+.button:hover {
+    background-color: var(--accent-secondary);
+}
+.buttonSimple {
+    background-color: var(--bg-secondary);
+    cursor:pointer;
+    color: var(--text-primary);
+    border-radius:2px;
+    padding:2px;
+}
+.buttonSimple:hover {
+    background-color: var(--border-color);
+}
+
+.button:active {
+    background-color: var(--accent-tertiary);
+}
+
+.continueButton {
+    display: block;
+    margin: 20px auto 0 auto;
+    padding: 10px 20px;
+    background-color: var(--warning-color); /* Adjust color as needed */
+    color: var(--text-primary);
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.2s ease-in-out;
+}
+
+.continueButton:hover {
+    background-color: #3e8a3a;
+}
+
+.toast {
+    position:relative;
+    margin-top:10px;
+    padding: 10px 25px 10px 10px;
+    cursor:pointer;
+    border:2px solid var(--border-color);
+    background-color: var(--warning-color);
+    font-size:16px;
+    display:none;
+    color: var(--text-primary);
+}
+.toast:hover {
+    background-color: var(--warning-color);
+    opacity: 0.9;
+}
+
+.toastInactive {
+    background-color: var(--bg-secondary);
+    color: var(--text-muted);
+}
+
+.toastInactive:hover {
+    background-color: var(--border-color);
+}
+
+.imageDragFix {
+    pointer-events:none;
+    user-drag: none;
+    user-select: none;
+    -moz-user-select: none;
+    -webkit-user-drag: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+}
+
+.clickable:hover {
+    background-color: var(--border-color);
+}
+.clickable:active {
+    background-color: var(--accent-secondary);
+}
+.clickable {
+    background-color: var(--bg-secondary);
+    cursor:pointer;
+    padding:3px;
+    border:2px solid transparent;
+}
+
+.preciseNum {
+    width:60px;
+    font-weight:bold;
+}
+.inputNum {
+    width:50px;
+    font-size:12px;
+    margin-right:10px;
+    height:10px;
+}
+
+.progressOuter {
+    width:80px;
+    height:11px;
+    background-color:var(--bg-secondary);
+    position:relative;
+    border: 1px solid var(--border-color);
+}
+.progressInner {
+    height:100%;
+    position:absolute;
+    background-color: var(--accent-primary);
+}
+
+.donationContainer {
+    padding:5px;
+    background-color:white;
+    opacity:.8;
+    width:100%;
+    border-radius:15px;
+    cursor:pointer;
+    margin-bottom:10px;
+}
+
+.donationContainer:hover {
+    background-color:#ff8080;
+}
+
+.donationReward {
+    font-size:14px;
+}
+
+.donationMessage {
+    font-size:12px;
+}
+
+.donationReason {
+    font-size:10px;
+    opacity: .8;
+}
+
+.red {
+    color:var(--error-color);
+}
+.green {
+    color:var(--success-color);
+}
+
+
+.lock-icon {
+    width: 50px;
+    height: 50px;
+}
+
+#windowElement {
+    border-color: var(--border-color) !important;
+}
+
+.menuSeparator {
+    width: 100%;
+    height: 2px;
+    background-color: rgba(255, 255, 255, 0.2); /* Adjust color as needed */
+    margin: 10px 0;
+}
+
+.dynamicContent {
+    max-height: 400px; /* Adjust max height as needed */
+    width: 100%;
+    padding: 10px;
+    font-size:16px;
+    text-align:left;
+    overflow-y:auto;will-change: transform;
+}
+
+.upgradeButton {
+    width:45px;
+    height:35px;
+    margin-right:8px;
+    border:none;
+    border-radius:6px;
+    cursor:pointer;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.planeButton0 {
+    background-color:var(--world-0-bg-primary);
+    border:2px solid var(--world-0-bg-secondary);
+}
+.planeButton0:hover {
+    background-color:var(--world-0-bg-secondary);
+}
+.planeButton0:active {
+    background-color:var(--world-0-bg-tertiary);
+}
+.planeButton1 {
+    background-color:var(--world-1-bg-primary);
+    border:2px solid var(--world-1-bg-secondary);
+}
+.planeButton1:hover {
+    background-color:var(--world-1-bg-secondary);
+}
+.planeButton1:active {
+    background-color:var(--world-1-bg-tertiary);
+}
+.planeButton2 {
+    background-color:var(--world-2-bg-primary);
+    border:2px solid var(--world-2-bg-secondary);
+}
+.planeButton2:hover {
+    background-color:var(--world-2-bg-secondary);
+}
+.planeButton2:active {
+    background-color:var(--world-2-bg-tertiary);
+}
+.planeButton3 {
+    background-color:var(--world-3-bg-primary);
+    border:2px solid var(--world-3-bg-secondary);
+}
+.planeButton3:hover {
+    background-color:var(--world-3-bg-secondary);
+}
+.planeButton3:active {
+    background-color:var(--world-3-bg-tertiary);
+}
+
+
+
+/* Add this to your CSS file */
+
+/* Container for all the upgrade cards */
+.upgrade-container {
+    display: flex;
+    flex-wrap: wrap; /* Allows cards to wrap to the next line */
+    gap: 15px; /* Space between cards */
+    padding: 10px;
+}
+
+/* Individual upgrade card styling */
+.upgrade-card {
+    background-color: #2c2c3e; /* Dark background */
+    border: 2px solid #00cd41; /* Green border for available */
+    border-radius: 8px;
+    padding: 12px;
+    width: 280px; /* Fixed width for each card */
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between; /* Pushes footer to the bottom */
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    color: #e0e0e0;
+}
+
+/* Card states */
+.upgrade-card.bought {
+    border-color: #c3cd00; /* Yellow border for bought */
+    background-color: #3a3a4f;
+}
+
+.upgrade-card.locked {
+    border-color: #ff0000; /* Red border for locked */
+    opacity: 0.6;
+}
+
+/* Card content styling */
+.card-title {
+    font-size: 16px;
+    font-weight: bold;
+    margin-bottom: 10px;
+    color: #ffffff;
+}
+
+.card-description {
+    font-size: 14px;
+    flex-grow: 1; /* Allows description to fill available space */
+    margin-bottom: 15px;
+}
+
+.card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.cost-section {
+    display: flex;
+    align-items: baseline;
+}
+
+.cost-label {
+    font-size: 14px;
+    margin-right: 8px;
+}
+
+.cost-value {
+    font-size: 24px;
+    font-weight: bold;
+    color: #ffffff;
+}
+
+.cost-multiplier {
+    font-size: 14px;
+    color: #a0a0a0;
+    margin-left: 8px;
+}
+
+.buy-button {
+    background-color: #008c33;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 8px 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.buy-button:hover {
+    background-color: #00a83e;
+}
+
+.card-footer-info {
+    font-size: 14px;
+    color: #a0a0a0;
+}
