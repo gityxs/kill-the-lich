@@ -89,7 +89,17 @@ function generateActionDisplay(actionVar) {
     queueCache(`${actionVar}Wage`);
     queueCache(`${actionVar}Instability`);
     queueCache(`${actionVar}InstabilityToAdd`);
-//background-color:var(--overlay-color);
+
+
+    let iconImgName = (actionObj.isGenerator?"gear":"lightning") + actionObj.tier;
+
+    let icon = Raw.html`
+        <span style="position:absolute;top:-43px;left:-40px;width:40px;height:40px;" class="showthat">
+            <img class="${actionObj.isGenerator?'generatorIconSvg':'actionIconSvg'}" src="img/${iconImgName}.svg" alt="${iconImgName}" style="width:100%;height:100%;" />
+            <div class="showthisUp" style="font-size:20px;width:150px">Tier ${actionObj.tier + (actionObj.isGenerator?" Generator":" Action")} </div>
+        </span>
+    `
+
     let title = Raw.html`
         <span onclick="actionTitleClicked('${actionVar}')" style="color:var(--text-primary);cursor:pointer;position:absolute;
             top:-82px;height:82px;left:0;white-space: nowrap;border-width: 0 0 0 6px;border-style:solid;
@@ -124,11 +134,12 @@ function generateActionDisplay(actionVar) {
     queueCache(`${actionVar}_infoMenuButton`);
     queueCache(`${actionVar}_attsMenuButton`);
     queueCache(`${actionVar}_storyMenuButton`);
+    queueCache(`${actionVar}_automationMenuButton`);
     queueCache(`${actionVar}MenuButtons`);
 
 
     let menuContainer = Raw.html`
-        <div id="${actionVar}MenuButtons" style="position:absolute;top:-20px;font-size:13px;left:3px;">
+        <div id="${actionVar}MenuButtons" style="position:absolute;top:-20px;font-size:13px;left:3px;width:315px;">
             ${!dataObj.parentVar?"":`<span onclick="actionTitleClicked('${dataObj.parentVar}')" 
             class="buttonSimple" style="margin-right:3px;width:30px;height:30px;text-align:center;cursor:pointer;padding:0 4px;">^</span>`}
         <span id="${actionVar}_downstreamMenuButton" onclick="clickActionMenu('${actionVar}', 'downstream')" class="buttonSimple" 
@@ -139,6 +150,8 @@ function generateActionDisplay(actionVar) {
             style="margin-right:3px;width:30px;height:30px;text-align:center;cursor:pointer;padding:0 4px;">Stats</span>
         <span id="${actionVar}_storyMenuButton" onclick="clickActionMenu('${actionVar}', 'story')" class="buttonSimple" 
             style="display:${dataObj.storyText?"":"none"};margin-right:3px;width:30px;height:30px;text-align:center;cursor:pointer;padding:0 4px;">Story</span>
+        <span id="${actionVar}_automationMenuButton" onclick="clickActionMenu('${actionVar}', 'automation')" class="buttonSimple" 
+            style="display:${actionObj.hasUpstream?"":"none"};margin-right:3px;width:30px;height:30px;text-align:center;cursor:pointer;padding:0 4px;">Automation</span>
         </div>`;
 
     queueCache(`${actionVar}ResourceIncrease`);
@@ -299,14 +312,14 @@ let maxLevelTop = (data.gameSettings.viewDeltas && data.gameSettings.viewRatio) 
     queueCache(`${actionVar}_infoContainer`);
 
     let levelInfoContainer = Raw.html`
-            <div id="${actionVar}_infoContainer" style="display:none;padding:5px;max-height:220px;overflow-y:auto;will-change: transform;">
-        Tier <b>${actionObj.tier}</b>${actionObj.isSpell ? " Spell" : actionObj.isGenerator ? " Generator" : " Action"}<br>
-        Efficiency, found in the title, is Expertise Mult * Base Efficiency (x<b><span id="${actionVar}EfficiencyBase"></span></b>), capping at <b>100</b>%.<br>
-        ${actionObj.isGenerator?"":(`Consume and send rate is ${actionObj.tierMult()*100}% of ${dataObj.resourceName} * efficiency.<br>`)}<br>
-        ${onComplete}
-        ${onLevelText}
-        ${upgradeInfoText}
-        ${dataObj.extraInfo ? dataObj.extraInfo[language]:""}
+        <div id="${actionVar}_infoContainer" style="display:none;padding:5px;max-height:220px;overflow-y:auto;will-change: transform;">
+            Tier <b>${actionObj.tier}</b> ${actionObj.isSpell ? "Spell" : actionObj.isGenerator ? "Generator" : "Action"}<br>
+            Efficiency, found in the title, is Expertise Mult * Base Efficiency (x<b><span id="${actionVar}EfficiencyBase"></span></b>), capping at <b>100</b>%.<br>
+            ${actionObj.isGenerator?"":(`Consume and send rate is ${actionObj.tierMult()*100}% of ${dataObj.resourceName} * efficiency.<br>`)}<br>
+            ${onComplete}
+            ${onLevelText}
+            ${upgradeInfoText}
+            ${dataObj.extraInfo ? dataObj.extraInfo[language]:""}
         </div>`;
 
     queueCache(`${actionVar}_storyContainer`);
@@ -314,6 +327,27 @@ let maxLevelTop = (data.gameSettings.viewDeltas && data.gameSettings.viewRatio) 
     let storyContainer = Raw.html`
         <div id="${actionVar}_storyContainer" style="display:none;padding:10px;max-height:220px;overflow-y:auto;will-change: transform;">
             ${dataObj.storyText ? dataObj.storyText[language]:""}
+        </div>`;
+
+    queueCache(`${actionVar}_automationContainer`);
+    queueCache(`${actionVar}_checkbox`);
+    queueCache(`${actionVar}_track`);
+    queueCache(`${actionVar}_knob`);
+
+    let preventParentSliderText = !actionObj.hasUpstream ? "": `
+           Prevent automation from changing the upstream slider to this action: 
+           
+            <label onclick="toggleAutomation('${actionVar}')" style="position:relative;display:inline-block;width:50px;height:14px;cursor:pointer;">
+                <input id="${actionVar}_checkbox" type="checkbox" style="opacity:0;width:0;height:0;">
+                <div id="${actionVar}_track" style="position:absolute;top:0;left:0;right:0;bottom:0;background-color:#ccc;border-radius:14px;">
+                    <div id="${actionVar}_knob" style="position:absolute;height:16px;width:16px;left:4px;bottom:-1px;background-color:white;border-radius:50%;"></div>
+                </div>
+            </label>
+    `
+
+    let automationContainer = Raw.html`
+        <div id="${actionVar}_automationContainer" style="display:none;padding:10px;max-height:220px;overflow-y:auto;will-change: transform;">
+            ${preventParentSliderText}
         </div>`;
 
     queueCache(`${actionVar}_attsContainer`);
@@ -385,6 +419,7 @@ let maxLevelTop = (data.gameSettings.viewDeltas && data.gameSettings.viewRatio) 
             onmouseenter="mouseOnAction('${actionVar}')" onmouseleave="mouseOffAction('${actionVar}')">
             <div id="${actionVar}LargeVersionContainer" style="border:2px solid var(--border-color);
                 background-color:var(--bg-secondary);">
+                ${icon}
                 ${title}
                 ${menuContainer}
                 ${momentumContainer}
@@ -393,10 +428,10 @@ let maxLevelTop = (data.gameSettings.viewDeltas && data.gameSettings.viewRatio) 
                 ${expBar}
                 ${storyContainer}
                 ${attsContainer}
+                ${automationContainer}
                 ${levelInfoContainer}
                 ${downstreamContainer}
                 ${lockOverAll}
-                ${dataObj.extraButton ?? ""}
             </div>
             <div id="${actionVar}SmallVersionContainer" 
                 style="display:none;text-align:center;margin:50px auto;font-size:12px;width:100px;">
@@ -407,6 +442,7 @@ let maxLevelTop = (data.gameSettings.viewDeltas && data.gameSettings.viewRatio) 
                     </span>
                 </span>
             </div>
+                ${dataObj.extraButton ?? ""}
             ${maxLevel}
         </div>`;
 
@@ -632,6 +668,8 @@ function createDownStreamSliders(actionObj, dataObj) {
         queueCache(`${actionVar}NumInput${downstreamVar}`)
         queueCache(`${actionVar}RangeInput${downstreamVar}`)
         queueCache(`${actionVar}SliderLabels${downstreamVar}`)
+        queueCache(`${actionVar}_${downstreamVar}_slider_container_advanced`)
+        queueCache(`${actionVar}_${downstreamVar}_slider_container_basic`)
 
         let resourceColor = getResourceColor(actionObj);
 
@@ -645,18 +683,25 @@ function createDownStreamSliders(actionObj, dataObj) {
                         class="hyperVisible" style="color:mediumpurple;display:none;font-weight:bold;">x1.00</span>
                     <span id="${actionVar}DownstreamAttentionBonus${downstreamVar}" 
                         class="hyperVisible" style="color:yellow;display:none;font-weight:bold;">x2</span><br>
+                </span>
+
+                <div id="${actionVar}_${downstreamVar}_slider_container_advanced">
                     <input type="number" id="${actionVar}NumInput${downstreamVar}" value="0" min="0" max="100" 
                         style="margin-right:3px;font-size:10px;width:37px;vertical-align: top;"
                         oninput="validateInput('${actionVar}', '${downstreamVar}')" onchange="downstreamNumberChanged('${actionVar}', '${downstreamVar}')" >
-                </span>
-
-                <div id="${actionVar}Slider_Container${downstreamVar}" style="display:inline-block;width:220px;height:20px; 
-                    user-select:none;padding: 0 10px;box-sizing:border-box;cursor:pointer;">
-                    <div id="${actionVar}Track${downstreamVar}" style="margin-top:6px;width:100%;height:5px; 
-                        background:linear-gradient(to right, red 10%, #ddd 10%, #ddd 90%, green 90%);position:relative;">
-                        <div id="${actionVar}Thumb${downstreamVar}" style="width:10px;height:20px;background-color: 
-                            ${resourceColor};position:absolute;top:50%;transform:translate(-50%, -50%);pointer-events:none;"></div>
+                            
+                    <div id="${actionVar}_${downstreamVar}_track_container" style="display:inline-block;width:220px;height:20px; 
+                        user-select:none;padding: 0 10px;box-sizing:border-box;cursor:pointer;">
+                        <div id="${actionVar}Track${downstreamVar}" style="margin-top:6px;width:100%;height:5px; 
+                            background:linear-gradient(to right, red 10%, #ddd 10%, #ddd 90%, green 90%);position:relative;">
+                            <div id="${actionVar}Thumb${downstreamVar}" style="width:10px;height:20px;background-color: 
+                                ${resourceColor};position:absolute;top:50%;transform:translate(-50%, -50%);pointer-events:none;"></div>
+                        </div>
                     </div>
+                </div>
+                
+                <div id="${actionVar}_${downstreamVar}_slider_container_basic" style="display:flex;">
+                    ${createBasicSliderHTML(actionVar, downstreamVar)}
                 </div>
                 
                 
@@ -665,6 +710,50 @@ function createDownStreamSliders(actionObj, dataObj) {
 
     return theStr;
 }
+
+function createBasicSliderHTML(actionVar, downstreamVar) {
+    const options = [
+        { label: 'Off', value: 0, color: 'red' },
+        { label: '10%', value: 10, color: 'grey' },
+        { label: '50%', value: 50, color: 'grey' },
+        { label: '100%', value: 100, color: 'green' }
+    ];
+
+    let optionsHTML = '';
+    for (let option of options) {
+        const elementId = `${actionVar}_${downstreamVar}_option_${option.value}`;
+        const initialBgColor = option.value === 0 ? 'blue' : 'transparent';
+        optionsHTML += `
+            <div id="${elementId}" style="border:2px solid ${option.color};padding:5px 15px;margin:2px;cursor:pointer;user-select:none;background-color:${initialBgColor};border-radius:5px;"
+                onmouseover="handleSliderMouseOver('${elementId}')" onmouseout="handleSliderMouseOut('${elementId}', '${option.color}')"
+                onclick="handleSliderClick('${elementId}', '${actionVar}', '${downstreamVar}', ${option.value})">
+                ${option.label}
+            </div>
+        `;
+    }
+    return `${optionsHTML}`;
+}
+
+function handleSliderMouseOver(elementId) {
+    document.getElementById(elementId).style.borderColor = 'yellow';
+}
+
+function handleSliderMouseOut(elementId, originalColor) {
+    document.getElementById(elementId).style.borderColor = originalColor;
+}
+
+function handleSliderClick(clickedId, actionVar, downstreamVar, value) {
+    // const allValues = [0, 10, 50, 100];
+    // for (let val of allValues) {
+    //     const optionId = `${actionVar}_${downstreamVar}_option_${val}`;
+    //     document.getElementById(optionId).style.backgroundColor = 'transparent';
+    // }
+    //
+    // document.getElementById(clickedId).style.backgroundColor = getResourceColor(data.actions[actionVar]);
+
+    setSliderUI(actionVar, downstreamVar, value);
+}
+
 function attachCustomSliderListeners() {
     for (let actionVar in data.actions) {
         let dataObj = actionData[actionVar];
@@ -672,7 +761,7 @@ function attachCustomSliderListeners() {
         if (!dataObj.downstreamVars) continue;
 
         for (let downstreamVar of dataObj.downstreamVars) {
-            const container = document.getElementById(`${actionVar}Slider_Container${downstreamVar}`);
+            const container = document.getElementById(`${actionVar}_${downstreamVar}_track_container`);
             const thumb = document.getElementById(`${actionVar}Thumb${downstreamVar}`);
 
             let downstreamObj = data.actions[downstreamVar];
@@ -746,7 +835,7 @@ function attachCustomSliderListeners() {
 
 function highlightLine(borderId) {
     const line = document.getElementById(borderId);
-    let miniVersion = scale < .55;
+    let miniVersion = scaleByPlane[data.planeTabSelected] < .55;
     if (line) {
         if(miniVersion) {
             line.style.boxShadow = '0 0 40px 11px yellow';
@@ -950,8 +1039,8 @@ function setAllCaches() {
 
 
 let idsToCache = [];
-function queueCache(id) {
-    idsToCache.push(id);
+function queueCache() {
+    Array.prototype.push.apply(idsToCache, arguments);
 }
 
 function clearCacheQueue() {

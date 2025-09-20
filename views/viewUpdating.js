@@ -40,9 +40,8 @@ let views = {
 
         views.updateVal(`jobDisplay`, data.displayJob ? "" : "none", "style.display");
 
-        if(data.actions.hearAboutTheLich.level >= 1 && data.totalSpellPower > 0) {
-            views.updateVal(`killTheLichMenuButton2`, "", "style.display")
-        }
+        let shouldShowKTLButton = data.actions.hearAboutTheLich.level >= 1 && data.totalSpellPower > 0 && data.gameState !== "KTL";
+        views.updateVal(`killTheLichMenuButton2`, shouldShowKTLButton?"":"none", "style.display")
     },
     scheduleUpdate: function(elementId, value, type) {
         view.scheduled.push({
@@ -145,51 +144,41 @@ let views = {
     updateActionVisibility: function(actionObj) {
         let actionVar = actionObj.actionVar;
         let dataObj = actionData[actionVar];
+        let parentVar = dataObj.parentVar;
 
         //if game state doesn't match, return
-        if(actionObj.plane !== data.planeTabSelected) {
+        if(dataObj.plane !== data.planeTabSelected) {
             return false;
         }
         let toDisplay = actionObj.visible || globalVisible;
         let isInRange = isActionVisible(actionVar);
         views.updateVal(`${actionVar}Container`, toDisplay&&isInRange?"":"none", "style.display");
-        if(dataObj.parentVar) {
-            let parentObj = data.actions[dataObj.parentVar];
-            views.updateVal(`${dataObj.parentVar}_${actionVar}_Line_Outer`, (globalVisible||(toDisplay && parentObj.visible)) && !dataObj.hideUpstreamLine ?"flex":"none", "style.display");
-            views.updateVal(`${dataObj.parentVar}_${actionVar}_Line_Inner`, toDisplay && parentObj.visible ?"":"none", "style.display");
+
+        if(parentVar) {
+            let parentObj = data.actions[parentVar];
+            let parentInRange = isActionVisible(parentVar);
+            views.updateVal(`${parentVar}_${actionVar}_Line_Outer`, (globalVisible||(toDisplay&&parentObj.visible&&(parentInRange||isInRange))) && !dataObj.hideUpstreamLine ?"flex":"none", "style.display");
+            views.updateVal(`${parentVar}_${actionVar}_Line_Inner`, toDisplay && parentObj.visible ?"":"none", "style.display");
         }
 
-        // if(!toDisplay) { // || not in screen range
-        if(!toDisplay || !isInRange) { // || not in screen range
-            return false;
+        if(!toDisplay || !isInRange) {
+            return false; //don't update other numbers
         }
 
-        let miniVersion = scale < .55;
-        let mediumVersion = scale < .65 && !miniVersion;
+        let miniVersion = scaleByPlane[data.planeTabSelected] < .55;
         let isMaxLevel = actionObj.maxLevel !== undefined && actionObj.level >= actionObj.maxLevel;
         views.updateVal(`${actionVar}LargeVersionContainer`, !miniVersion?"":"none", "style.display");
         views.updateVal(`${actionVar}SmallVersionContainer`, miniVersion?"":"none", "style.display");
         views.updateVal(`${actionVar}Container`, miniVersion ? "100px" : "" , "style.borderRadius");
-        views.updateVal(`${actionVar}SmallVersionContainer`, ((scale < .11) ? 3 : (1 / scale)*.8)+"", "style.scale");
+        views.updateVal(`${actionVar}SmallVersionContainer`, ((scaleByPlane[data.planeTabSelected] < .11) ? 3 : (1 / scaleByPlane[data.planeTabSelected])*.8)+"", "style.scale");
 
-        views.updateVal(`${actionVar}SmallVersionTitle`, scale < .11 ? "0" : "1" , "style.opacity");
+        views.updateVal(`${actionVar}SmallVersionTitle`, scaleByPlane[data.planeTabSelected] < .11 ? "0" : "1" , "style.opacity");
         views.updateVal(`${actionVar}Container`, miniVersion ? "100px" : "" , "style.borderRadius");
 
         views.updateVal(`${actionVar}SmallVersionLevels`, isMaxLevel?"var(--max-level-color)":"var(--text-primary)", "style.color");
         views.updateVal(`${actionVar}Level2`, actionObj.level, "innerText", 1);
         views.updateVal(`${actionVar}MaxLevel2`, actionObj.maxLevel, "innerText", 1);
         views.updateVal(`${actionVar}IsMaxLevel`, isMaxLevel && !miniVersion ? "":"none", "style.display");
-
-        // views.updateVal(`${actionVar}SmallVersionTitle`, scale < .11 ? "none" : "" , "style.display");
-
-        // if(!miniVersion) { //don't check in small
-        //     views.updateVal(`${actionVar}DeltasDisplayContainer`, mediumVersion?"none":"", "style.display");
-        //     views.updateVal(`${actionVar}BalanceNeedleLabel`, mediumVersion?"none":"", "style.display");
-        //     views.updateVal(`${actionVar}ProgressBarLabels`, mediumVersion?"none":"", "style.display");
-        //     views.updateVal(`${actionVar}ExpBarLabels`, mediumVersion?"none":"", "style.display");
-        //     views.updateVal(`${actionVar}ToggleDownstreamButtons`, mediumVersion?"none":"", "style.display");
-        //     views.updateVal(`${actionVar}MenuButtons`, mediumVersion?"none":"", "style.display");
-        // }
 
 
         //go through each downstream
@@ -200,11 +189,6 @@ let views = {
             views.updateVal(`${actionVar}_${downstreamVar}_Line_Inner_Container`, !miniVersion ? "flex" : "none", "style.display");
             let boxShadow = !isAttentionLine(actionVar, downstreamVar)?"":(miniVersion?"0 0 40px 11px yellow":"0 0 18px 5px yellow");
             views.updateVal(`${actionVar}_${downstreamVar}_Line_Outer`, boxShadow, "style.boxShadow");
-
-            // if(!miniVersion) { //don't check in small
-            //     views.updateVal(`${actionVar}SliderLabels${downstreamVar}`, mediumVersion?"none":"", "style.display");
-            //     views.updateVal(`${actionVar}SliderDownstreamTitle${downstreamVar}`, mediumVersion?"16px":"12px", "style.fontSize");
-            // }
         }
 
         return !miniVersion;
@@ -504,14 +488,32 @@ function isActionVisible(actionVar) {
     const currentTransformX = transformX[data.planeTabSelected];
     const currentTransformY = transformY[data.planeTabSelected];
 
-    const elementScreenX = currentTransformX + (element.realX * scale);
-    const elementScreenY = currentTransformY + (element.realY * scale);
+    const elementScreenX = currentTransformX + (element.realX * scaleByPlane[data.planeTabSelected]);
+    const elementScreenY = currentTransformY + (element.realY * scaleByPlane[data.planeTabSelected]);
 
-    const elementScreenWidth = 350 * scale;
-    const elementScreenHeight = 400 * scale;
+    const elementScreenWidth = 350 * scaleByPlane[data.planeTabSelected];
+    const elementScreenHeight = 400 * scaleByPlane[data.planeTabSelected];
 
     return elementScreenX < window.innerWidth &&
         elementScreenX + elementScreenWidth > 0 &&
         elementScreenY < window.innerHeight &&
         elementScreenY + elementScreenHeight > 0;
+}
+
+function updateSliderContainers() {
+    for(let actionVar in data.actions) {
+        let dataObj = actionData[actionVar];
+        for (let downstreamVar of dataObj.downstreamVars) {
+            if(!data.actions[downstreamVar].hasUpstream) {
+                continue;
+            }
+            if (data.gameSettings.viewAdvancedSliders) {
+                views.updateVal(`${actionVar}_${downstreamVar}_slider_container_advanced`, "inline-block", "style.display");
+                views.updateVal(`${actionVar}_${downstreamVar}_slider_container_basic`, "none", "style.display");
+            } else {
+                views.updateVal(`${actionVar}_${downstreamVar}_slider_container_advanced`, "none", "style.display");
+                views.updateVal(`${actionVar}_${downstreamVar}_slider_container_basic`, "flex", "style.display");
+            }
+        }
+    }
 }

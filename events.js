@@ -21,6 +21,18 @@ function setSliderUI(fromAction, toAction, newValue) {
     document.getElementById(fromAction + "_" + toAction + "_Line_Inner").style.height = (newValue / 100 * 20) + "px";
     updateCustomThumbPosition(fromAction, toAction, newValue);
     data.actions[fromAction]["downstreamRate" + toAction] = Math.max(0, newValue);
+
+    const allValues = [0, 10, 50, 100];
+    for (let val of allValues) {
+        const optionId = `${fromAction}_${toAction}_option_${val}`;
+        document.getElementById(optionId).style.backgroundColor = 'transparent';
+    }
+
+    const targetId = `${fromAction}_${toAction}_option_${newValue}`;
+    const targetElement = document.getElementById(targetId);
+    if (targetElement) {
+        targetElement.style.backgroundColor = getResourceColor(data.actions[fromAction]);
+    }
 }
 
 
@@ -69,9 +81,9 @@ window.addEventListener('resize', () => {
 
 function resizeStatMenu() {
     let bonusDisplay = view.cached[`bonusDisplay`];
-    let reduction = 200;
+    let reduction = 210;
     if(bonusDisplay.style.display !== "none") {
-        reduction += 97;
+        reduction += 70;
     }
 
     if(view.cached[`attDisplay`]) {
@@ -80,12 +92,12 @@ function resizeStatMenu() {
 }
 
 
-
+const bodyElement = document.getElementById("theBody");
 const windowElement = document.getElementById('windowElement');
 const actionContainer = document.getElementById('actionContainer');
 
 
-let scale = 1;
+let scaleByPlane = [1,1,1,1];
 const scaleStep = 0.1;
 const minScale = 0.1;
 const maxScale = 2.5;
@@ -99,7 +111,7 @@ let transformX = [0,0,0,0], transformY = [0,0,0,0];
 let originalTransformX, originalTransformY;
 
 let initialPinchDistance = null;
-let lastTouchScale = 1;
+let lastTouchScale = [1, 1, 1, 1];
 let isTouchDragging = false;
 
 function setZoomNoMouse(newScale) {
@@ -107,9 +119,9 @@ function setZoomNoMouse(newScale) {
     const centerX = rect.width / 2;
     const centerY = rect.height / 2;
 
-    const prevScale = scale;
-    scale = Math.max(minScale, Math.min(maxScale, newScale));
-    const scaleFactor = scale / prevScale;
+    const prevScale = scaleByPlane[data.planeTabSelected];
+    scaleByPlane[data.planeTabSelected] = Math.max(minScale, Math.min(maxScale, newScale));
+    const scaleFactor = scaleByPlane[data.planeTabSelected] / prevScale;
 
     const dx = (centerX - transformX[data.planeTabSelected]) * (1 - scaleFactor);
     const dy = (centerY - transformY[data.planeTabSelected]) * (1 - scaleFactor);
@@ -117,15 +129,15 @@ function setZoomNoMouse(newScale) {
     transformX[data.planeTabSelected] += dx;
     transformY[data.planeTabSelected] += dy;
 
-    actionContainer.style.transform = `translate(${transformX[data.planeTabSelected]}px, ${transformY[data.planeTabSelected]}px) scale(${scale})`;
+    actionContainer.style.transform = `translate(${transformX[data.planeTabSelected]}px, ${transformY[data.planeTabSelected]}px) scale(${scaleByPlane[data.planeTabSelected]})`;
 }
 
 function clickZoomIn() {
-    setZoomNoMouse(scale + scaleStep*3)
+    setZoomNoMouse(scaleByPlane[data.planeTabSelected] + scaleStep*3)
 }
 
 function clickZoomOut() {
-    setZoomNoMouse(scale - scaleStep*3)
+    setZoomNoMouse(scaleByPlane[data.planeTabSelected] - scaleStep*3)
 }
 windowElement.addEventListener('wheel', function(e) {
     if(mouseIsOnAction) {
@@ -140,21 +152,21 @@ windowElement.addEventListener('wheel', function(e) {
     const mouseX = e.clientX - rect.left;
     const mouseY = e.clientY - rect.top;
 
-    const prevScale = scale;
+    const prevScale = scaleByPlane[data.planeTabSelected];
     const delta = Math.sign(e.deltaY);
 
-    scale += delta < 0 ? scaleStep : -scaleStep;
-    scale = Math.min(Math.max(minScale, scale), maxScale);
+    scaleByPlane[data.planeTabSelected] += delta < 0 ? scaleStep : -scaleStep;
+    scaleByPlane[data.planeTabSelected] = Math.min(Math.max(minScale, scaleByPlane[data.planeTabSelected]), maxScale);
 
     // Adjust translation to zoom at mouse position
-    const scaleFactor = scale / prevScale;
+    const scaleFactor = scaleByPlane[data.planeTabSelected] / prevScale;
     const dx = (mouseX - transformX[data.planeTabSelected]) * (1 - scaleFactor);
     const dy = (mouseY - transformY[data.planeTabSelected]) * (1 - scaleFactor);
 
     transformX[data.planeTabSelected] += dx;
     transformY[data.planeTabSelected] += dy;
 
-    actionContainer.style.transform = `translate(${transformX[data.planeTabSelected]}px, ${transformY[data.planeTabSelected]}px) scale(${scale})`;
+    actionContainer.style.transform = `translate(${transformX[data.planeTabSelected]}px, ${transformY[data.planeTabSelected]}px) scale(${scaleByPlane[data.planeTabSelected]})`;
 
     // clearTimeout(redrawTimeout);
     // redrawTimeout = setTimeout(globalRedraw, 200);
@@ -181,12 +193,11 @@ document.addEventListener('mousemove', function(e) {
     const deltaX = e.clientX - originalMouseX;
     const deltaY = e.clientY - originalMouseY;
 
-    // Clamp range to [-4000, 4000]
-    transformX[data.planeTabSelected] = Math.max(-4000, Math.min(originalTransformX + deltaX, 4000));
-    transformY[data.planeTabSelected] = Math.max(-4000, Math.min(originalTransformY + deltaY, 4000));
+    transformX[data.planeTabSelected] = originalTransformX + deltaX
+    transformY[data.planeTabSelected] = originalTransformY + deltaY
 
     // Update the position of the container
-    actionContainer.style.transform = `translate(${transformX[data.planeTabSelected]}px, ${transformY[data.planeTabSelected]}px) scale(${scale})`;
+    actionContainer.style.transform = `translate(${transformX[data.planeTabSelected]}px, ${transformY[data.planeTabSelected]}px) scale(${scaleByPlane[data.planeTabSelected]})`;
 });
 
 document.addEventListener('mouseup', function() {
@@ -194,12 +205,18 @@ document.addEventListener('mouseup', function() {
 });
 
 
+document.body.addEventListener('touchmove', function(e) {
+    if (e.touches.length > 1) {
+        e.preventDefault();
+    }
+}, { passive: false });
+
 // Touch start
 windowElement.addEventListener('touchstart', function(e) {
     if (e.touches.length === 2) {
         e.preventDefault();
         initialPinchDistance = getTouchDistance(e.touches[0], e.touches[1]);
-        lastTouchScale = scale;
+        lastTouchScale[data.planeTabSelected] = scaleByPlane[data.planeTabSelected];
         isTouchDragging = false;
     } else if (e.touches.length === 1) {
         // Single finger drag
@@ -219,17 +236,17 @@ windowElement.addEventListener('touchmove', function(e) {
 
         const currentDistance = getTouchDistance(e.touches[0], e.touches[1]);
         const pinchScale = currentDistance / initialPinchDistance;
-        let newScale = lastTouchScale * pinchScale;
+        let newScale = lastTouchScale[data.planeTabSelected] * pinchScale;
 
         newScale = Math.min(Math.max(minScale, newScale), maxScale);
-        const prevScale = scale;
-        scale = newScale;
+        const prevScale = scaleByPlane[data.planeTabSelected];
+        scaleByPlane[data.planeTabSelected] = newScale;
 
         const rect = windowElement.getBoundingClientRect();
         const midX = (e.touches[0].clientX + e.touches[1].clientX) / 2 - rect.left;
         const midY = (e.touches[0].clientY + e.touches[1].clientY) / 2 - rect.top;
 
-        const scaleFactor = scale / prevScale;
+        const scaleFactor = scaleByPlane[data.planeTabSelected] / prevScale;
         const dx = (midX - transformX[data.planeTabSelected]) * (1 - scaleFactor);
         const dy = (midY - transformY[data.planeTabSelected]) * (1 - scaleFactor);
 
@@ -239,12 +256,15 @@ windowElement.addEventListener('touchmove', function(e) {
         applyTransform();
     } else if (e.touches.length === 1 && isTouchDragging) {
         e.preventDefault();
-
         const touch = e.touches[0];
+
         const deltaX = touch.clientX - originalMouseX;
         const deltaY = touch.clientY - originalMouseY;
 
-        applyPan(originalTransformX + deltaX, originalTransformY + deltaY);
+        transformX[data.planeTabSelected] = originalTransformX + deltaX;
+        transformY[data.planeTabSelected] = originalTransformY + deltaY;
+
+        applyTransform();
     }
 }, { passive: false });
 
@@ -258,21 +278,8 @@ windowElement.addEventListener('touchend', function(e) {
     }
 });
 
-// Reusable helpers
-function getDistance(t1, t2) {
-    const dx = t2.clientX - t1.clientX;
-    const dy = t2.clientY - t1.clientY;
-    return Math.sqrt(dx * dx + dy * dy);
-}
-
-function applyPan(x, y) {
-    transformX[data.planeTabSelected] = Math.max(-4000, Math.min(x, 4000));
-    transformY[data.planeTabSelected] = Math.max(-4000, Math.min(y, 4000));
-    applyTransform();
-}
-
 function applyTransform() {
-    actionContainer.style.transform = `translate(${transformX[data.planeTabSelected]}px, ${transformY[data.planeTabSelected]}px) scale(${scale})`;
+    actionContainer.style.transform = `translate(${transformX[data.planeTabSelected]}px, ${transformY[data.planeTabSelected]}px) scale(${scaleByPlane[data.planeTabSelected]})`;
 
     clearTimeout(redrawTimeout);
     // redrawTimeout = setTimeout(globalRedraw, 200);
@@ -302,11 +309,13 @@ function forceRedraw(elem) {
 function actionTitleClicked(actionVar, setAll) {
     let dataObj = actionData[actionVar];
 
-    let newtransformX = -((dataObj.realX + 100) * scale) + windowElement.offsetWidth / 2 ;
-    let newtransformY = -((dataObj.realY + 100) * scale) + windowElement.offsetHeight / 2 - 50;
+    switchToPlane(dataObj.plane)
 
-    newtransformX = Math.max(-4000, Math.min(newtransformX, 4000));
-    newtransformY = Math.max(-4000, Math.min(newtransformY, 4000));
+    let newtransformX = -((dataObj.realX + 100) * scaleByPlane[data.planeTabSelected]) + windowElement.offsetWidth / 2 ;
+    let newtransformY = -((dataObj.realY + 100) * scaleByPlane[data.planeTabSelected]) + windowElement.offsetHeight / 2 - 50;
+
+    // newtransformX = Math.max(-4000, Math.min(newtransformX, 4000));
+    // newtransformY = Math.max(-4000, Math.min(newtransformY, 4000));
 
     if(setAll) {
         for(let plane in transformX) {
@@ -319,7 +328,22 @@ function actionTitleClicked(actionVar, setAll) {
     }
 
     // Update the position of the container
-    actionContainer.style.transform = `translate(${newtransformX}px, ${newtransformY}px) scale(${scale})`;
+    actionContainer.style.transform = `translate(${newtransformX}px, ${newtransformY}px) scale(${scaleByPlane[data.planeTabSelected]})`;
+}
+
+function toggleAutomation(actionVar) {
+    let actionObj = data.actions[actionVar];
+    const checkbox = document.getElementById(`${actionVar}_checkbox`);
+
+    actionObj.automationOff = checkbox.checked;
+
+    if (checkbox.checked) {
+        views.updateVal(`${actionVar}_track`, "#2196F3", "style.backgroundColor");
+        views.updateVal(`${actionVar}_knob`, "translateX(26px)", "style.transform");
+    } else {
+        views.updateVal(`${actionVar}_track`, "#ccc", "style.backgroundColor");
+        views.updateVal(`${actionVar}_knob`, "translateX(0px)", "style.transform");
+    }
 }
 
 
@@ -481,13 +505,13 @@ function changeJob(actionVar) {
 
 function pauseGame() {
     data.gameSettings.stop = !data.gameSettings.stop;
-    if(data.gameSettings.stop) {
-        document.title = "*PAUSED* KTL";
-    } else {
-        document.title = "KTL";
-    }
-    document.getElementById('pauseButton').textContent = data.gameSettings.stop ? "> Resume" : "|| Pause";
+    updatePauseButtonVisuals();
     save();
+}
+
+function updatePauseButtonVisuals() {
+    document.title = data.gameSettings.stop ? "*PAUSED* KTL" : "KTL";
+    document.getElementById('pauseButton').textContent = data.gameSettings.stop ? "> Resume" : "|| Pause";
 }
 
 function stopClicks(event) {
@@ -532,10 +556,17 @@ function bonusMenuHideButton() {
 function toggleBonusSpeed() {
     if(data.gameSettings.bonusSpeed > 1 || data.currentGameState.bonusTime <= 1000) {
         data.gameSettings.bonusSpeed = 1;
+    } else {
+        data.gameSettings.bonusSpeed = data.options.bonusRate;
+    }
+    updateBonusSpeedButton();
+}
+
+function updateBonusSpeedButton() {
+    if(data.gameSettings.bonusSpeed === 1) {
         document.getElementById("toggleBonusSpeedButton").style.backgroundColor = "red";
         document.getElementById("toggleBonusSpeedButton").textContent = "Enable Bonus Speed";
     } else {
-        data.gameSettings.bonusSpeed = data.options.bonusRate;
         document.getElementById("toggleBonusSpeedButton").style.backgroundColor = "green";
         document.getElementById("toggleBonusSpeedButton").textContent = "Disable Bonus Speed";
     }
@@ -557,7 +588,7 @@ function switchToPlane(num) {
     data.planeTabSelected = num;
     document.getElementById(`planeContainer${data.planeTabSelected}`).style.display = '';
     document.getElementById("windowElement").style.backgroundColor = `var(--world-${data.planeTabSelected}-bg-primary)`;
-    actionContainer.style.transform = `translate(${transformX[data.planeTabSelected]}px, ${transformY[data.planeTabSelected]}px) scale(${scale})`;
+    actionContainer.style.transform = `translate(${transformX[data.planeTabSelected]}px, ${transformY[data.planeTabSelected]}px) scale(${scaleByPlane[data.planeTabSelected]})`;
 }
 
 function unveilPlane(num) {
@@ -722,4 +753,51 @@ function drawChart() {
     }
     ctx.fillText(secondsToTime(minTime), padding, canvasHeight - padding + 20);
     ctx.fillText(secondsToTime(maxTime), canvasWidth - padding, canvasHeight - padding + 20);
+}
+
+function addLogMessage(text) {
+    const logContainer = document.getElementById('logContainer');
+    const logMessages = document.getElementById('logMessages');
+    const timestamp = secondsToTime(data.secondsPerReset);
+    const fullMessage = `${timestamp}: ${text}`;
+    data.currentLog.push(fullMessage);
+    const messageElement = document.createElement('div');
+    messageElement.innerHTML = fullMessage;
+    messageElement.style.padding = '2px 8px';
+    const isScrolledToBottom = logContainer.scrollTop + logContainer.clientHeight >= logContainer.scrollHeight - 10;
+    logMessages.appendChild(messageElement);
+    if(isScrolledToBottom) {
+        logContainer.scrollTop = logContainer.scrollHeight;
+    }
+}
+
+function toggleLog() {
+    const logWrapper = document.getElementById('logWrapper');
+    const openLogButton = document.getElementById('openLogButton');
+    if (logWrapper.style.display === 'none') {
+        logWrapper.style.display = 'block';
+        openLogButton.style.display = 'none';
+    } else {
+        logWrapper.style.display = 'none';
+        openLogButton.style.display = 'block';
+    }
+}
+
+function clearLog() {
+    const logMessages = document.getElementById('logMessages');
+    logMessages.replaceChildren();
+    data.currentLog = [];
+}
+
+function rebuildLog() {
+    clearLog();
+    const logContainer = document.getElementById('logContainer');
+    const logMessages = document.getElementById('logMessages');
+    for (let message of data.currentLog) {
+        const messageElement = document.createElement('div');
+        messageElement.innerHTML = message;
+        messageElement.style.padding = '2px 8px';
+        logMessages.appendChild(messageElement);
+    }
+    logContainer.scrollTop = logContainer.scrollHeight;
 }

@@ -413,11 +413,19 @@ function load() {
     let toLoad = {};
 
     // if(onLoadData) {
-    //     toLoad = onLoadData;
+    //     try {
+    //         toLoad = JSON.parse(decode(onLoadData));
+    //     } catch(e) {
+    //         exportErrorFile(onLoadData);
+    //     }
     // }
     if(localStorage[saveName]) {
         console.log('Save found.');
-        toLoad = JSON.parse(decode(localStorage[saveName]));
+        try {
+            toLoad = JSON.parse(decode(localStorage[saveName]));
+        } catch(e) {
+            exportErrorFile(localStorage[saveName]);
+        }
     }
 
 
@@ -428,7 +436,6 @@ function load() {
         //these are in the skiplist because if, between saves, an action has changed the atts it has, the links need to be reset instead of saved.
         mergeExistingOnly(data, toLoad, "atts", ["linkedActionExpAtts", "linkedActionEfficiencyAtts", "linkedActionOnLevelAtts"]);
         mergeExistingOnly(data, toLoad, "options");
-        data.options.bonusRate = 3;
         mergeExistingOnly(data, toLoad, "gameSettings");
 
 
@@ -436,7 +443,6 @@ function load() {
         patchActions("upgrades", toLoad.upgrades, upgradeData);
 
         data.toastStates = toLoad.toastStates;
-
 
         //load global items that aren't lists or objects
         data.gameState = toLoad.gameState ?? "default";
@@ -457,12 +463,15 @@ function load() {
         data.focusMult = toLoad.focusMult ?? 2;
         data.focusLoopMax = toLoad.focusLoopMax ?? 2.5;
         data.lastVisit = toLoad.lastVisit ?? Date.now();
+        data.currentLog = toLoad.currentLog ?? [];
 
         data.currentGameState = toLoad.currentGameState;
         // data.gameSettings = toLoad.gameSettings;
 
-
         //data correction
+        if(toLoad.gameSettings.viewAdvancedSliders === undefined) {
+            data.gameSettings.viewAdvancedSliders = true;
+        }
 
         //new spells need to be leveled to current grimoire's level
 
@@ -537,6 +546,8 @@ function patchActions(dataVar, toLoadActions, baseData) { //, dataActions, toLoa
 }
 
 function setSlidersOnLoad(toLoad) {
+    updateSliderContainers(); //show hide according to setting
+
     for(let actionVar in data.actions) {
         let dataObj = actionData[actionVar];
         for(let downstreamVar of dataObj.downstreamVars) {
@@ -614,11 +625,23 @@ function mergeExistingOnly(data, toLoad, varName, skipList = []) {
 
 function updateUIOnLoad() {
 
+    updatePauseButtonVisuals()
+
+    refreshResetLog()
+    rebuildLog()
+
     document.getElementById('viewDeltasSwitch').firstElementChild.style.left = data.gameSettings.viewDeltas ? "50%" : "0";
-    document.getElementById('numberTypeSwitch').firstElementChild.style.left = data.gameSettings.numberType==="scientific" ? "50%" : "0";
+    document.getElementById('numberTypeSwitch').firstElementChild.style.left = data.gameSettings.numberType==="numberSuffix" ? "66.666%" : (data.gameSettings.numberType==="scientific" ? "33.333%" : "0");
     document.getElementById('viewRatioSwitch').firstElementChild.style.left = data.gameSettings.viewRatio ? "50%" : "0";
     document.getElementById('viewTotalMomentumSwitch').firstElementChild.style.left = data.gameSettings.viewTotalMomentum ? "50%" : "0";
     document.getElementById('viewZeroButtonsSwitch').firstElementChild.style.left = data.gameSettings.viewAll0Buttons ? "50%" : "0";
+    document.getElementById('viewAdvancedSlidersSwitch').firstElementChild.style.left = data.gameSettings.viewAdvancedSliders ? "50%" : "0";
+
+    if(data.gameSettings.bonusSpeed > 1) {
+        data.gameSettings.bonusSpeed = 1;
+        data.options.bonusRate = 3; //set it to 3 or set the checked correctly on load
+    }
+    updateBonusSpeedButton();
 
     for (let actionVar in data.actions) {
         let actionObj = data.actions[actionVar];
@@ -642,6 +665,22 @@ function updateUIOnLoad() {
         }
         if(data.gameSettings.viewTotalMomentum) {
             views.updateVal(`${actionVar}TotalDownstreamContainer`, "", "style.display");
+        }
+        let automationUnlocked = data.upgrades.stopLettingOpportunityWait.upgradePower > 0
+            || data.upgrades.knowWhenToMoveOn.upgradePower > 0;
+        if(automationUnlocked) {
+            views.updateVal(`${actionVar}_automationMenuButton`, actionObj.hasUpstream?"":"none", "style.display");
+        }
+        if(actionObj.hasUpstream) {
+            if (actionObj.automationOff) {
+                views.updateVal(`${actionVar}_checkbox`, true, "checked");
+                views.updateVal(`${actionVar}_track`, "#2196F3", "style.backgroundColor");
+                views.updateVal(`${actionVar}_knob`, "translateX(26px)", "style.transform");
+            } else {
+                views.updateVal(`${actionVar}_checkbox`, false, "checked");
+                views.updateVal(`${actionVar}_track`, "#ccc", "style.backgroundColor");
+                views.updateVal(`${actionVar}_knob`, "translateX(0px)", "style.transform");
+            }
         }
     }
     if (data.planeUnlocked[1] || data.planeUnlocked[2]) {
@@ -706,11 +745,68 @@ function save() {
 
 function exportSave() {
     save();
-    // console.log(encoded);
     document.getElementById("exportImportSave").value = window.localStorage[saveName];
     document.getElementById("exportImportSave").select();
     document.execCommand('copy');
     document.getElementById("exportImportSave").value = "";
+}
+
+function exportErrorFile(data) {
+    const blob = new Blob([data], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+
+    const baseName = "KTL_Error_File";
+    const extension = 'txt';
+
+    const now = new Date();
+
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const seconds = String(now.getSeconds()).padStart(2, '0');
+
+    a.download = `${baseName}_${year}-${month}-${day}_${hours}-${minutes}-${seconds}.${extension}`;
+
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+
+    URL.revokeObjectURL(url);
+}
+
+function exportSaveFile() {
+    save();
+    const data = window.localStorage[saveName];
+    const blob = new Blob([data], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+
+    const baseName = "KTL_Save";
+    const extension = 'txt';
+
+    const now = new Date();
+
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const seconds = String(now.getSeconds()).padStart(2, '0');
+
+    a.download = `${baseName}_${year}-${month}-${day}_${hours}-${minutes}-${seconds}.${extension}`;
+
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+
+    URL.revokeObjectURL(url);
 }
 
 function importSave() {
@@ -723,4 +819,22 @@ function importSave() {
     }
     window.localStorage[saveName] = document.getElementById("exportImportSave").value;
     location.reload();
+}
+
+function importSaveFile() {
+    const input = document.getElementById("importSaveFileInput");
+    const file = input.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const content = e.target.result.trim();
+        if (!content) {
+            clearSave();
+        } else {
+            window.localStorage[saveName] = content;
+        }
+        location.reload();
+    };
+    reader.readAsText(file);
 }

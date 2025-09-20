@@ -46,6 +46,7 @@ data.doneKTL = false;
 data.doneAmulet = false;
 data.focusSelected = [];
 data.resetLogs = [];
+data.currentLog = [];
 data.maxFocusAllowed = 2;
 data.focusMult = 2;
 data.focusLoopMax = 2.5;
@@ -70,6 +71,7 @@ data.gameSettings = {
     viewRatio:false,
     viewAll0Buttons:false,
     viewTotalMomentum:false,
+    viewAdvancedSliders:false,
     numberType:"numberSuffix",
     redeemedBonusCodes:{}
 };
@@ -95,6 +97,7 @@ let isLoadingEnabled = true; //SET FALSE FOR CLEARING SAVE
 data.upgrades = {};
 
 let isDebug = false;
+// let isDebug = true;
 function debug() {
     if(!isDebug) {
         return;
@@ -131,9 +134,9 @@ function debug() {
     //setup system to right before HATL:
     // revealAtt("integration")
     // revealAtt("legacy")
-    // unveilPlane(0);
-    // unveilPlane(1);
-    // unveilPlane(2);
+    unveilPlane(0);
+    unveilPlane(1);
+    unveilPlane(2);
     // statAddAmount("pulse", 10)
     // statAddAmount("integration", 120)
     // statAddAmount("legacy", 10)
@@ -488,37 +491,12 @@ function initializeData() {
     //Plane 3
     create("absorbStarseed", [], 0, 0)
 
-/*
-
-Market:
-* Opens a bunch of energy gains from food
-* Lots of social improvements with clothes
-* random improvement with stall chats
-
-Socialization:
-* Talk to Scott
-* Big buffs to everything existing
-
-Travel and Emotions:
-* Process emotions for the buffs
-* travel through hermit for the stuff
-
-
- */
-
-
-//TODO...
-
-    // create("readTheWritten", [], -1, 0);
-    // create("siftExcess", [], -1.9, 0);
-
-
-
 
 
 
 
     setParents();
+    processActionStoriesXML();
 }
 
 function setParents() {
