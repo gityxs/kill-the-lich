@@ -90,9 +90,18 @@
     --gold-color: #a99102;
     --gold-color-dim: #766607;
     --gold-color-bg: #363107;
+    --fortune-color: #9333ea;
+    --fortune-color-dim: #6b21a8;
+    --fortune-color-bg: #2a0c3f;
+    --research-color: #c2a68a;
+    --research-color-dim: #936a3f;
+    --research-color-bg: #5d3f13;
     --conversations-color: #429977;
     --conversations-color-dim: #36765e;
     --conversations-color-bg: #162d23;
+    --teamwork-color: #25b1cc;
+    --teamwork-color-dim: #1e899e;
+    --teamwork-color-bg: #0a2e36;
     --fear-color: #d2062a;
     --fear-color-dim: #a30924;
     --fear-color-bg: #40090f;
@@ -188,6 +197,11 @@ body.lightMode {
     filter: invert(86%) sepia(43%) saturate(2850%) hue-rotate(359deg) brightness(103%) contrast(97%)
 drop-shadow(0 0 3px #FCEE36)
 drop-shadow(0 0 8px #FCEE36);
+}
+.spellIconSvg {
+    filter: invert(85%) sepia(13%) saturate(1145%) hue-rotate(130deg) brightness(96%) contrast(91%)
+    drop-shadow(0 0 3px #0ec3cf)
+    drop-shadow(0 0 8px #0ec3cf);
 }
 .generatorIconSvg {
     filter:
@@ -295,7 +309,6 @@ body {
     position:relative;
     color: var(--text-primary);
     border: 1px solid var(--border-color);
-    max-height:90vh;
 }
 
 .title {
@@ -404,6 +417,12 @@ input {
     background-color: var(--accent-tertiary);
 }
 
+.mouseoverRed:hover {
+    background-color:red;
+}
+.mouseoverBlue:hover {
+    background-color: var(--accent-tertiary);
+}
 .continueButton {
     display: block;
     margin: 20px auto 0 auto;

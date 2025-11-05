@@ -180,7 +180,7 @@ const actionTextData = `
     
     <catchAScent>
         <english><![CDATA[
-            The scent was elusive, and not present all days. When the wind shifted and I caught the scent, it was a sweet and enticing smell. I started paying closer attention to where in forest I was catching the smell, and after a few days I was able to roughly figure out a direction to head towards. Unfortunately, the path led me to a cliff that I could not scale. While I thought I could explore further and find a path up the cliff, at the moment this was as far as I could get.<br><br>
+            The scent was elusive, and not present all days. When the wind shifted and I caught the scent, it was a sweet and enticing smell. I started paying closer attention to where in the forest I was catching the smell, and after a few days I was able to roughly figure out a direction to head towards. Unfortunately, the path led me to a cliff that I could not scale. While I thought I could explore further and find a path up the cliff, at the moment this was as far as I could get.<br><br>
             
             Scott was still happy to hear about all the birds I found along the path.
         ]]></english>
@@ -259,172 +259,100 @@ const actionTextData = `
             
             This time, however, I was going to go prepared; I knew Fate could only bend so far at a time. I had just received magic, and knew that all I needed was to show I had the power to help, and the War for Life would let me join.<br><br>
             
-            So, I changed the target of Overclock, from itself to a new target: Kill the Lich. I felt my thoughts collapse, no longer held up by the artificial momentum. I became focused, with only a single goal in mind: letting my ability life my legs, move my mouth, and swing my sword. For better or worse, I was along for the ride.
+            So, I changed the target of Overclock, from itself to a new target: Kill the Lich. I felt my expanded thoughts collapse into a single focus, no longer held up by the artificial momentum. Guided by my Talent, I fed a very particular mana arrangement into the amulet I had received from the Hermit, and it glowed for a second. Then, I joined up with the army to fight the lich's forces, far in the northern wastes.<br>
+            
+            For better or worse, I was along for the ride.
         ]]></english>
     </hearAboutTheLich>
+    
+	<feelAGentleTug>
+        <english><![CDATA[
+            (WIP)
+            Familiarity with the crossroads has me noticing something changing; my amulet is falling slightly to the left as I walk, and I take it off and hold it up by the chain - it still moves gently, being pulled gently into a direction in the woods. I decide to follow its guidance.
+        ]]></english>
+	</feelAGentleTug>
+    
+    
+	<leaveTheOpenRoad>
+        <english><![CDATA[
+            (WIP)
+            I go through a bunch of forest, holding my amulet up for directions here and there. It's tough.
+        ]]></english>
+	</leaveTheOpenRoad>
+    
+    
+	<findOverlook>
+        <english><![CDATA[
+            (WIP)
+            I see a mountain with a cliff, and I decide to climb it. At the top, I can see across vast swathes of wilderness and little else. I hold up my amulet again for the direction and look closer at the tops of the trees I can see in that way. As I'm concentrating, I can suddenly distinguish a building standing out. As I trace the outline of the building with my vision, it reveals a full town, hidden in the wilderness. Deciding to follow my amulet's lead, I take the layout of the forest to get there and prepare to go.
+        ]]></english>
+	</findOverlook>
+    
+    
+	<discoverBurntTown>
+        <english><![CDATA[
+            (WIP)
+            It's a large town, clearly having undergone a very large fire some time in the past, likely a few years ago. Ivy has already consumed this place, and I wonder why I was able to get access - perhaps my amulet, as it was the that led the way.
+        ]]></english>
+	</discoverBurntTown>
+    
+    
+	<feelTheDespair>
+        <english><![CDATA[
+            (WIP)
+            The town is scarred. I can see it in the way some of the standing buildings have gashes in them, in the way that doors and windows were boarded up. Whatever took this place, it was no accidental fire.
+        ]]></english>
+	</feelTheDespair>
+    
+    
+	<repairShatteredShrine>
+        <english><![CDATA[
+            (WIP)
+            A shrine is not just damaged, but destroyed. 
+        ]]></english>
+	</repairShatteredShrine>
+    
+    
+	<stepThroughAsh>
+        <english><![CDATA[
+            (WIP)
+            Inside a large building with burnt stone walls still standing, I found a floor coated in ash, untouched by the elements. This place had a raging fire inside of it, and I didn't know why. Well, that wasn't true - I knew why, I just refused to accept it; it reminded me too much of the Ashmarch, when the ash I walked through was borne from demons, the fire raining upon us... and my fellow countrymen. I stopped at the threshold and steeled myself. I banished the memories momentarily - this was not the Ashmarch. This was a different tragedy, and I had yet to identify the nature of it. With each step I walked, my emotions rose up, almost overcoming me. I had a lot to think about.
+        ]]></english>
+	</stepThroughAsh>
+	
+    
+	<graspTheTragedy>
+        <english><![CDATA[
+            (WIP)
+            I let myself see past the veil of my memory, and what I found was a kind of relief: there were no bones in this place. There were remnants of shelving, burnt paper with a uniform layout, glass, and frames - it was records and art that was destroyed in this place. This was storage, not a last refuge. It was a tragedy nonetheless, but of a kind that was foreign enough as to let my heightened feelings pass.
+        ]]></english>
+	</graspTheTragedy>
+	
+	
+	<processEmotions>
+        <english><![CDATA[
+            (WIP)
+			My emotions were in turmoil. With great concentration, I carved a path of momentum in order to handle it. 
+        ]]></english>
+	</processEmotions>
+	
+    
+	<readTheWritten>
+        <english><![CDATA[
+            (WIP)
+			It was time to do something I had been putting off for a long time: reading my own journal, and coming to terms with what had happened to me.
+        ]]></english>
+	</readTheWritten>
+	
+    
+	<siftExcess>
+        <english><![CDATA[
+            (WIP)
+			As my emotional state calmed, I found my mind clearing as well, and with it came noticing how, when I redirected the momentum back into itself, there were smaller sets of flows that I could redirect as well. With my growing ability to multitask, it was trivial to do a little more about the efficiency of the flow.
+        ]]></english>
+	</siftExcess>
+	
+	
+    
 </actionStories>
 `;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//Story Text:
-
-// actionData.talkWithScott.storyText = { english:Raw.html`
-// &nbsp;&nbsp;&nbsp;&nbsp;"Oh wow, you actually want to know about me? Well, I've been here a long time."<br>
-// Scott and you keep talking for a while, and then he mentions that he overheard you've been doing good work, and has more people to recommend you to.
-// `}
-// actionData.bodyAwareness.storyText = { english:Raw.html`
-// &nbsp;&nbsp;&nbsp;&nbsp;I was tapping my pen on my chin when I suddenly focused on the sensation - was there a way to use
-// my momentum on my own proprioception? To mindfully move each of my muscles at all times would be incredible! I could craft such fine tools!<br><br>
-//
-// After some focus, I felt a new conceptual river open up from Overclock, flowing into the idea of being aware of myself.
-// For a moment, it was incredible to realize that I could expand this way, but rapidly I felt I hit my limit of comprehension.<br><br>
-//
-// Still, the newfound awareness had me desire to move around; I just had to find a purpose to do so.
-// `}
-// actionData.takeNotes.storyText = { english:Raw.html`
-// &nbsp;&nbsp;&nbsp;&nbsp;I started realizing the difficulties of understanding what was changing, so I started taking notes.
-// At first, I recorded the patterns, but as it helped me understand exactly how Overclock was changing: it was
-// substantially growing. I wondered how far this could go.<br><br>
-//
-// &nbsp;&nbsp;&nbsp;&nbsp;It was as I was writing while continuing to work the knots in my soul that I realized I was easily doing multiple things at once.
-// My thoughts felt split, yet not incomplete; I had the attention to give to both things at once. What else could I do at the same time?
-// `}
-//
-// actionData.harnessOverflow.storyText = { english:Raw.html`
-// &nbsp;&nbsp;&nbsp;&nbsp;An insight quickly arose, gained as I became more aware of the currents of momentum flowing through my soul.
-// I noticed, in those currents, that some was splashing over.<br><br>
-//
-// &nbsp;&nbsp;&nbsp;&nbsp;I observed the spillage - where would it go? - and found that, eventually, it always rejoined the current. Now that I was
-// looking for it, I realized my other actions that momentum had latched onto had much more violent currents and eddies,
-// whirling in place and creating knots of movement, hindering transference.<br><br>
-//
-// &nbsp;&nbsp;&nbsp;&nbsp;As I observed the various actions that I had thus felt out, I realized that Reflect and Distill Insight had some whirls
-// I could smooth out by controlling their spins into joining the river quicker.<br><br>
-//
-// &nbsp;&nbsp;&nbsp;&nbsp;Overclock was a storm, and difficult for me to fully access. I didn't quite understand, but feeling out those complicated ever-changing knots,
-//  it also sparked the tip of a memory. I had been confused - why was this familiar?
-// `}
-//
-// actionData.distillInsight.storyText = { english:Raw.html`
-// &nbsp;&nbsp;&nbsp;&nbsp;Almost immediately, my ability triggered successfully on yet another surprising option -
-// the ability to understand what I was doing, to distill insight out of the complicated signals coming through.<br><br>
-// `}
-//
-// actionData.reflect.storyText = { english:Raw.html`
-// &nbsp;&nbsp;&nbsp;&nbsp;At first, I simply sat down and closed my eyes, and tried to feel, or see, or sense in any way something that was possible.<br><br>
-//
-// &nbsp;&nbsp;&nbsp;&nbsp;But to my surprise, it was the act of looking itself that I felt the momentum latch onto.
-// I gained awareness - I was starting to understand the nature of how my ability was influencing things.
-// However, as the monstrous complexity of what this meant started to hit me, I realized this would be a long journey indeed.<br><br>
-//
-// &nbsp;&nbsp;&nbsp;&nbsp;I needed to experiment more - was there more I could pull out of this?
-// `}
-//
-//
-// actionData.overclock.storyText = {english:Raw.html`
-// &nbsp;&nbsp;&nbsp;&nbsp;"Choose a valid target; get a little more out of it" is the Description on my ability Overclock. Abilities are given intuitively,
-// and the Description was part of that intuitive understanding, given as soon as one has understood all of the words within the Description.
-// Overclock works by using the concept of momentum to improve the target over time. The target will be denied unless it meets the criteria,
-// which is any type of action you can do over and over until you get better at it.<br><br>
-//
-// &nbsp;&nbsp;&nbsp;&nbsp;That feeling, that concept - momentum - had been spilling over somehow from when I had the target set to itself.
-// It felt as if there was a spinning vortex of movement, with splashes leaking. Momentum had
-// started to apply itself in small ways to anything I started doing that fit the targeting criteria, and the momentum had
-// me continue doing whatever it was, helping me to do so as long as I needed.<br><br>
-//
-// &nbsp;&nbsp;&nbsp;&nbsp;As long as I stated doing something potentially targetable - even without me realizing it - the conceptual "spillover" from the vortex would latch on.<br><br>
-//
-// &nbsp;&nbsp;&nbsp;&nbsp;This was more than I ever anticipated. I had targeted Overclock to itself so that I would be prepared so that the next
-// time a threat came along, I would have a large pool of a fate-bending resource, and therefore - at least once - be strong enough
-// to save more than only myself. Maybe then, I could learn to find some measure of peace.`
-// };
-//
-// actionData.remember.storyText = {english:Raw.html`
-// Your world ended, and they only live on through you. Think about what they would
-//     have wanted for you, and on how much you miss them, and let it drive you forward. This is an internal story as much
-//     as it is an external one.`}
-// actionData.makeMoney.storyText = {english:"Your motivation to overclock spills over throughout your mind. Your general drive expands, and you put this to use in making money. At first it's whatever odd jobs you can find, with later getting employed, Making Money is the gateway to improving your situation."}
-// actionData.spendMoney.storyText={english:"At this village there are not many things to buy, but there are still the essentials you need. Buying things with the money you've earned gets you confidence, and the things improve your life to gain more energy."}
-//
-//
-//
-//
-//
-//
-//
-// actionData.meetVillageLeaderScott.storyText = {english:Raw.html`
-// Introductions with Scott as a village leader are nothing to note - he tells me not to make trouble and that he's open to chatting about any problems. He wants to help make the community work well. He seems like a good man. Past the introductions, when I really strike up a conversation with him, he opens up.
-//
-// "Did you see any birds on the road?" the softly smiling man asks me, after we got the pleasantries out of the way. I didn't think to look for the birds, and told him so. "You should have! There's a particularly golden one I only got a glimpse of!" He's passionate about this, but I am not. There might still be something worthwhile in finding this "golden bird" though.
-//
-// I ask if I can help out, and he gives me a job! It's just helping him out with some chores, but he pays me for it.
-//
-// Scott is really nice. I wish more people like him existed - my life would have gone differently. The more I chat with him, the more I remember the few soldiers I knew who were similar. It's a good connection, a good memory, and I have precious few of those.
-//
-// It also reminds me of how those men died, which starts to be more than I can handle for the moment. I have to start reminding myself that this is somewhere safe, but ultimately I am not quite up to do the task of socialization. I'm glad I ended up here though, and for the peace it has offered me.
-// `};
-//Mana
-// actionData.gatherMana.onCompleteText = {english:"+<b><span id=\"gatherManaActionPower\">1</span></b> Mana to Expel Mana<br>"};
-// actionData.gatherMana.storyText = {english:"gather mana info"};
-
-//Socialize
-// actionData.socialize.onCompleteText = {english:"+<b><span id=\"socializeActionPower\">1</span></b> Conversations<br>"};
-// actionData.socialize.storyText = {english:"socialize info"};
-
-//Money
-
-
-
-// actionData.makeMoney.onCompleteText = {english:"+<b><span id=\"makeMoneyActionPower\">1</span></b> Gold<br>"};
-// actionData.makeMoney.storyText = {english:"mm info"};
-//
-// actionData.spendMoney.storyText = {english:"Simple and frivoloous things that make you happy, that you can't help spend on. " +
-//         "A treat, a trinket, an upgrade, a waste - or is it? Well, there are better ways to spend gold."};
-
-
-
-// story = [
-//     {
-//         english: "The world was ending. Mark has a Talent. Claire tells him to report to the Delvers Guild to help out. He does, eventually"
-//     }
-// ]

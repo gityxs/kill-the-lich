@@ -1,6 +1,6 @@
 function updateCustomThumbPosition(actionVar, downstreamVar, newValue) {
     const thumb = document.getElementById(actionVar + "Thumb" + downstreamVar);
-    const thumbPosition = (newValue / 100) * 200;
+    const thumbPosition = (newValue / 100) * 230;
     thumb.style.left = thumbPosition + 'px';
 }
 
@@ -139,9 +139,48 @@ function clickZoomIn() {
 function clickZoomOut() {
     setZoomNoMouse(scaleByPlane[data.planeTabSelected] - scaleStep*3)
 }
+
+function centerScreen() {
+    if(data.planeTabSelected === 0) {
+        actionTitleClicked('overclock')
+    }
+    if(data.planeTabSelected === 1) {
+        actionTitleClicked('echoKindle')
+    }
+    if(data.planeTabSelected === 2) {
+        actionTitleClicked('overclockTargetingTheLich')
+    }
+}
+
+function hoveringIcon(actionVar) {
+    actionData[actionVar].hoveringIcon = true;
+}
+function stopHoveringIcon(actionVar) {
+    actionData[actionVar].hoveringIcon = false;
+}
+function pauseAction(event, actionVar) {
+    event.stopPropagation();
+    let actionObj = data.actions[actionVar];
+    actionObj.isPaused = !actionObj.isPaused;
+    updatePauseActionVisuals(actionVar)
+}
+
+function updatePauseActionVisuals(actionVar) {
+    let actionObj = data.actions[actionVar];
+    views.updateVal(`${actionVar}PauseButton`, actionObj.isPaused?">":"||", "textContent")
+    views.updateVal(`${actionVar}PauseButton`, actionObj.isPaused?"green":"red", "style.borderColor")
+    views.updateVal(`${actionVar}Title`, actionObj.isPaused?"red":"", "style.color")
+    views.updateVal(`${actionVar}SmallVersionTitle`, actionObj.isPaused?"red":"", "style.color")
+}
+
 windowElement.addEventListener('wheel', function(e) {
-    if(mouseIsOnAction) {
-        let elem = document.getElementById(`${mouseIsOnAction}_${data.actions[mouseIsOnAction].currentMenu}Container`);
+    let actionObj = data.actions[mouseIsOnAction];
+    if(mouseIsOnAction && actionObj.currentMenu !== "") {
+        let elem = document.getElementById(`${mouseIsOnAction}_${actionObj.currentMenu}Container`);
+        if(!elem) {
+            console.log('error, no elem at: ' + mouseIsOnAction);
+            return;
+        }
         if(elem.scrollHeight > elem.clientHeight) { //only stop wheel if there's a reason to
             return;
         }
@@ -213,6 +252,10 @@ document.body.addEventListener('touchmove', function(e) {
 
 // Touch start
 windowElement.addEventListener('touchstart', function(e) {
+    if(mouseIsOnAction) {
+        data.actions[mouseIsOnAction].mouseOnThis = false;
+    }
+    mouseIsOnAction = null;
     if (e.touches.length === 2) {
         e.preventDefault();
         initialPinchDistance = getTouchDistance(e.touches[0], e.touches[1]);
@@ -255,6 +298,17 @@ windowElement.addEventListener('touchmove', function(e) {
 
         applyTransform();
     } else if (e.touches.length === 1 && isTouchDragging) {
+        let actionObj = data.actions[mouseIsOnAction];
+        if(mouseIsOnAction && actionObj.currentMenu !== "") {
+            let elem = document.getElementById(`${mouseIsOnAction}_${actionObj.currentMenu}Container`);
+            if(!elem) {
+                console.log('error, no elem at: ' + mouseIsOnAction);
+                return;
+            }
+            if(elem.scrollHeight > elem.clientHeight) { //only stop wheel if there's a reason to
+                return;
+            }
+        }
         e.preventDefault();
         const touch = e.touches[0];
 
@@ -308,8 +362,9 @@ function forceRedraw(elem) {
 
 function actionTitleClicked(actionVar, setAll) {
     let dataObj = actionData[actionVar];
-
+    data.actions[actionVar].mouseOnThis = true;
     switchToPlane(dataObj.plane)
+
 
     let newtransformX = -((dataObj.realX + 100) * scaleByPlane[data.planeTabSelected]) + windowElement.offsetWidth / 2 ;
     let newtransformY = -((dataObj.realY + 100) * scaleByPlane[data.planeTabSelected]) + windowElement.offsetHeight / 2 - 50;
@@ -331,11 +386,11 @@ function actionTitleClicked(actionVar, setAll) {
     actionContainer.style.transform = `translate(${newtransformX}px, ${newtransformY}px) scale(${scaleByPlane[data.planeTabSelected]})`;
 }
 
-function toggleAutomation(actionVar) {
+function toggleAutomationOnReveal(actionVar) {
     let actionObj = data.actions[actionVar];
     const checkbox = document.getElementById(`${actionVar}_checkbox`);
 
-    actionObj.automationOff = checkbox.checked;
+    actionObj.automationOnReveal = checkbox.checked;
 
     if (checkbox.checked) {
         views.updateVal(`${actionVar}_track`, "#2196F3", "style.backgroundColor");
@@ -346,34 +401,59 @@ function toggleAutomation(actionVar) {
     }
 }
 
-
-function clickActionMenu(actionVar, menuVar, isLoad) {
+function toggleAutomationOnMaxLevel(actionVar) {
     let actionObj = data.actions[actionVar];
+    const checkbox = document.getElementById(`${actionVar}_checkbox2`);
+
+    actionObj.automationOnMax = checkbox.checked;
+
+    if (checkbox.checked) {
+        views.updateVal(`${actionVar}_track2`, "#2196F3", "style.backgroundColor");
+        views.updateVal(`${actionVar}_knob2`, "translateX(26px)", "style.transform");
+    } else {
+        views.updateVal(`${actionVar}_track2`, "#ccc", "style.backgroundColor");
+        views.updateVal(`${actionVar}_knob2`, "translateX(0px)", "style.transform");
+    }
+}
+
+function clickActionMenuButton(event, actionVar, menuVar) {
+    data.actions[actionVar].mouseOnThis = true;//for mobile/touch reasons
+    clickActionMenu(actionVar, menuVar);
+}
+function clickActionMenu(actionVar, menuVar) {
+    let actionObj = data.actions[actionVar];
+    let currentMenu = actionObj.currentMenu;
     if(!menuVar) {
         return;
     }
-    if(!isLoad && (!actionObj.unlocked || !actionObj.visible)) {
+
+    //allow switching between automation and downstream menu when locked, but not turning them off
+    if(menuVar === "downstream" || menuVar === "automation") {
+        if(menuVar === currentMenu && !actionObj.unlocked) {
+            return;
+        }
+    } else if(!actionObj.unlocked) {
         return;
     }
 
-    if(actionObj.currentMenu && !isLoad) {
-        // view.cached[actionVar + "_" + actionObj.currentMenu + "MenuButton"].style.removeProperty("background-color");
-
-        views.updateVal(`${actionVar}_${actionObj.currentMenu}Container`, "none", "style.display");
-        views.updateVal(`${actionVar}_${actionObj.currentMenu}MenuButton`, "", "style.backgroundColor");
+    //clear previous menu
+    if(currentMenu) {
+        views.updateVal(`${actionVar}_${currentMenu}Container`, "none", "style.display");
+        views.updateVal(`${actionVar}_${currentMenu}MenuButton`, "", "style.backgroundColor");
     }
 
-    if(actionObj.currentMenu === menuVar && !isLoad) {
-        data.actions[actionVar].currentMenu = "";
+    //if you clicked the button as-is, remove it and quit
+    if(currentMenu === menuVar) {
+        actionObj.currentMenu = "";
         return;
     }
 
+    //turn on the menu
     views.updateVal(`${actionVar}_${menuVar}Container`, "", "style.display");
     views.updateVal(`${actionVar}_${menuVar}MenuButton`, "var(--selection-color)", "style.backgroundColor");
 
-    data.actions[actionVar].currentMenu = menuVar;
+    actionObj.currentMenu = menuVar;
 }
-
 
 function clickMenuButton() {
     let isShowing = document.getElementById("helpMenu").style.display !== "none";
@@ -499,7 +579,7 @@ function changeJob(actionVar) {
     }
 
     //set displayed
-    document.getElementById("jobTitle").textContent = data.actions[data.currentJob] ? data.actions[data.currentJob].title : data.currentJob;
+    document.getElementById("jobTitle").textContent = data.actions[data.currentJob] ? actionData[data.currentJob].title : data.currentJob;
     document.getElementById("jobWage").textContent = intToString(data.currentWage, 2);
 }
 
@@ -607,14 +687,15 @@ function mouseOffAction(actionVar) {
     actionObj.mouseOnThis = false;
     mouseIsOnAction = null;
 }
-
-function levelAllCharges() {
-    for(let actionVar in data.actions) {
-        let actionObj = data.actions[actionVar];
-        if(actionObj.instabilityToAdd) {
-            addMaxLevel(actionVar, 1);
+function mouseOnActionTouch(event, actionVar) {
+    let actionObj = data.actions[actionVar];
+    if(actionVar && actionObj.currentMenu !== "") {
+        let elem = document.getElementById(`${actionVar}_${actionObj.currentMenu}Container`);
+        if(elem.scrollHeight > elem.clientHeight) { //only stop touch if there's a reason to
+            event.stopPropagation();
         }
     }
+    mouseOnAction(actionVar);
 }
 
 
@@ -755,12 +836,17 @@ function drawChart() {
     ctx.fillText(secondsToTime(maxTime), canvasWidth - padding, canvasHeight - padding + 20);
 }
 
-function addLogMessage(text) {
+function addLogMessage(text, type) {
     const logContainer = document.getElementById('logContainer');
     const logMessages = document.getElementById('logMessages');
     const timestamp = secondsToTime(data.secondsPerReset);
-    const fullMessage = `${timestamp}: ${text}`;
-    data.currentLog.push(fullMessage);
+    let logData = {
+        theVar: text,
+        type: type,
+        timestamp: timestamp
+    }
+    const fullMessage = expandLogMessage(logData);
+    data.currentLog.push(logData);
     const messageElement = document.createElement('div');
     messageElement.innerHTML = fullMessage;
     messageElement.style.padding = '2px 8px';
@@ -768,6 +854,38 @@ function addLogMessage(text) {
     logMessages.appendChild(messageElement);
     if(isScrolledToBottom) {
         logContainer.scrollTop = logContainer.scrollHeight;
+    }
+}
+
+function expandLogMessage(logData) {
+    let theVar = logData.theVar;
+    let type = logData.type;
+    let timestamp = logData.timestamp;
+    if(type === "purchaseAction") {
+        let dataObj = actionData[theVar];
+        return `${timestamp}: Permanently unlocked action: ${dataObj.title} in ${getPlaneNameFromNum(dataObj.plane)}`;
+    } else if(type === "unlockAction") {
+        let dataObj = actionData[theVar];
+        let planeName = getPlaneNameFromNum(dataObj.plane);
+        return `${timestamp}: New Action: <span style="font-weight:bold;cursor:pointer;" onclick="actionTitleClicked('${theVar}');">${dataObj.title}</span> in ${planeName}`
+    } else if(type === "purchaseUpgrade") {
+        let upgradeDataObj = upgradeData[theVar];
+        return `${timestamp}: New Upgrade Available: ${upgradeDataObj.title}!`;
+    } else if(type === "info") {
+        return logData.theVar;
+    }
+}
+
+function getPlaneNameFromNum(planeNum) {
+    switch(planeNum) {
+        case 0:
+            return "Brythal"
+        case 1:
+            return "Magic"
+        case 2:
+            return "Northern Wastes"
+        case 3:
+            return "Astral"
     }
 }
 
@@ -795,9 +913,77 @@ function rebuildLog() {
     const logMessages = document.getElementById('logMessages');
     for (let message of data.currentLog) {
         const messageElement = document.createElement('div');
-        messageElement.innerHTML = message;
+        messageElement.innerHTML = expandLogMessage(message);
         messageElement.style.padding = '2px 8px';
         logMessages.appendChild(messageElement);
     }
     logContainer.scrollTop = logContainer.scrollHeight;
+}
+
+
+function togglePinned() {
+    const pinnedWrapper = document.getElementById('pinnedWrapper');
+    const openPinnedButton = document.getElementById('openPinnedButton');
+    if (pinnedWrapper.style.display === 'none') {
+        pinnedWrapper.style.display = 'block';
+        openPinnedButton.style.display = 'none';
+    } else {
+        pinnedWrapper.style.display = 'none';
+        openPinnedButton.style.display = 'block';
+    }
+}
+
+function rebuildPinned() {
+    let tempArray = copyArray(data.currentPinned);
+    data.currentPinned = [];
+    for(let actionVar of tempArray) {
+        addPinnedAction(actionVar);
+    }
+}
+
+function addPinnedActionClick(event, actionVar) {
+    event.stopPropagation();
+    addPinnedAction(actionVar);
+}
+
+function addPinnedAction(actionVar) {
+    let dataObj = actionData[actionVar];
+    let actionObj = data.actions[actionVar];
+    if(data.currentPinned.indexOf(actionVar) !== -1) {
+        return;
+    }
+    data.currentPinned.push(actionVar);
+
+    queueCache(`${actionVar}PinnedLevels`)
+    queueCache(`${actionVar}Level3`)
+    queueCache(`${actionVar}MaxLevel3`)
+
+    const messageElement = document.createElement('div');
+    //remove button (X) removes all listeners
+    messageElement.innerHTML = `<span id="${actionVar}PinContainer">
+        [${dataObj.plane+1}]
+        <span id="${actionVar}PinnedLevels">
+            <span style="font-weight:bold;cursor:pointer;" onclick="actionTitleClicked('${actionVar}');">${dataObj.title}</span> 
+            (<span id="${actionVar}Level3"></span>${actionObj.maxLevel >= 0?`/<span id="${actionVar}MaxLevel3"></span>`:""})
+        </span>
+        <span style="border:2px solid #840000;cursor:pointer;" class="mouseoverRed" onclick="removePinnedAction('${actionVar}')">X</span>
+    </span>`;
+    messageElement.style.padding = '2px 8px';
+
+    document.getElementById("pinnedActions").appendChild(messageElement);
+
+    clearCacheQueue();
+}
+
+function removePinnedAction(actionVar) {
+    const pinElement = document.getElementById(`${actionVar}PinContainer`);
+    if (pinElement) {
+        pinElement.parentElement.remove();
+        delete view.cached[actionVar];
+    }
+
+    const index = data.currentPinned.indexOf(actionVar);
+    if (index !== -1) {
+        data.currentPinned.splice(index, 1);
+    }
 }

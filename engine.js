@@ -43,7 +43,7 @@ function actionSetBaseVariables(actionObj, dataObj) {
     actionObj.instability = 0;
     actionObj.progressMaxBase = dataObj.progressMaxBase ? dataObj.progressMaxBase : 1;
     actionObj.progressMaxMult = dataObj.progressMaxMult ? dataObj.progressMaxMult : 1;
-    actionObj.progressMax = actionObj.progressMaxBase * actionObj.progressMaxMult * (1+actionObj.instability/100);
+    actionObj.progressMax = actionObj.progressMaxBase * actionObj.progressMaxMult * calcInstabilityEffect(actionObj.instability);
     actionObj.actionPowerBase = dataObj.actionPowerBase ? dataObj.actionPowerBase : 1;
     actionObj.actionPowerMult = dataObj.actionPowerMult ? dataObj.actionPowerMult : 1;
     actionObj.level = 0;
@@ -54,10 +54,6 @@ function actionSetBaseVariables(actionObj, dataObj) {
     actionObj.expToLevelBase = dataObj.expToLevelBase ? dataObj.expToLevelBase : 1;
     actionObj.expToLevelMult = dataObj.expToLevelMult ? dataObj.expToLevelMult : 1;
     actionObj.expToLevel = actionObj.expToLevelBase * actionObj.expToLevelMult; //can be divided
-    actionObj.expToAddBase = 1;
-    actionObj.expToAddMult = 1;
-    actionObj.expToAdd = actionObj.expToAddBase * actionObj.expToAddMult;
-    actionObj.generatorSpeed = dataObj.generatorSpeed ? dataObj.generatorSpeed : 0;
     actionObj.generatorTarget = dataObj.generatorTarget;
     actionObj.resource = 0;
     actionObj.resourceDelta = 0;
@@ -69,10 +65,14 @@ function actionSetBaseVariables(actionObj, dataObj) {
     actionObj.expToLevelIncrease = dataObj.expToLevelIncrease;
     actionObj.actionPowerMultIncrease = dataObj.actionPowerMultIncrease ? dataObj.actionPowerMultIncrease : 1;
     actionObj.progressMaxIncrease = dataObj.progressMaxIncrease;
-    actionObj.visible = (globalVisible || dataObj.visible === null) ? true : dataObj.visible;
+    actionObj.visible = dataObj.visible === null ? true : dataObj.visible;
+
+    actionObj.unlockTime = null;
+    actionObj.level1Time = null;
+
+    // actionObj.visible = (globalVisible || dataObj.visible === null) ? true : dataObj.visible;
     actionObj.unlockCost = dataObj.unlockCost;
     actionObj.unlocked = dataObj.unlocked === null ? true : dataObj.unlocked;
-    actionObj.currentMenu = "downstream";
 
     actionObj.isRunning = dataObj.plane !== 2; //for controlling whether time affects it
     actionObj.onLevelAtts = dataObj.onLevelAtts ? dataObj.onLevelAtts : [];
@@ -89,6 +89,10 @@ function actionSetBaseVariables(actionObj, dataObj) {
     actionObj.wage = dataObj.wage ? dataObj.wage : undefined;
 
 
+    actionObj.expToAddBase = 1;
+    actionObj.expToAddMult = calcUpgradeMultToExp(actionObj);
+    actionObj.expToAdd = actionObj.expToAddBase * actionObj.expToAddMult;
+
     actionObj.upgradeMult = 1;
     if(dataObj.updateUpgradeMult) {
         dataObj.updateUpgradeMult();
@@ -103,12 +107,14 @@ function actionSetInitialVariables(actionObj, dataObj) {
     actionObj.cooldownTimer = 0; //when this is higher than cooldown it is ready
     actionObj.resourceName = dataObj.resourceName ? dataObj.resourceName : "momentum";
     actionObj.tier = dataObj.tier;
-    actionObj.instabilityToAdd = dataObj.instabilityToAdd ? dataObj.instabilityToAdd : undefined;
     actionObj.hasUpstream = dataObj.hasUpstream ?? true;
     actionObj.isKTL = !!dataObj.isKTL;
     actionObj.purchased = !!dataObj.purchased;
     actionObj.plane = dataObj.plane;
-    actionObj.automationOff = !!dataObj.automationOff;
+    actionObj.automationOnReveal = true;
+    actionObj.automationOnMax = true;
+    actionObj.currentMenu = "downstream";
+    actionObj.hasBeenUnlocked = false;
 
     // actionObj.onUnlock = dataObj.onUnlock ? dataObj.onUnlock : function() {};
     // actionObj.onCompleteCustom = dataObj.onCompleteCustom ? dataObj.onCompleteCustom : function() {};
@@ -117,16 +123,15 @@ function actionSetInitialVariables(actionObj, dataObj) {
 
     //Vars that don't really need to be initalized but I like to know they're there
     actionObj.highestLevel = -1;
-    actionObj.prevUnlockTime = null;
+    actionObj.secondHighestLevel = -1;
+    actionObj.thirdHighestLevel = -1;
 }
 
-//function createAndLinkNewAction(actionVar, expToLevelIncrease, actionPowerMultIncrease, progressMaxIncrease, progressMax, expToLevel, unlockCost, title, x, y, downstreamVars, tier, dataObj) {
-function createAndLinkNewAction(actionVar, dataObj, title, downstreamVars) {
+function createAndLinkNewAction(actionVar, dataObj, downstreamVars) {
     data.actions[actionVar] = {};
 
     let actionObj = data.actions[actionVar];
     actionObj.actionVar = actionVar;
-    actionObj.title = title;
     dataObj.downstreamVars = downstreamVars ? downstreamVars : [];
 
     actionSetBaseVariables(actionObj, dataObj);
@@ -135,8 +140,8 @@ function createAndLinkNewAction(actionVar, dataObj, title, downstreamVars) {
 
 
     for(let downstreamVar of dataObj.downstreamVars) {
-        actionObj[downstreamVar+"FocusMult"] = 1;
-        actionObj[downstreamVar+"downstreamSendRate"] = 0;
+        actionObj[downstreamVar+"TempFocusMult"] = 2;
+        actionObj[downstreamVar+"PermFocusMult"] = 1;
         actionObj[`downstreamRate${downstreamVar}`] = 0;
     }
 
@@ -164,7 +169,7 @@ function createAndLinkNewAction(actionVar, dataObj, title, downstreamVars) {
             actionObj.expToLevel = actionObj.expToLevelBase * actionObj.expToLevelMult;
         } else {
             actionObj.progressMaxMult = 1/totalEffect;
-            actionObj.progressMax = actionObj.progressMaxBase * actionObj.progressMaxMult * (1+actionObj.instability/100);
+            actionObj.progressMax = actionObj.progressMaxBase * actionObj.progressMaxMult * calcInstabilityEffect(actionObj.instability);
         }
         actionObj.actionPower = actionObj.actionPowerBase * actionObj.actionPowerMult * (actionObj.efficiency/100);
     }
@@ -205,18 +210,28 @@ function actionProgressRate(actionObj) {
 }
 
 function isAttentionLine(actionVar, downstreamVar) {
-    return data.focusSelected.some(
-        sel => sel.lineData.from === actionVar && sel.lineData.to === downstreamVar
-    );
+    for(let focusObj of data.focusSelected) {
+        if(focusObj.lineData.from === actionVar && focusObj.lineData.to === downstreamVar) {
+            return true;
+        }
+    }
+    return false;
 }
 
 function checkLevelUp(actionObj, dataObj) {
     let isMaxLevel = actionObj.maxLevel !== undefined && actionObj.level >= actionObj.maxLevel;
     if(actionObj.exp >= actionObj.expToLevel && !isMaxLevel) {
-        actionObj.exp -= actionObj.expToLevel;
+        if(actionObj.isGenerator) {
+            actionObj.exp -= actionObj.expToLevel;
+        } else {
+            actionObj.exp = 0;
+        }
+        if(!actionObj.level1Time) {
+            actionObj.level1Time = data.secondsPerReset;
+        }
         actionObj.level++;
         actionObj.progressMaxBase *= actionObj.progressMaxIncrease;
-        actionObj.progressMax = actionObj.progressMaxBase * actionObj.progressMaxMult * (1+actionObj.instability/100);
+        actionObj.progressMax = actionObj.progressMaxBase * actionObj.progressMaxMult * calcInstabilityEffect(actionObj.instability);
         actionObj.expToLevelBase *= actionObj.expToLevelIncrease;
         actionObj.expToLevel = actionObj.expToLevelBase * actionObj.expToLevelMult;
         actionObj.actionPowerMult *= actionObj.actionPowerMultIncrease;
@@ -237,7 +252,7 @@ function checkLevelUp(actionObj, dataObj) {
         }
 
         let isNowMaxLevel = actionObj.maxLevel !== undefined && actionObj.level >= actionObj.maxLevel;
-        if (isNowMaxLevel) {
+        if (isNowMaxLevel && actionObj.automationOnMax) {
             updateSupplyChain(actionObj.actionVar);
         }
 
@@ -247,15 +262,19 @@ function checkLevelUp(actionObj, dataObj) {
 }
 
 function actionAddExp(actionObj) {
-    actionObj.exp += actionObj.expToAdd * calcUpgradeMultToExp(actionObj);
+    actionObj.expToAddMult = calcUpgradeMultToExp(actionObj);
+    actionObj.expToAdd = actionObj.expToAddBase * actionObj.expToAddMult;
+    actionObj.exp += actionObj.expToAdd;
     let dataObj = actionData[actionObj.actionVar];
 
-    let timesRun = 0;
-    for(let i = 0; i < 10; i++) {
-        if(!checkLevelUp(actionObj, dataObj)) {
+    for (let i = 0; i < 10; i++) {
+        if (!checkLevelUp(actionObj, dataObj)) {
             break;
         }
     }
+    //update exp visuals after leveling
+    actionObj.expToAddMult = calcUpgradeMultToExp(actionObj);
+    actionObj.expToAdd = actionObj.expToAddBase * actionObj.expToAddMult;
 }
 
 function statAddAmount(attVar, amount) {
@@ -264,6 +283,9 @@ function statAddAmount(attVar, amount) {
         console.log("Tried to add to a stat that doesn't exist: " + attVar);
     }
     if(attVar === "legacy") {
+        if(data.gameState === "KTL") {
+            amount *= data.legacyMultKTL;
+        }
         data.actions.echoKindle.resource += amount;
     }
     attObj.num += amount;
@@ -309,7 +331,12 @@ function purchaseAction(actionVar) {
         console.log('tried to purchase ' + actionVar + ' in error.');
         return;
     }
+    if(actionObj.purchased) {
+        return;
+    }
     actionObj.purchased = true;
+
+    addLogMessage(actionVar, "purchaseAction")
 }
 
 function unveilAction(actionVar) {
@@ -322,36 +349,31 @@ function unveilAction(actionVar) {
         return;
     }
 
-    let planeName = getPlaneNameFromNum(dataObj.plane);
 
-    addLogMessage(`New Action: <span style="font-weight:bold;cursor:pointer;" onclick="actionTitleClicked('${actionVar}');">${actionObj.title}</span> in ${planeName}`)
+    addLogMessage(actionVar, "unlockAction")
+
+    if(dataObj.plane === 1) { //Give magic actions an unlock time
+        actionObj.unlockTime = data.secondsPerReset;
+    }
 
     actionObj.visible = true;
     revealActionAtts(actionObj);
 
-    updateSupplyChain(actionVar);
-}
-
-function getPlaneNameFromNum(planeNum) {
-    switch(planeNum) {
-        case 0:
-            return "Brythal"
-        case 1:
-            return "Magic"
-        case 2:
-            return "Kill the Lich"
-        case 3:
-            return "Astral"
+    if(data.actions[actionVar].automationOnReveal) {
+        updateSupplyChain(actionVar);
     }
 }
 
 
-
-
 function unveilUpgrade(upgradeVar) {
     let upgradeObj = data.upgrades[upgradeVar];
+    if(upgradeObj.visible) {
+        return;
+    }
     upgradeObj.visible = true;
     views.updateVal(`card_${upgradeVar}`, "flex", "style.display");
+
+    addLogMessage(upgradeVar, "purchaseUpgrade")
 }
 
 function addMaxLevel(actionVar, amount) {
@@ -359,7 +381,9 @@ function addMaxLevel(actionVar, amount) {
 
     // setUpstreamSlidersToUnlockValue(actionVar); // New line
 
-    updateSupplyChain(actionVar);
+    if(data.actions[actionVar].automationOnMax) {
+        updateSupplyChain(actionVar);
+    }
 }
 
 //for a given actionVar:
@@ -369,7 +393,7 @@ function addMaxLevel(actionVar, amount) {
 //4. else, if it is max level, recurse down to the children - are any of them not max level and visible? If any are, it makes all their parents yes needed
 //5. if none are needed, return false
 //6. saves in isNeededList only to prevent recalc with multiple calls via updateSupplyChain
-//7. if the action has automationOff, i'm pretty sure it shouldn't change anything here - it's still needed or not based on max level
+//7. if the action has automationOnMax, i'm pretty sure it shouldn't change anything here - it's still needed or not based on max level
 function isNeeded(actionVar, isNeededList = {}) {
     if (isNeededList[actionVar] !== undefined) {
         return isNeededList[actionVar];
@@ -378,7 +402,7 @@ function isNeeded(actionVar, isNeededList = {}) {
     const actionObj = data.actions[actionVar];
     const dataObj = actionData[actionVar];
 
-    if (!actionObj || !actionObj.visible) {
+    if (!actionObj || !actionObj.visible || !actionObj.hasUpstream) {
         isNeededList[actionVar] = false;
         return false;
     }
@@ -407,6 +431,7 @@ function updateSupplyChain(startActionVar) {
     const isNeededList = {};
     let currentVar = startActionVar;
 
+    //recurses upwards
     while (currentVar) {
         const actionObj = data.actions[currentVar];
         const dataObj = actionData[currentVar];
@@ -416,34 +441,28 @@ function updateSupplyChain(startActionVar) {
         }
 
         const parentVar = dataObj.parentVar;
+        //recurses downwards to be true if any downstream is needed
         const childIsNeeded = isNeeded(currentVar, isNeededList);
 
         let currentSliderValue = data.actions[parentVar][`downstreamRate${currentVar}`];
 
         if (childIsNeeded) {
-            if (currentSliderValue === 0) {
-                if(!actionObj.automationOff) {
+            //if a child is needed, and slider is off, turn it on
+            if (currentSliderValue === 0 && actionObj.automationOnReveal) {
+                if(!actionObj.hasBeenUnlocked && currentVar === startActionVar) { //ignore the first time
+                    setSliderUI(parentVar, currentVar, 0);
+                } else {
                     setSliderUI(parentVar, currentVar, getUpgradeSliderAmount());
                 }
             }
-        } else {
-            if (data.upgrades.knowWhenToMoveOn.upgradePower > 0) {
-                if (currentSliderValue !== 0) {
-                    if(!actionObj.automationOff) {
-                        setSliderUI(parentVar, currentVar, 0);
-                    }
-                }
-            } else {
-                if (currentSliderValue === 0) {
-                    if(!actionObj.automationOff) {
-                        setSliderUI(parentVar, currentVar, getUpgradeSliderAmount());
-                    }
-                }
-            }
+        } else if (data.upgrades.knowWhenToMoveOn.upgradePower > 0 && currentSliderValue !== 0 && actionObj.automationOnMax) {
+            //if not needed, turn off
+            setSliderUI(parentVar, currentVar, 0);
         }
 
         currentVar = parentVar;
     }
+
 }
 
 
@@ -483,10 +502,12 @@ function revealAtt(attVar) {
 
 function unlockAction(actionObj) {
     let actionVar = actionObj.actionVar;
-    if(actionObj.unlocked) {
+    if(actionObj.unlocked === true) {
         return;
     }
+    actionObj.hasBeenUnlocked = true;
     actionObj.unlocked = true;
+    actionObj.unlockCost = 0;
     actionObj.unlockTime = data.secondsPerReset; //mark when it unlocked
     let dataObj = actionData[actionVar];
     if(dataObj.onUnlock) {
@@ -519,7 +540,14 @@ function upgradeUpdates() {
     }
 
     //passive gain
-    data.actions.overclock.resource += data.upgrades.startALittleQuicker.upgradePower * 20 / data.gameSettings.ticksPerSecond;
+    data.actions.overclock.resource += [0, 5, 20, 50][data.upgrades.startALittleQuicker.upgradePower] * 20 / data.gameSettings.ticksPerSecond;
+
+    if(data.upgrades.keepMyMagicReady.upgradePower) {
+        saveMaxChargedSpellPowers();
+        data.maxSpellPower = getTotalMaxChargedSpellPower();
+    } else {
+        data.maxSpellPower = getActiveSpellPower(true);
+    }
 }
 
 function getUpgradeSliderAmount() {
@@ -528,34 +556,82 @@ function getUpgradeSliderAmount() {
 
 //get current info based on upgrade information, generally global or universal stuff. Individual action stuff upgrades get put on the action.
 function calcUpgradeMultToExp(actionObj) {
+    if(actionObj.plane === 2 || actionObj.isSpell) {
+        return 1;
+    }
     let upgradeMult = 1;
     if(data.upgrades.rememberWhatIDid.isFullyBought && actionObj.level < actionObj.highestLevel) {
-        upgradeMult *= 2;
+        upgradeMult += .25;
     }
     if(data.upgrades.rememberHowIGrew.isFullyBought && actionObj.level < actionObj.secondHighestLevel) {
-        upgradeMult *= 2;
+        upgradeMult += .25;
     }
     if(data.upgrades.rememberMyMastery.isFullyBought && actionObj.level < actionObj.thirdHighestLevel) {
-        upgradeMult *= 2;
+        upgradeMult += .5;
     }
     return upgradeMult;
 }
 
 function isSpellReady(actionVar) {
     let actionObj = data.actions[actionVar];
-    return actionObj.level > 0 && (!actionObj.cooldown || actionObj.cooldownTimer >= actionObj.cooldown);
+    return actionObj.level > 0 && !actionObj.isPaused && (!actionObj.cooldown || actionObj.cooldownTimer >= actionObj.cooldown);
 }
 
 function useCharge(actionVar) {
     let actionObj = data.actions[actionVar];
+    let dataObj = actionData[actionVar]
 
     actionObj.level--;
-    actionObj.instability += actionObj.instabilityToAdd / (actionObj.efficiency/100);
+    actionObj.instability += dataObj.instabilityToAdd / (actionObj.efficiency/100);
 
     if(actionObj.cooldown) {
         actionObj.cooldownTimer = 0;
     }
+    updateSupplyChain(actionVar);
 }
+
+function useActiveSpellCharges() {
+    for(let actionVar in data.actions) {
+        let actionObj = data.actions[actionVar];
+        if(actionObj.power && actionObj.level > 0 && !actionObj.isPaused) {
+            useCharge(actionVar);
+        }
+    }
+}
+
+function getActiveSpellPower(shouldCountPaused) {
+    let totalSpellPower = 0;
+    for(let actionVar in data.actions) {
+        let actionObj = data.actions[actionVar];
+        if(actionObj.power && (shouldCountPaused || !actionObj.isPaused)) {
+            totalSpellPower += actionObj.power * actionObj.level;
+        }
+    }
+    return totalSpellPower;
+}
+
+function saveMaxChargedSpellPowers() {
+    for(let actionVar in data.actions) {
+        let actionObj = data.actions[actionVar];
+        if(actionObj.power) {
+            if(!data.chargedSpellPowers[actionVar]) {
+                data.chargedSpellPowers[actionVar] = 0;
+            }
+            if(actionObj.power * actionObj.level > data.chargedSpellPowers[actionVar]) {
+                data.chargedSpellPowers[actionVar] = actionObj.power * actionObj.level;
+            }
+        }
+    }
+}
+
+function getTotalMaxChargedSpellPower() {
+    let total = 0;
+    for(let actionVar in data.chargedSpellPowers) {
+        total += data.chargedSpellPowers[actionVar];
+    }
+    return total;
+}
+
 
 const bonusCodes = {};
 function addBonusCode(code, rewardFunction, message = "") {
@@ -625,6 +701,8 @@ addBonusCode("nothing", function () {
 }, "There was nothing there - except 24 hours bonus time.");
 
 
+
+
 //function to be used as a debug helper, running in console
 //adjustActionData('', 'progressMaxBase', 1e6)
 //adjustActionData('', 'efficiencyBase', .1)
@@ -632,7 +710,7 @@ function adjustActionData(actionVar, key, value) {
     let actionObj = data.actions[actionVar];
     actionObj[key] = value;
     if(['progressMaxBase', 'progressMaxMult'].includes(key)) {
-        actionObj.progressMax = actionObj.progressMaxBase * actionObj.progressMaxMult * (1+actionObj.instability/100);
+        actionObj.progressMax = actionObj.progressMaxBase * actionObj.progressMaxMult * calcInstabilityEffect(actionObj.instability);
     }
     if(['efficiencyBase', 'efficiencyMult'].includes(key)) {
         actionObj.expertise = actionObj.efficiencyBase * actionObj.efficiencyMult;

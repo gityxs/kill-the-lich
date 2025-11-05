@@ -9,7 +9,7 @@ function upgradesSetBaseVariables(upgradeObj, dataObj) {
     upgradeObj.upgradesBought = dataObj.upgradesBought ?? 0;
     upgradeObj.increaseRatio = dataObj.increaseRatio;
 
-    upgradeObj.isFullyBought = !!dataObj.isFullyBought;
+    upgradeObj.isFullyBought = false;
     upgradeObj.visible = !!dataObj.visible;
 }
 
@@ -22,6 +22,9 @@ function createUpgrades() {
         let dataObj = upgradeData[upgradeVar];
         data.upgrades[upgradeVar] = {};
         let upgradeObj = data.upgrades[upgradeVar];
+
+        dataObj.creationVersion = dataObj.creationVersion ?? 0;
+        dataObj.title = dataObj.title || decamelizeWithSpace(upgradeVar);
 
         upgradesSetBaseVariables(upgradeObj, dataObj);
     }
@@ -67,7 +70,7 @@ function toggleSortByCost(checkbox) {
 
 function initializeAmuletCards() {
     const container = document.getElementById("amuletUpgrades");
-    container.style.cssText = "display:flex;flex-wrap:wrap;gap:15px;padding:10px;";
+    container.style.cssText = "display:flex;flex-wrap:wrap;gap:15px;padding:10px;max-height:50vh";
     container.innerHTML = "";
 
     for (const upgradeVar in data.upgrades) {
@@ -86,7 +89,7 @@ function initializeAmuletCards() {
         const costSectionId = `costSection_${upgradeVar}`;
         const remainingSectionId = `remainingSection_${upgradeVar}`;
         const maxLevelSectionId = `maxLevelSection_${upgradeVar}`;
-        const title = upgradeDataObj.title || `...${decamelize(upgradeVar)}`;
+        const title = upgradeDataObj.title;
 
         cardElement.innerHTML = `
             <div>
@@ -253,7 +256,6 @@ function buyUpgrade(upgradeVar) {
     updateAmuletCardUI(upgradeVar);
     refreshUpgradeVisibility();
 
-    // --- THIS IS THE KEY CHANGE ---
     // Only re-sort the cards if the checkbox is checked.
     const sortCheckbox = document.getElementById('sortByCostCheckbox');
     if (sortCheckbox && sortCheckbox.checked) {
@@ -363,6 +365,16 @@ function updateCardAffordabilityBorders() {
     }
 }
 
+function calcTotalSpentOnUpgrade(initialCost, costIncrease, upgradesBought) {
+    let total = 0;
+    let theCost = initialCost;
+    for(let i = 0; i < upgradesBought; i++) {
+        total += theCost
+        theCost *= costIncrease;
+    }
+    return total;
+}
+
 let upgradeData = {
     stopLettingOpportunityWait: {
         initialCost:2, costIncrease:3,
@@ -370,11 +382,16 @@ let upgradeData = {
         visible: true,
         customInfo: function(num) {
             return `[Automation] When unlocking a new action, automatically sets the downstream sliders of the 
-            unlocked action to ${["50%", "100% (Currently 50%)", "100%"][num]}.`;
+            unlocked action to ${["50%", "100% (Currently 50%)", "100%"][num]}. This only fully works on previously unlocked actions.`;
         },
         onBuy: function(num) {
             for (let actionVar in data.actions) {
-                views.updateVal(`${actionVar}_automationMenuButton`, data.actions[actionVar].hasUpstream?"":"none", "style.display");
+                let actionObj = data.actions[actionVar];
+                if(!actionObj.hasUpstream) {
+                    continue;
+                }
+                views.updateVal(`${actionVar}_automationMenuButton`, data.actions[actionVar].hasUpstream && actionData[actionVar].plane !== 2?"":"none", "style.display");
+                views.updateVal(`${actionVar}_automationRevealContainer`, data.actions[actionVar].hasUpstream && actionData[actionVar].plane !== 2?"":"none", "style.display");
             }
         }
     },
@@ -388,7 +405,12 @@ let upgradeData = {
         },
         onBuy: function(num) {
             for (let actionVar in data.actions) {
-                views.updateVal(`${actionVar}_automationMenuButton`, data.actions[actionVar].hasUpstream?"":"none", "style.display");
+                let actionObj = data.actions[actionVar];
+                if(!actionObj.hasUpstream) {
+                    continue;
+                }
+                views.updateVal(`${actionVar}_automationMenuButton`, actionData[actionVar].plane !== 2?"":"none", "style.display");
+                views.updateVal(`${actionVar}_automationMaxLevelContainer`,  actionData[actionVar].plane !== 2?"":"none", "style.display");
             }
         }
     },
@@ -405,32 +427,43 @@ let upgradeData = {
         upgradesAvailable:3,
         visible:true,
         customInfo: function(num) {
-            return Raw.html`Overclock gains a flat +${["5", "20 (currently 5)", "100 (currently 20)", 100][num]} momentum per second.`
+            return Raw.html`Overclock gains a flat +${["5", "20 (currently 5)", "50 (currently 20)", 50][num]} momentum per second.`
         }
     },
-    rememberWhatIFocusedOn: {
-        initialCost:5, costIncrease:2,
-        upgradesAvailable:3,
+    learnToFocusMore: {
+        initialCost:5, costIncrease:10, creationVersion:2,
+        upgradesAvailable:2,
         visible:true,
         customInfo: function(num) {
             if(num === 0) {
-                return Raw.html`Gain a rate of +1/hr to a Practice Mult on the flow you have Focused. The mult lasts until the amulet 
-                is used, and stacks with the Focus Mult. The Practice Mult will have a max of 2. `
+                return `Increase the base focus rate (x2) over 10 minutes, to a maximum of x3. This keeps within a loop, but resets on amulet use.`
             }
             if(num === 1) {
-                return Raw.html`You have a rate of +1/hr to a Practice Mult on the flow you have Focused. This mult lasts until the amulet 
-                is used, and stacks with the Focus Mult. The Practice Mult currently has a max of 2. Gain +1.`
+                return `Increase the base focus rate (x2) over 10 minutes, to a maximum of x4 (currently x3). This keeps within a loop, but resets on amulet use.`
             }
-            if(num === 2) {
-                return Raw.html`You have a rate of +1/hr to a Practice Mult on the flow you have Focused. This mult lasts until the amulet 
-                is used, and stacks with the Focus Mult. The Practice Mult currently has a max of 3. Gain +1.`
-            }
-            return Raw.html`You have a rate of +1/hr to a Practice Mult on the flow you have Focused. This mult lasts until the amulet 
-                is used, and stacks with the Focus Mult. The Practice Mult currently has a max of 4.`
+            return `Increase the base focus rate (x2) over 10 minutes, to a maximum of x4. This keeps within a loop, but resets on amulet use.`
         },
         onBuy: function(num) {
-            data.focusLoopMax = 2 + num;
-            unveilUpgrade('knowWhatIFocusedOn')
+            unveilUpgrade('rememberWhatIFocusedOn')
+        },
+    },
+    rememberWhatIFocusedOn: {
+        initialCost:10, costIncrease:10, creationVersion: 2,
+        upgradesAvailable:3,
+        visible:false,
+        customInfo: function(num) {
+            if(num === 0) {
+                return `Gain a permanent +(Hear About The Lich's Level)^2 % to all Focused rates, when you enter Northern Wastes. This effect works even when the bar is not focused. This effect caps at a x2 mult.`
+            }
+            if(num === 1) {
+                return `You currently gain a permanent +(Hear About The Lich's Level)^2 % to all Focused rates, when you enter Northern Wastes. This effect works even when the bar is not focused. This effect will cap at a x3 mult (currently x2).`
+            }
+            if(num === 2) {
+                return `You currently gain a permanent +(Hear About The Lich's Level)^2 % to all Focused rates, when you enter Northern Wastes. This effect works even when the bar is not focused. This effect will cap at a x4 mult (currently x3).`
+            }
+            return `You currently gain a permanent +(Hear About The Lich's Level)^2 % to all Focused rates, when you enter Northern Wastes. This effect works even when the bar is not focused. This effect caps at a x4 mult.`
+        },
+        onBuy: function(num) {
         },
     },
     learnedOfLichSigns: {
@@ -444,14 +477,404 @@ let upgradeData = {
             actionData.hearAboutTheLich.maxLevel = 2 + num;
         }
     },
-    knowWhatIFocusedOn: {
-        initialCost:5, costIncrease:2,
-        upgradesAvailable:2,
-        visible:false,
+
+
+    feelTheEchoesOfTheBurntTown: {
+        initialCost:20, costIncrease:2, creationVersion:2,
+        upgradesAvailable:3,
+        visible:true,
         customInfo: function(num) {
-            return "Keep "+(["20", "50 (currently 20%)", "50"][num])+"% of your Focus Loop Bonus when you use the Amulet";
+            switch(num) {
+                case 0:
+                case 1:
+                case 2:
+                default:
+                    return "Unlocks new actions that use Momentum"
+            }
+        },
+        onBuy: function(num) {
+            if(num === 1) {
+                purchaseAction('feelAGentleTug')
+                purchaseAction('leaveTheOpenRoad')
+                purchaseAction('findOverlook')
+                purchaseAction('discoverBurntTown')
+                purchaseAction('feelTheDespair')
+                purchaseAction('repairShatteredShrine')
+            } else if(num === 2) {
+                purchaseAction('stepThroughAsh')
+                purchaseAction('graspTheTragedy')
+                purchaseAction('processEmotions')
+                purchaseAction('readTheWritten')
+                purchaseAction('siftExcess')
+            } else if(num === 3) {
+                purchaseAction('resonanceCompass')
+                purchaseAction('clearIvyWall')
+                purchaseAction('findPulsingShard')
+                purchaseAction('scavengeForSupplies')
+                unveilUpgrade('learnFromTheLibrary')
+            }
         }
     },
+    learnFromTheLibrary: {
+        initialCost:200, costIncrease:2, creationVersion:2,
+        upgradesAvailable:5,
+        visible:false,
+        customInfo: function(num) {
+            return "Unlocks new actions that use Research, and new spells"
+        },
+        onBuy: function(num) {
+            if(num === 1) {
+                purchaseAction('skimAHeavyTome')
+                purchaseAction('clearRubble')
+                purchaseAction('readFadedMarkers')
+                purchaseAction('mapOutTraps')
+                purchaseAction('accessForbiddenArea')
+                purchaseAction('collectSpellBooks')
+
+                purchaseAction('readBooks')
+                purchaseAction('catalogNewBooks')
+                purchaseAction('study')
+                purchaseAction('researchBySubject')
+
+                purchaseAction('studyMagic')
+
+                purchaseAction('studySupportSpells')
+                purchaseAction('studyEarthMagic')
+                purchaseAction('stoneCompression')
+                purchaseAction('digFoundation')
+
+                purchaseAction('shapeBricks')
+                unveilUpgrade('keepMyMagicReady')
+                unveilUpgrade('trainTogetherMore');
+                unveilUpgrade('refineMyWizardry')
+            } else if(num === 2) {
+                purchaseAction('findAFamiliarLanguage')
+                purchaseAction('searchForRelevantBooks')
+                purchaseAction('collectInterestingBooks')
+                purchaseAction('collectHistoryBooks')
+
+                purchaseAction('studyHistory')
+                purchaseAction('readOldStories')
+                purchaseAction('readWarJournals')
+
+                purchaseAction('reviewOldMemories')
+                purchaseAction('rememberFriends')
+                purchaseAction('rememberTheWar')
+
+                purchaseAction('studyPracticalMagic')
+                purchaseAction('tidyMagesmithShop')
+                purchaseAction('clearTheBasement')
+            } else if(num === 3) {
+                data.actions.collectHistoryBooks.maxLevel = 7;
+                purchaseAction('readOldReligiousTexts')
+                purchaseAction('readOldPoetry')
+                purchaseAction('readOldProphecies')
+                purchaseAction('readOldPhilosophy')
+                purchaseAction('honorTheLost')
+                purchaseAction('letGoOfGuilt')
+            } else if(num === 4) {
+                purchaseAction('complainAboutDifficulty')
+                purchaseAction('browseFantasyNovels')
+
+                purchaseAction('collectMathBooks')
+
+                purchaseAction('studyMath')
+                purchaseAction('studyCryptology')
+
+                purchaseAction('decipherOrganization')
+                purchaseAction('recognizeRunicLanguages')
+                purchaseAction('catalogUnknownLanguages')
+
+                purchaseAction('studyAdvancedEarthMagic')
+
+                purchaseAction('moldBarsFromScrap')
+                purchaseAction('mendGearCracks')
+                purchaseAction('assistantMagesmith')
+            } else if(num === 5) {
+                data.actions.collectMathBooks.maxLevel = 5; //each level increases catalognewbooks
+                purchaseAction('studyArchitecture')
+                purchaseAction('expandPersonalLibrary')
+
+                purchaseAction('dismantleShelves')
+                purchaseAction('markTheLayout')
+
+                purchaseAction('comprehendDifficultTexts')
+                purchaseAction('clearTheDust')
+
+                purchaseAction('examineTheArchitecture')
+                purchaseAction('pryGemLoose')
+                
+                purchaseAction('studyAdvancedPracticalMagic')
+                purchaseAction('unblemish')
+                purchaseAction('manaTransfer')
+
+            }
+        }
+    },
+    investMyGold: {
+        initialCost:20, costIncrease:2, creationVersion:2,
+        upgradesAvailable:6,
+        visible:true,
+        customInfo: function(num) {
+            switch(num) {
+                case 0:
+                    return "Unlocks new actions for converting gold into fortune"
+                case 1:
+                    return "Unlocks an action for using fortune to build fortune, and an action for attributes"
+                case 2:
+                case 3:
+                case 4:
+                case 5:
+                    return "Unlocks new actions for using fortune"
+                default:
+                    return "Unlocks new actions that use Fortune, generated from Gold"
+            }
+        },
+        onBuy: function(num) {
+            if(num === 1) {
+                purchaseAction('invest');
+                purchaseAction('buildFortune');
+                purchaseAction('spendFortune');
+                unveilUpgrade('increaseInitialInvestment')
+            } else if(num === 2) {
+                purchaseAction('reinvest')
+                purchaseAction('investInLocals')
+                purchaseAction('townCrier')
+                purchaseAction('storyTeller')
+                unveilUpgrade('buyNicerStuff')
+            } else if(num === 3) {
+                purchaseAction('hostAFestival')
+                purchaseAction('fundTownImprovements')
+                purchaseAction('browsePersonalCollection')
+                purchaseAction('buyUtilityItems')
+                unveilUpgrade('refineMyLeverage')
+                unveilUpgrade('increaseMarketCap')
+            } else if(num === 4) {
+                purchaseAction('supportLocalLibrary')
+                purchaseAction('expandLocalLibrary')
+                purchaseAction('investInSelf')
+                unveilUpgrade('retrieveMyUnusedResources')
+            } else if(num === 5) {
+                purchaseAction('makeAPublicDonation')
+                purchaseAction('fundASmallStall')
+                purchaseAction('purchaseALot')
+            } else if(num === 6) {
+                purchaseAction('buildPersonalLibrary')
+                purchaseAction('recruitACarpenter')
+                purchaseAction('procureQualityWood')
+            }
+        }
+    },
+    increaseInitialInvestment: {
+        initialCost:40, costIncrease:1.5, creationVersion:2,
+        upgradesAvailable:5,
+        visible:false,
+        customInfo: function(num) {
+            return Raw.html`Invest's base Fortune gain increases to ${["2 (currently 1)", "5 (currently 2)", "10 (currently 5)", "20 (currently 10)", "50 (currently 20)", "50"][num]}.`
+        },
+        currentValue: function() {
+            return [1, 2, 5, 10, 20, 50][data.upgrades.increaseInitialInvestment.upgradePower];
+        }
+    },
+    increaseMarketCap: {
+        initialCost:200, costIncrease:1.5, creationVersion:2,
+        upgradesAvailable:5,
+        visible:false,
+        customInfo: function(num) {
+            return Raw.html`Invest's maximum fortune gain cap increases to ${["1e7 (currently 1e5)", "1e9 (currently 1e7)", "1e11 (currently 1e9)", "1e13 (currently 1e11)", "1e15 (currently 1e13)", "1e15"][num]}.`
+        },
+        currentValue: function() {
+            return [1e5, 1e7, 1e9, 1e11, 1e13, 1e15][data.upgrades.increaseMarketCap.upgradePower];
+        }
+    },
+    buyNicerStuff: {
+        initialCost:70, costIncrease:3, creationVersion:2,
+        upgradesAvailable:3,
+        visible:false,
+        customInfo: function(num) {
+            return "Unlocks new actions that use Gold"
+        },
+        onBuy: function(num) {
+            if(num === 1) {
+                purchaseAction('buyComfyShoes')
+                purchaseAction('buyTravelersGear')
+            } else if(num === 2) {
+                purchaseAction('buyArtisanFood')
+                purchaseAction('buyPotions')
+            } else if(num === 3) {
+                purchaseAction('buyTools')
+                purchaseAction('buyCart')
+            }
+        }
+    },
+    improveMyHouse: {
+        initialCost:400, costIncrease:3, creationVersion:2,
+        upgradesAvailable:3,
+        visible:false,
+        customInfo: function(num) {
+            return "Unlocks new actions that use Gold"
+        },
+        onBuy: function(num) {
+            if(num === 1) {
+                purchaseAction('buyFurniture')
+                purchaseAction('buyBed')
+            } else if(num === 2) {
+                purchaseAction('buyReadingChair')
+                purchaseAction('buyFireplace')
+            } else if(num === 3) {
+                purchaseAction('buyGoodFirewood')
+                purchaseAction('buySilkSheets')
+            }
+        }
+    },
+    askAboutBetterWork: {
+        initialCost:30, costIncrease:1, creationVersion:2,
+        upgradesAvailable:1,
+        visible:false,
+        customInfo: function(num) {
+            return "Unlocks a new job, after asking for it"
+        },
+        onBuy: function(num) {
+            if(num === 1) {
+                purchaseAction('askAboutLocalWork')
+                purchaseAction('worksiteSweeper')
+            }
+        }
+    },
+
+    fightAlongsideAllies: {
+        initialCost:30, costIncrease:1, creationVersion:2,
+        upgradesAvailable:1,
+        visible:true,
+        customInfo: function(num) {
+            return "Unlocks new actions that use Conversations, and results in a better Northern Wastes reset"
+        },
+        onBuy: function(num) {
+            purchaseAction('learnToInquire')
+            purchaseAction('talkToTheRecruiters')
+            purchaseAction('buyPointyHat')
+            purchaseAction('askAboutArcaneCorps')
+            purchaseAction('getTestedForKnowledge')
+            purchaseAction('discussPlacement')
+            purchaseAction('meetTheMages')
+            purchaseAction('trainWithTeam')
+            unveilUpgrade('askAboutBetterWork');
+        }
+    },
+    trainTogetherMore: {
+        initialCost:400, costIncrease:2, creationVersion:2,
+        upgradesAvailable:3,
+        visible:false,
+        customInfo: function(num) {
+            return "Increases max level of Train With Team by 1"
+        },
+        onBuy: function(num) {
+            actionData.trainWithTeam.maxLevel = 2 + num;
+        }
+    },
+    keepMyMagicReady: {
+        initialCost:100, costIncrease:1, creationVersion:2,
+        upgradesAvailable:1,
+        visible:false,
+        customInfo: function(num) {
+            return Raw.html`The Spell Power used in the Northern Wastes becomes the highest you've reached per spell each loop, instead of the current value.`;
+        }
+    },
+    retrieveMyUnusedResources: {
+        initialCost:500, costIncrease:1.5, creationVersion:2,
+        upgradesAvailable:3,
+        visible:false,
+        customInfo: function(num) {
+            return `Retrieve 10 + ${[1, 2, 5][num]}% of current resource per second on all actions that are dimmed (max level, no resource increase or decrease). Skips Reinvest.`;
+        },
+    },
+    createABetterFoundation: {
+        initialCost:500, costIncrease:1.5, creationVersion:2,
+        upgradesAvailable:4,
+        visible:false,
+        customInfo: function(num) {
+            return "Momentum generation increased by "+(num >0?"another ":"")+"x1.1, multiplicative";
+        },
+    },
+    workHarder: {
+        initialCost:600, costIncrease:1.5, creationVersion:2,
+        upgradesAvailable:4,
+        visible:false,
+        customInfo: function(num) {
+            return "Gold generation increased by "+(num >0?"another ":"")+"x1.5, multiplicative";
+        }
+    },
+    haveBetterConversations: {
+        initialCost:800, costIncrease:1.5, creationVersion:2,
+        upgradesAvailable:4,
+        visible:false,
+        customInfo: function(num) {
+            return "Conversation generation increased by "+(num >0?"another ":"")+"x1.25, multiplicative";
+        },
+    },
+    sparkMoreMana: {
+        initialCost:800, costIncrease:2, creationVersion:2,
+        upgradesAvailable:4,
+        visible:false,
+        customInfo: function(num) {
+            return "Mana generation increased by "+(num >0?"another ":"")+"x1.25, multiplicative";
+        },
+    },
+    studyHarder: {
+        initialCost:1000, costIncrease:1.5, creationVersion:2,
+        upgradesAvailable:4,
+        visible:false,
+        customInfo: function(num) {
+            return "Research generation increased by "+(num >0?"another ":"")+"x1.25, multiplicative";
+        },
+    },
+
+
+    rememberWhatIDid: {
+        initialCost:600, costIncrease:1, creationVersion:2,
+        upgradesAvailable:1,
+        visible:false,
+        customInfo: function(num) {
+            return "When you use the amulet, the highest levels achieved on non-Northern Wastes actions and generators are recorded. Gain +25% more exp up to the highest level reached. Note: non-generators do not carry over exp into their next level.";
+        },
+        onBuy: function(num) {
+            unveilUpgrade('rememberHowIGrew')
+        }
+    },
+    rememberHowIGrew: {
+        initialCost:2000, costIncrease:1, creationVersion:2,
+        upgradesAvailable:1,
+        visible:false,
+        customInfo: function(num) {
+            return "When you use the amulet, the second highest levels achieved on non-Northern Wastes actions and generators are recorded. Gain +25% additive more exp up to the second highest level reached. Note: non-generators do not carry over exp into their next level.";
+        },
+        onBuy: function(num) {
+            unveilUpgrade('rememberMyMastery')
+        }
+    },
+    rememberMyMastery: {
+        initialCost:6000, costIncrease:1, creationVersion:2,
+        upgradesAvailable:1,
+        visible:false,
+        customInfo: function(num) {
+            return "When you use the amulet, the third highest levels achieved on non-Northern Wastes actions and generators are recorded. Gain +50% additive more exp up to the third highest level reached. Note: non-generators do not carry over exp into their next level.";
+        }
+    },
+
+
+    stopBeingSoTense: {
+        initialCost:500, costIncrease:1, creationVersion:2,
+        upgradesAvailable:1,
+        visible:false,
+        customInfo: function(num) {
+            return "Unlock 2 actions that use momentum"
+        },
+        onBuy: function(num) {
+            purchaseAction('standStraighter'); //1e31
+            purchaseAction('walkAware'); //1e35
+        }
+    },
+
 
     refineMyCycle: { attribute:"cycle", upgradesAvailable:4, increaseRatio:.25, initialCost:5, costIncrease:4, visible:true },
     refineMyAwareness: { attribute:"awareness", upgradesAvailable:4, increaseRatio:.5, initialCost:5, costIncrease:4, visible:true },
@@ -481,262 +904,37 @@ let upgradeData = {
     refineMyMight: { attribute:"might", upgradesAvailable:4, increaseRatio:.5, initialCost:10, costIncrease:3, visible:true },
     refineMyGeared: { attribute:"geared", upgradesAvailable:4, increaseRatio:.5, initialCost:10, costIncrease:3, visible:true },
     refineMyCourage: { attribute:"courage", upgradesAvailable:4, increaseRatio:1, initialCost:10, costIncrease:2, visible:true },
-    refineMyWizardry: { attribute:"wizardry", upgradesAvailable:4, increaseRatio:.25, initialCost:15, costIncrease:4, visible:false },
-
-
-
-    makeMoreMoney: {
-        initialCost:6, costIncrease:2,
-        upgradesAvailable:4,
-        visible:false,
-        customInfo: function(num) {
-            return "Gold generation increased by "+(num >0?"another ":"")+"50%";
-        }
-    },
-    haveBetterConversations: {
-        initialCost:6, costIncrease:2,
-        upgradesAvailable:4,
-        visible:false,
-        customInfo: function(num) {
-            return "Conversation generation increased by "+(num >0?"another ":"")+"50%";
-        }
-    },
-    createABetterFoundation: {
-        initialCost:8, costIncrease:4,
-        upgradesAvailable:4,
-        visible:false,
-        customInfo: function(num) {
-            return "Motivation generation is increased by "+(num >0?"another ":"")+"25%";
-        }
-    },
-
-    rememberWhatIDid: {
-        initialCost:1, costIncrease:1,
-        upgradesAvailable:1,
-        visible:false,
-        customInfo: function(num) {
-            return "On each action, get 2x exp as long as the action's level is lower than the highest level ever reached." +
-                " The action's highest level will be recorded on amulet use, and it will be displayed.";
-        }
-    },
-    checkWhatScottMentioned: {
-        initialCost:1, costIncrease:1,
-        upgradesAvailable:1,
-        visible:false,
-        customInfo: function(num) {
-            return Raw.html`He said something about seeing a spot of gold among the trees. 
-            The birds, maybe? It might have been worth checking out.<br><br>
-            Unlocks 5 new actions.<br>
-            Recommended to start. 
-            `
-        },
-        onBuy: function(num) {
-            purchaseAction('watchBirds');
-            purchaseAction('catchAScent');
-            purchaseAction('exploreDifficultPath');
-            purchaseAction('eatGoldenFruit');
-            purchaseAction('journal');
-        }
-    },
-    stopBeingSoTense: {
-        initialCost:30, costIncrease:1,
-        upgradesAvailable:1,
-        visible:false,
-        customInfo: function(num) {
-            return "What was the point? I should have handled myself first."
-        },
-        onBuy: function(num) {
-            purchaseAction('meditate');
-            purchaseAction('walkAware');
-        }
-    },
-    focusHarder: {
-        initialCost:25, costIncrease:4,
-        upgradesAvailable:8,
-        visible:false,
-        customInfo: function(num) {
-            return "Increases the Focus Mult by "+(num >0?"another ":"")+"+1 (for a total of " + (num+1+2) + ")";
-        },
-        onBuy: function(num) {
-            data.focusMult = 2 + num;
-        }
-    },
-    rememberHowIGrew: {
-        initialCost:50, costIncrease:1,
-        upgradesAvailable:1,
-        visible:false,
-        customInfo: function(num) {
-            return "On each action, get 2x exp as long as the action's level is lower than the second highest level ever reached." +
-                " The action's second highest level will be recorded on amulet use, and it will be displayed.";
-        }
-    },
-    rememberMyMastery: {
-        initialCost:200, costIncrease:1,
-        upgradesAvailable:1,
-        visible:false,
-        customInfo: function(num) {
-            return "On each action, get 2x exp as long as the action's level is lower than the third highest level ever reached." +
-                " The action's third highest level will be recorded on amulet use, and it will be displayed.";
-        }
-    }, //200|1, 2x exp to third highest
-
-    lookCloserAtTheBoard: {
-        initialCost:10, costIncrease:2,
-        upgradesAvailable:2,
-        visible:false,
-        customInfo: function(num) {
-            return "The board was stuffed with notices. Surely something else is relevant for you."
-        },
-        onBuy: function(num) {
-            // actionData.checkNoticeBoard.maxLevel++;
-            // if(num === 1) {
-            //     purchaseAction('reportForTraining');
-            //     purchaseAction('basicTrainingWithJohn');
-            //     purchaseAction('noticeTheStrain');
-            //     purchaseAction('clenchTheJaw');
-            //     purchaseAction('breatheThroughIt');
-            //     purchaseAction('ownTheWeight');
-            //     purchaseAction('moveWithPurpose');
-            //     purchaseAction('standStraighter');
-            //     purchaseAction('keepGoing');
-            //     purchaseAction('climbTheRocks');
-            //     purchaseAction('findAShortcut');
-            // } else if(num === 2) {
-            //     purchaseAction('buyBasicSupplies');
-            //     purchaseAction('chimneySweep');
-            //     purchaseAction('handyman');
-            //     purchaseAction('tavernHelper');
-            //     purchaseAction('guildReceptionist');
-            //     purchaseAction('messenger');
-            //     purchaseAction('storyTeller');
-            // }
-        }
-    }, //STORY notice board level 2 (training) and level 3 (jobs)
-    buyNicerStuff: {
-        initialCost:11, costIncrease:1,
-        upgradesAvailable:1,
-        visible:false,
-        customInfo: function(num) {
-            return "asdf"
-        },
-        onBuy: function(num) {
-        }
-    }, //STORY market
-    askScottMoreQuestions: {
-        initialCost:11, costIncrease:1,
-        upgradesAvailable:1,
-        visible:false,
-        customInfo: function(num) {
-            return "asdf"
-        },
-        onBuy: function(num) {
-        }
-    }, //STORY socialization
-    discoverMoreOfTheWorld: {
-        initialCost:11, costIncrease:1,
-        upgradesAvailable:1,
-        visible:false,
-        customInfo: function(num) {
-            return "asdf"
-        },
-        onBuy: function(num) {
-        }
-    }, //STORY travel
-
+    refineMyLeverage: { attribute:"leverage", upgradesAvailable:4, increaseRatio:.5, initialCost:100, costIncrease:3, visible:false, creationVersion:2 },
+    refineMyWizardry: { attribute:"wizardry", upgradesAvailable:4, increaseRatio:.25, initialCost:200, costIncrease:4, visible:false, creationVersion:2 },
 
     //... finish up to here
     /*
-    learnHowToFight: { //unlock john socialize / instruction
-        initialCost:40, costIncrease:1,
-        upgradesAvailable:1,
-        customInfo: function(num) {
-            return "TODO / doesn't work<br>Unlock new actions!<br>Story: My armor barely saved me when I was out of position. My shield disappeared " +
-                "when I lost my footing. My sword frequently gets stuck and leaves my grip. The problem is not only my equipment, but how I use it.";
-        }
+
+    discoverMoreOfTheWorld: {
+    },
+    learnHowToFight: {
     },
     getCombatExperience: {
-        initialCost:110, costIncrease:1,
-        upgradesAvailable:1,
-        customInfo: function(num) {
-            return "";
-        }
     },
     thinkAboutWhatINeed: {
-        initialCost:110, costIncrease:1,
-        upgradesAvailable:1,
-        customInfo: function(num) {
-            return "";
-        }
     },
     gainAccessToTheAcademy: {
-        initialCost:110, costIncrease:1,
-        upgradesAvailable:1,
-        customInfo: function(num) {
-            return "";
-        }
-    },
-    learnMoreFromTheLibrary: {
-        initialCost:110, costIncrease:1,
-        upgradesAvailable:1,
-        customInfo: function(num) {
-            return "";
-        }
     },
     learnMagicFromTheTowerMages: {
-        initialCost:110, costIncrease:1,
-        upgradesAvailable:1,
-        customInfo: function(num) {
-            return "";
-        }
     },
     nurtureAGoodReputation: {
-        initialCost:110, costIncrease:1,
-        upgradesAvailable:1,
-        customInfo: function(num) {
-            return "";
-        }
     },
     gatherBlackmailMaterial: {
-        initialCost:110, costIncrease:1,
-        upgradesAvailable:1,
-        customInfo: function(num) {
-            return "";
-        }
     },
     stealMagicFromTheTowerMages: {
-        initialCost:110, costIncrease:1,
-        upgradesAvailable:1,
-        customInfo: function(num) {
-            return "";
-        }
     },
     wieldMyNaturalMagic: {
-        initialCost:110, costIncrease:1,
-        upgradesAvailable:1,
-        customInfo: function(num) {
-            return "";
-        }
     },
     wieldMyMagicNaturally: {
-        initialCost:110, costIncrease:1,
-        upgradesAvailable:1,
-        customInfo: function(num) {
-            return "";
-        }
     },
     gatherArtifcatsOfPower: {
-        initialCost:110, costIncrease:1,
-        upgradesAvailable:1,
-        customInfo: function(num) {
-            return "";
-        }
     },
-    leadTheCharge: { //win
-        initialCost:110, costIncrease:1,
-        upgradesAvailable:1,
-        customInfo: function(num) {
-            return "";
-        }
+    leadTheCharge: {
     },
 */
 

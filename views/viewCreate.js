@@ -78,55 +78,117 @@ function generateActionDisplay(actionVar) {
     let resourceColor = getResourceColor(actionObj);
     let resourceColorDim = getResourceColorDim(actionObj);
 
+    queueCache(`${actionVar}HighestLevelContainer`);
+    queueCache(`${actionVar}HighestLevel`);
+    queueCache(`${actionVar}SecondHighestLevelContainer`);
+    queueCache(`${actionVar}SecondHighestLevel`);
+    queueCache(`${actionVar}ThirdHighestLevelContainer`);
+    queueCache(`${actionVar}ThirdHighestLevel`);
+
+    queueCache(`${actionVar}CurrentUnlockTimeContainer`)
+    queueCache(`${actionVar}CurrentUnlockTime`);
+    queueCache(`${actionVar}PrevUnlockTimeContainer`)
+    queueCache(`${actionVar}PrevUnlockTime`);
+    queueCache(`${actionVar}DeltaUnlockTimeContainer`)
+    queueCache(`${actionVar}DeltaUnlockTime`);
+
+    queueCache(`${actionVar}CurrentLevel1TimeContainer`)
+    queueCache(`${actionVar}CurrentLevel1Time`);
+    queueCache(`${actionVar}PrevLevel1TimeContainer`)
+    queueCache(`${actionVar}PrevLevel1Time`);
+    queueCache(`${actionVar}DeltaLevel1TimeContainer`)
+    queueCache(`${actionVar}DeltaLevel1Time`);
+
+    let iconImgName = (actionObj.isGenerator?"gear":actionObj.isSpell?"spell":"lightning") + actionObj.tier;
+
+    let icon = Raw.html`
+        <span style="position:absolute;top:-43px;left:-40px;width:40px;height:40px;" class="showthat" onmouseover="hoveringIcon('${actionVar}')" onmouseleave="stopHoveringIcon('${actionVar}')">
+            <img class="${actionObj.isGenerator?'generatorIconSvg':actionObj.isSpell?"spellIconSvg":'actionIconSvg'}" src="img/${iconImgName}.svg" alt="${iconImgName}" style="width:100%;height:100%;" />
+            <div class="showthisUp" style="font-size:16px;width:350px">
+                <div style="font-size:20px;">Tier ${actionObj.tier + (actionObj.isGenerator?" Generator":actionObj.isSpell?" Spell":" Action")} 
+                </div>
+                
+                ${dataObj.iconText ? dataObj.iconText[language]+"<br>" : ""}
+                
+                <div id="${actionVar}HighestLevelContainer" style="display:none">
+                    <br>
+                    Highest level: <span id="${actionVar}HighestLevel" style="font-weight:bold;"></span>
+                </div>
+                <div id="${actionVar}SecondHighestLevelContainer" style="display:none">
+                    Second highest: <span id="${actionVar}SecondHighestLevel" style="font-weight:bold;"></span>
+                </div>
+                <div id="${actionVar}ThirdHighestLevelContainer" style="display:none">
+                    Third highest: <span id="${actionVar}ThirdHighestLevel" style="font-weight:bold;"></span>
+                </div>
+                
+                
+                <div id="${actionVar}CurrentUnlockTimeContainer" style="display:none">
+                    <br>
+                    Current Unlock Time: <span id="${actionVar}CurrentUnlockTime" style="font-weight:bold;"></span>
+                </div>
+                <div id="${actionVar}PrevUnlockTimeContainer" style="display:none">
+                    Previous Unlock Time: <span id="${actionVar}PrevUnlockTime" style="font-weight:bold;"></span>
+                </div>
+                <div id="${actionVar}DeltaUnlockTimeContainer" style="display:none">
+                    Delta Unlock Time: <span id="${actionVar}DeltaUnlockTime" style="font-weight:bold;"></span>
+                </div>
+                
+                
+                <div id="${actionVar}CurrentLevel1TimeContainer" style="display:none">
+                    <br>
+                    Current Level 1 Time: <span id="${actionVar}CurrentLevel1Time" style="font-weight:bold;"></span>
+                </div>
+                <div id="${actionVar}PrevLevel1TimeContainer" style="display:none">
+                    Previous Level 1 Time: <span id="${actionVar}PrevLevel1Time" style="font-weight:bold;"></span>
+                </div>
+                <div id="${actionVar}DeltaLevel1TimeContainer" style="display:none">
+                    Delta Level 1 Time: <span id="${actionVar}DeltaLevel1Time" style="font-weight:bold;"></span>
+                </div>
+            </div>
+        </span>
+    `
+
+    queueCache(`${actionVar}PauseButton`);
+    queueCache(`${actionVar}Title`);
     queueCache(`${actionVar}Tier`);
     queueCache(`${actionVar}Resource`);
     queueCache(`${actionVar}ResourceToAdd`);
+    queueCache(`${actionVar}ResourceRetrieved`);
     queueCache(`${actionVar}Level`);
     queueCache(`${actionVar}MaxLevel`);
-    queueCache(`${actionVar}HighestLevelContainer2`);
-    queueCache(`${actionVar}HighestLevel2`);
     queueCache(`${actionVar}Efficiency`);
     queueCache(`${actionVar}Wage`);
     queueCache(`${actionVar}Instability`);
     queueCache(`${actionVar}InstabilityToAdd`);
+    queueCache(`${actionVar}SpellPower`);
+    queueCache(`${actionVar}SpellPowerContainer`);
+    queueCache(`${actionVar}PinButton`);
 
-
-    let iconImgName = (actionObj.isGenerator?"gear":"lightning") + actionObj.tier;
-
-    let icon = Raw.html`
-        <span style="position:absolute;top:-43px;left:-40px;width:40px;height:40px;" class="showthat">
-            <img class="${actionObj.isGenerator?'generatorIconSvg':'actionIconSvg'}" src="img/${iconImgName}.svg" alt="${iconImgName}" style="width:100%;height:100%;" />
-            <div class="showthisUp" style="font-size:20px;width:150px">Tier ${actionObj.tier + (actionObj.isGenerator?" Generator":" Action")} </div>
-        </span>
-    `
+    let pauseButton = `<span id="${actionVar}PauseButton" style="font-size:16px;border:2px solid red;font-weight:bold;vertical-align:top;padding:0 3px" class="mouseoverRed" onclick="pauseAction(event, '${actionVar}')">||</span>`
+    let spellPowerContainer = `<span style="font-size:16px;"> | <span style="font-weight:bold;color:#0ec3cf" id="${actionVar}SpellPower"></span> Spell Power</span>`
+    let pinButton = `<span id="${actionVar}PinButton" style="display:none;font-size:16px;border:2px solid ${resourceColorDim};font-weight:bold;vertical-align:top;padding:0 3px" class="mouseoverBlue" onclick="addPinnedActionClick(event, '${actionVar}')">P</span>`
 
     let title = Raw.html`
         <span onclick="actionTitleClicked('${actionVar}')" style="color:var(--text-primary);cursor:pointer;position:absolute;
             top:-82px;height:82px;left:0;white-space: nowrap;border-width: 0 0 0 6px;border-style:solid;
             border-color:${resourceColorDim};padding-left:4px;text-shadow:1px 1px 2px var(--text-dark);">
-            <span style="font-size:20px;font-weight:bold;">${actionObj.title}<br></span>
-            <span style="font-size:18px;font-weight:bold;" id='${actionVar}Resource'>0</span> 
+            ${pinButton}
+            ${(dataObj.isSpell || dataObj.isSpellConsumer) ? pauseButton : ""}
+            <span style="font-size:20px;font-weight:bold;" id="${actionVar}Title">${dataObj.title}</span>
+            ${actionObj.power>0?spellPowerContainer:""}<br>
+            <span style="font-size:18px;font-weight:bold;" id="${actionVar}Resource">0</span> 
             <span style="color:${resourceColor};font-size:16px;font-weight:bold;">${capitalizeFirst(dataObj.resourceName)}</span>
-            <span style="font-size:14px;color:var(--text-muted)">${actionObj.isGenerator?`(+<span id="${actionVar}ResourceToAdd" 
+            <span style="font-size:16px;font-weight:bold" id="${actionVar}ResourceRetrieved"></span>
+            <span style="font-size:14px;color:var(--text-muted)">${(actionObj.isGenerator||dataObj.showToAdd)?`(+<span id="${actionVar}ResourceToAdd" 
                 style="color:var(--text-primary);font-weight:bold;">???</span>)`:""}</span><br>
             <span style="font-size:14px;position:relative;color:var(--text-muted)">
                 ${!actionObj.isSpell?"Level ":"Charges "}<span id="${actionVar}Level" style="color:var(--text-primary);font-weight:bold;">0</span>
-                ${actionObj.maxLevel !== undefined ? ` / <span id="${actionVar}MaxLevel" style="color:var(--text-primary);font-weight:bold;">0</span>` : ""}
-                <span id="${actionVar}HighestLevelContainer2"> 
-                    (<span id='${actionVar}HighestLevel2' style="color:var(--text-primary);font-weight:bold;"></span>)
-                </span> | 
+                ${actionObj.maxLevel !== undefined ? ` / <span id="${actionVar}MaxLevel" style="color:var(--text-primary);font-weight:bold;">0</span>` : ""} | 
                 <span id="${actionVar}Efficiency" style="color:var(--text-primary);font-weight:bold;"></span>% efficiency
                 ${!actionObj.wage ? "" : ` | Wage: $<span id="${actionVar}Wage" style="color:var(--wage-color);font-weight:bold;"></span>`}
                 ${!actionObj.isSpell ? "" : ` | <span id="${actionVar}Instability" style="color:var(--text-primary);font-weight:bold;">0</span>% instability
                 (+<span id="${actionVar}InstabilityToAdd" style="color:var(--text-primary);font-weight:bold;"></span>)` }
             </span>
-        </span>
-    `
-
-    let mediumTitle = Raw.html`
-        <span onclick="actionTitleClicked('${actionVar}')" style="color:var(--text-primary);cursor:pointer;position:absolute;top:-77px;height:77px;left:0;
-            white-space: nowrap;border-width: 0 0 0 3px;border-style: solid;border-color: var(--text-muted);padding-left:4px;background-color:var(--overlay-color)">
-            
         </span>
     `
 
@@ -142,15 +204,15 @@ function generateActionDisplay(actionVar) {
         <div id="${actionVar}MenuButtons" style="position:absolute;top:-20px;font-size:13px;left:3px;width:315px;">
             ${!dataObj.parentVar?"":`<span onclick="actionTitleClicked('${dataObj.parentVar}')" 
             class="buttonSimple" style="margin-right:3px;width:30px;height:30px;text-align:center;cursor:pointer;padding:0 4px;">^</span>`}
-        <span id="${actionVar}_downstreamMenuButton" onclick="clickActionMenu('${actionVar}', 'downstream')" class="buttonSimple" 
+        <span id="${actionVar}_downstreamMenuButton" onclick="clickActionMenuButton(event, '${actionVar}', 'downstream')" class="buttonSimple" 
             style="margin-right:3px;width:30px;height:30px;text-align:center;cursor:pointer;padding:0 4px;">Downstream</span>
-        <span id="${actionVar}_infoMenuButton" onclick="clickActionMenu('${actionVar}', 'info')" class="buttonSimple" 
+        <span id="${actionVar}_infoMenuButton" onclick="clickActionMenuButton(event, '${actionVar}', 'info')" class="buttonSimple" 
             style="margin-right:3px;width:30px;height:30px;text-align:center;cursor:pointer;padding:0 4px;">Info</span>
-        <span id="${actionVar}_attsMenuButton" onclick="clickActionMenu('${actionVar}', 'atts')" class="buttonSimple" 
+        <span id="${actionVar}_attsMenuButton" onclick="clickActionMenuButton(event, '${actionVar}', 'atts')" class="buttonSimple" 
             style="margin-right:3px;width:30px;height:30px;text-align:center;cursor:pointer;padding:0 4px;">Stats</span>
-        <span id="${actionVar}_storyMenuButton" onclick="clickActionMenu('${actionVar}', 'story')" class="buttonSimple" 
+        <span id="${actionVar}_storyMenuButton" onclick="clickActionMenuButton(event, '${actionVar}', 'story')" class="buttonSimple" 
             style="display:${dataObj.storyText?"":"none"};margin-right:3px;width:30px;height:30px;text-align:center;cursor:pointer;padding:0 4px;">Story</span>
-        <span id="${actionVar}_automationMenuButton" onclick="clickActionMenu('${actionVar}', 'automation')" class="buttonSimple" 
+        <span id="${actionVar}_automationMenuButton" onclick="clickActionMenuButton(event, '${actionVar}', 'automation')" class="buttonSimple" 
             style="display:${actionObj.hasUpstream?"":"none"};margin-right:3px;width:30px;height:30px;text-align:center;cursor:pointer;padding:0 4px;">Automation</span>
         </div>`;
 
@@ -264,96 +326,80 @@ let maxLevelTop = (data.gameSettings.viewDeltas && data.gameSettings.viewRatio) 
             ${dataObj.onCompleteText[language]}
         </div><br>` : "";
 
-    queueCache(`${actionVar}ActionPowerMult`);
+    queueCache(`${actionVar}ActionPower`);
 
     let onLevelText = Raw.html`
         On Level up:<br>
         ${actionObj.isGenerator || actionObj.progressMaxIncrease === 1 ? "" : `x<b>${actionObj.progressMaxIncrease}</b> progress required to complete<br>`}
         ${actionObj.expToLevelIncrease === 1 ? "" : `x<b>${actionObj.expToLevelIncrease}</b> exp required to level<br>`}
         ${actionObj.actionPowerMultIncrease === 1 ?"" : `x<b>${actionObj.actionPowerMultIncrease}</b> to Action Power per level <br>`}
-        ${!actionObj.isGenerator ? "" : `(x<b><span id="${actionVar}ActionPowerMult"></b> total Action Power from level)<br>`}
+        ${!actionObj.isGenerator ? "" : `x<b><span id="${actionVar}ActionPower"></b> total Action Power<br>`}
         ${dataObj.onLevelText ? dataObj.onLevelText[language]:""}`;
-
-    queueCache(`${actionVar}HighestLevelContainer`);
-    queueCache(`${actionVar}HighestLevel`);
-    queueCache(`${actionVar}SecondHighestLevelContainer`);
-    queueCache(`${actionVar}SecondHighestLevel`);
-    queueCache(`${actionVar}ThirdHighestLevelContainer`);
-    queueCache(`${actionVar}ThirdHighestLevel`);
-    queueCache(`${actionVar}CurrentUnlockTimeContainer`)
-    queueCache(`${actionVar}CurrentUnlockTime`);
-    queueCache(`${actionVar}PrevUnlockTimeContainer`)
-    queueCache(`${actionVar}PrevUnlockTime`);
-    queueCache(`${actionVar}DeltaUnlockTimeContainer`)
-    queueCache(`${actionVar}DeltaUnlockTime`);
-
-    let upgradeInfoText = Raw.html`<br>
-        <div id="${actionVar}HighestLevelContainer" style="display:none">
-            Highest level (2x up to): <span id="${actionVar}HighestLevel" style="font-weight:bold;"></span>
-        </div>
-        <div id="${actionVar}SecondHighestLevelContainer" style="display:none">
-            Second Highest level (2x up to): <span id="${actionVar}SecondHighestLevel" style="font-weight:bold;"></span>
-        </div>
-        <div id="${actionVar}ThirdHighestLevelContainer" style="display:none">
-            Third Highest level (2x up to): <span id="${actionVar}ThirdHighestLevel" style="font-weight:bold;"></span>
-        </div>
-        
-        <div id="${actionVar}CurrentUnlockTimeContainer" style="display:none">
-            Current Unlock Time: <span id="${actionVar}CurrentUnlockTime" style="font-weight:bold;"></span>
-        </div>
-        <div id="${actionVar}PrevUnlockTimeContainer" style="display:none">
-            Previous Unlock Time: <span id="${actionVar}PrevUnlockTime" style="font-weight:bold;"></span>
-        </div>
-        <div id="${actionVar}DeltaUnlockTimeContainer" style="display:none">
-            Delta Unlock Time: <span id="${actionVar}DeltaUnlockTime" style="font-weight:bold;"></span>
-        </div>`;
 
 
     queueCache(`${actionVar}_infoContainer`);
 
     let levelInfoContainer = Raw.html`
-        <div id="${actionVar}_infoContainer" style="display:none;padding:5px;max-height:220px;overflow-y:auto;will-change: transform;">
+        <div id="${actionVar}_infoContainer" style="display:none;padding:5px;max-height:220px;overflow-y:auto;">
             Tier <b>${actionObj.tier}</b> ${actionObj.isSpell ? "Spell" : actionObj.isGenerator ? "Generator" : "Action"}<br>
             Efficiency, found in the title, is Expertise Mult * Base Efficiency (x<b><span id="${actionVar}EfficiencyBase"></span></b>), capping at <b>100</b>%.<br>
             ${actionObj.isGenerator?"":(`Consume and send rate is ${actionObj.tierMult()*100}% of ${dataObj.resourceName} * efficiency.<br>`)}<br>
             ${onComplete}
             ${onLevelText}
-            ${upgradeInfoText}
             ${dataObj.extraInfo ? dataObj.extraInfo[language]:""}
         </div>`;
 
     queueCache(`${actionVar}_storyContainer`);
 
     let storyContainer = Raw.html`
-        <div id="${actionVar}_storyContainer" style="display:none;padding:10px;max-height:220px;overflow-y:auto;will-change: transform;">
+        <div id="${actionVar}_storyContainer" style="display:none;padding:10px;max-height:220px;overflow-y:auto;">
             ${dataObj.storyText ? dataObj.storyText[language]:""}
         </div>`;
 
     queueCache(`${actionVar}_automationContainer`);
+    queueCache(`${actionVar}_automationRevealContainer`);
+    queueCache(`${actionVar}_automationMaxLevelContainer`);
     queueCache(`${actionVar}_checkbox`);
     queueCache(`${actionVar}_track`);
     queueCache(`${actionVar}_knob`);
+    queueCache(`${actionVar}_checkbox2`);
+    queueCache(`${actionVar}_track2`);
+    queueCache(`${actionVar}_knob2`);
 
     let preventParentSliderText = !actionObj.hasUpstream ? "": `
-           Prevent automation from changing the upstream slider to this action: 
-           
-            <label onclick="toggleAutomation('${actionVar}')" style="position:relative;display:inline-block;width:50px;height:14px;cursor:pointer;">
-                <input id="${actionVar}_checkbox" type="checkbox" style="opacity:0;width:0;height:0;">
-                <div id="${actionVar}_track" style="position:absolute;top:0;left:0;right:0;bottom:0;background-color:#ccc;border-radius:14px;">
-                    <div id="${actionVar}_knob" style="position:absolute;height:16px;width:16px;left:4px;bottom:-1px;background-color:white;border-radius:50%;"></div>
-                </div>
-            </label>
+            <span id="${actionVar}_automationRevealContainer">
+                Enable automation to enable upstream sliders to this action when it is revealed, or when the max level increases:
+               
+                <label onclick="toggleAutomationOnReveal('${actionVar}')" style="position:relative;display:inline-block;width:50px;height:14px;cursor:pointer;">
+                    <input id="${actionVar}_checkbox" type="checkbox" style="opacity:0;width:0;height:0;" checked="true">
+                    <div id="${actionVar}_track" style="position:absolute;top:0;left:0;right:0;bottom:0;background-color:#ccc;border-radius:14px;">
+                        <div id="${actionVar}_knob" style="position:absolute;height:16px;width:16px;left:4px;bottom:-1px;background-color:white;border-radius:50%;"></div>
+                    </div>
+                </label><br>
+            </span>
+            
+            <span id="${actionVar}_automationMaxLevelContainer">
+                Enable automation to disable upstream sliders to this action when it is max level:
+               
+                <label onclick="toggleAutomationOnMaxLevel('${actionVar}')" style="position:relative;display:inline-block;width:50px;height:14px;cursor:pointer;">
+                    <input id="${actionVar}_checkbox2" type="checkbox" style="opacity:0;width:0;height:0;">
+                    <div id="${actionVar}_track2" style="position:absolute;top:0;left:0;right:0;bottom:0;background-color:#ccc;border-radius:14px;">
+                        <div id="${actionVar}_knob2" style="position:absolute;height:16px;width:16px;left:4px;bottom:-1px;background-color:white;border-radius:50%;"></div>
+                    </div>
+                </label><br>
+            </span>
     `
 
     let automationContainer = Raw.html`
-        <div id="${actionVar}_automationContainer" style="display:none;padding:10px;max-height:220px;overflow-y:auto;will-change: transform;">
+        <div id="${actionVar}_automationContainer" style="display:none;padding:10px;max-height:220px;overflow-y:auto;
+        ">
             ${preventParentSliderText}
         </div>`;
 
     queueCache(`${actionVar}_attsContainer`);
 
     let attsContainer = Raw.html`
-        <div id="${actionVar}_attsContainer" style="display:none;padding:5px;max-height:220px;overflow-y:auto;font-size;12px;will-change: transform;">
+        <div id="${actionVar}_attsContainer" style="display:none;padding:5px;max-height:220px;overflow-y:auto;font-size;12px;">
             ${generateActionOnLevelAtts(actionObj)}
             ${generateActionExpAtts(actionObj)}
             ${generateActionEfficiencyAtts(actionObj)}
@@ -371,7 +417,7 @@ let maxLevelTop = (data.gameSettings.viewDeltas && data.gameSettings.viewRatio) 
             <span>
                 <div id="${actionVar}UnlockCostContainer">
                     Needs <span style="font-weight:bold;" id="${actionVar}UnlockCost">0</span> ${dataObj.resourceName}<br>
-                    sent from <b>${data.actions[dataObj.parentVar]?data.actions[dataObj.parentVar].title:"WAIT"}</b>.
+                    sent from <b>${data.actions[dataObj.parentVar]?actionData[dataObj.parentVar].title:"WAIT"}</b>.
                 </div>
                 ${dataObj.unlockMessage ? dataObj.unlockMessage[language]:""}
             </span>
@@ -410,22 +456,25 @@ let maxLevelTop = (data.gameSettings.viewDeltas && data.gameSettings.viewRatio) 
     queueCache(`${actionVar}Level2`)
     queueCache(`${actionVar}MaxLevel2`)
     queueCache(`${actionVar}SmallVersionLevels`)
+    queueCache(`${actionVar}ResourceInfoContainer`)
 //transform-style: preserve-3d;
 
-    let maxLevelDiv = `<span style="display:${actionObj.maxLevel ? "" : "none"}">/ <span id="${actionVar}MaxLevel2" style="font-weight:bold;"></span></span>`;
+    let maxLevelDiv = `<span style="display:${actionObj.maxLevel !== undefined ? "" : "none"}"> / <span id="${actionVar}MaxLevel2" style="font-weight:bold;"></span></span>`;
 
     theStr += Raw.html`
-        <div id="${actionVar}Container" style="display:none;position:absolute;left:${newX};top:${newY};width:300px;" 
-            onmouseenter="mouseOnAction('${actionVar}')" onmouseleave="mouseOffAction('${actionVar}')">
+        <div id="${actionVar}Container" style="display:none;position:absolute;left:${newX};top:${newY};width:330px;"
+            onmouseenter="mouseOnAction('${actionVar}')" onmouseleave="mouseOffAction('${actionVar}')" >
             <div id="${actionVar}LargeVersionContainer" style="border:2px solid var(--border-color);
                 background-color:var(--bg-secondary);">
                 ${icon}
                 ${title}
                 ${menuContainer}
-                ${momentumContainer}
-                ${balanceNeedle}
-                ${pbar}
-                ${expBar}
+                <span id="${actionVar}ResourceInfoContainer">
+                    ${momentumContainer}
+                    ${balanceNeedle}
+                    ${pbar}
+                    ${expBar}
+                </span>
                 ${storyContainer}
                 ${attsContainer}
                 ${automationContainer}
@@ -436,7 +485,7 @@ let maxLevelTop = (data.gameSettings.viewDeltas && data.gameSettings.viewRatio) 
             <div id="${actionVar}SmallVersionContainer" 
                 style="display:none;text-align:center;margin:50px auto;font-size:12px;width:100px;">
                 <span id="${actionVar}SmallVersionTitle">
-                    <span style="font-size:16px;font-weight:bold;">${actionObj.title}</span><br>
+                    <span style="font-size:16px;font-weight:bold;">${dataObj.title}</span><br>
                     <span id="${actionVar}SmallVersionLevels">
                         Level <span id="${actionVar}Level2" style="font-weight:bold;"></span>${maxLevelDiv}
                     </span>
@@ -473,7 +522,7 @@ function generateOnLevelContainers(actionObj) {
     if(dataObj.onLevelAtts.length > 0) {
         theStr += Raw.html`
             <span style="font-size:10px;color:var(--text-primary);position:absolute;
-                top:0;left:299px;white-space: nowrap;padding-left:8px;">`
+                top:0;left:329px;white-space: nowrap;padding-left:8px;">`
         //padding-left to make it overlap by 1 pix on the main container, so it redraws on zoom correctly.
 
         for(let onLevelAtt of dataObj.onLevelAtts) {
@@ -486,7 +535,7 @@ function generateOnLevelContainers(actionObj) {
     if(dataObj.expAtts.length > 0 || dataObj.efficiencyAtts.length > 0) {
         theStr += Raw.html`
             <span style="font-size:10px;color:var(--text-primary);position:absolute;
-                top:0;right:299px;white-space: nowrap;padding-right:8px;">`
+                top:0;right:329px;white-space: nowrap;padding-right:8px;">`
 
         for(let onLevelAtt of dataObj.expAtts) {
             theStr += generateOutsideAttDisplay(actionObj, onLevelAtt, "exp");
@@ -657,14 +706,14 @@ function createDownStreamSliders(actionObj, dataObj) {
         if(!data.actions[downstreamVar] || !data.actions[downstreamVar].hasUpstream) {
             continue;
         }
-        let title = data.actions[downstreamVar] ? data.actions[downstreamVar].title : downstreamVar;
+        let title = data.actions[downstreamVar] ? actionData[downstreamVar].title : downstreamVar;
         let actionVar = actionObj.actionVar;
 
         queueCache(`${actionVar}SliderContainer${downstreamVar}`)
         queueCache(`${actionVar}SliderDownstreamTitle${downstreamVar}`)
         queueCache(`${actionVar}DownstreamSendRate${downstreamVar}`)
-        queueCache(`${actionVar}DownstreamAttentionBonusLoop${downstreamVar}`)
-        queueCache(`${actionVar}DownstreamAttentionBonus${downstreamVar}`)
+        queueCache(`${actionVar}DownstreamAttentionBonusPerm${downstreamVar}`)
+        queueCache(`${actionVar}DownstreamAttentionBonusTemp${downstreamVar}`)
         queueCache(`${actionVar}NumInput${downstreamVar}`)
         queueCache(`${actionVar}RangeInput${downstreamVar}`)
         queueCache(`${actionVar}SliderLabels${downstreamVar}`)
@@ -679,9 +728,9 @@ function createDownStreamSliders(actionObj, dataObj) {
                     onclick="actionTitleClicked('${downstreamVar}')">${title}</span>
                 <span id="${actionVar}SliderLabels${downstreamVar}">
                     (+<span id="${actionVar}DownstreamSendRate${downstreamVar}" style="font-weight:bold;">0</span>/s)
-                    <span id="${actionVar}DownstreamAttentionBonusLoop${downstreamVar}"
+                    <span id="${actionVar}DownstreamAttentionBonusPerm${downstreamVar}"
                         class="hyperVisible" style="color:mediumpurple;display:none;font-weight:bold;">x1.00</span>
-                    <span id="${actionVar}DownstreamAttentionBonus${downstreamVar}" 
+                    <span id="${actionVar}DownstreamAttentionBonusTemp${downstreamVar}" 
                         class="hyperVisible" style="color:yellow;display:none;font-weight:bold;">x2</span><br>
                 </span>
 
@@ -690,7 +739,7 @@ function createDownStreamSliders(actionObj, dataObj) {
                         style="margin-right:3px;font-size:10px;width:37px;vertical-align: top;"
                         oninput="validateInput('${actionVar}', '${downstreamVar}')" onchange="downstreamNumberChanged('${actionVar}', '${downstreamVar}')" >
                             
-                    <div id="${actionVar}_${downstreamVar}_track_container" style="display:inline-block;width:220px;height:20px; 
+                    <div id="${actionVar}_${downstreamVar}_track_container" style="display:inline-block;width:250px;height:20px; 
                         user-select:none;padding: 0 10px;box-sizing:border-box;cursor:pointer;">
                         <div id="${actionVar}Track${downstreamVar}" style="margin-top:6px;width:100%;height:5px; 
                             background:linear-gradient(to right, red 10%, #ddd 10%, #ddd 90%, green 90%);position:relative;">
@@ -724,7 +773,7 @@ function createBasicSliderHTML(actionVar, downstreamVar) {
         const elementId = `${actionVar}_${downstreamVar}_option_${option.value}`;
         const initialBgColor = option.value === 0 ? 'blue' : 'transparent';
         optionsHTML += `
-            <div id="${elementId}" style="border:2px solid ${option.color};padding:5px 15px;margin:2px;cursor:pointer;user-select:none;background-color:${initialBgColor};border-radius:5px;"
+            <div id="${elementId}" style="border:2px solid ${option.color};padding:5px 20px;margin:2px;cursor:pointer;user-select:none;background-color:${initialBgColor};border-radius:5px;"
                 onmouseover="handleSliderMouseOver('${elementId}')" onmouseout="handleSliderMouseOut('${elementId}', '${option.color}')"
                 onclick="handleSliderClick('${elementId}', '${actionVar}', '${downstreamVar}', ${option.value})">
                 ${option.label}
@@ -759,6 +808,11 @@ function attachCustomSliderListeners() {
         let dataObj = actionData[actionVar];
         let actionObj = data.actions[actionVar];
         if (!dataObj.downstreamVars) continue;
+
+        let actionContainer = document.getElementById(`${actionVar}LargeVersionContainer`);
+        actionContainer.addEventListener('touchstart', function(e) {
+            mouseOnActionTouch(e, actionVar)
+        })
 
         for (let downstreamVar of dataObj.downstreamVars) {
             const container = document.getElementById(`${actionVar}_${downstreamVar}_track_container`);
@@ -814,12 +868,11 @@ function attachCustomSliderListeners() {
 
             const hoverTargetContainer = document.getElementById(`${actionVar}SliderContainer${downstreamVar}`);
             const line = document.getElementById(`${actionVar}_${downstreamVar}_Line_Outer`);
-            const largeVersionContainer = document.getElementById(`${downstreamVar}LargeVersionContainer`);
             const lockContainer = document.getElementById(`${downstreamVar}LockContainer`);
 
             hoverTargetContainer.addEventListener('mouseenter', () => {
                 line.style.borderColor = "yellow";
-                largeVersionContainer.style.borderColor = "yellow";
+                views.updateVal(`${downstreamVar}LargeVersionContainer`, "yellow", "style.borderColor");
                 lockContainer.style.borderColor = "yellow";
             });
 
@@ -894,9 +947,9 @@ function generateLinesBetweenActions() {
                 continue;
             }
             // Calculate the centers of each object
-            const x1 = dataObj.realX + 155; // 220 / 2
+            const x1 = dataObj.realX + 170; // 220 / 2
             const y1 = dataObj.realY + 20; // 200 / 2
-            const x2 = downstreamDataObj.realX + 155; // 220 / 2
+            const x2 = downstreamDataObj.realX + 170; // 220 / 2
             const y2 = downstreamDataObj.realY + 20; // 200 / 2
 
             let sourceBackgroundColor = getResourceColor(dataObj);
@@ -958,35 +1011,48 @@ function generateLinesBetweenActions() {
     }
 }
 
-
 function renderResetLog() {
     let rows = '';
-    let index = 1;
+    let teamworkFound = false;
     for (let resetLog in data.resetLogs) {
-        if (!data.resetLogs.hasOwnProperty(resetLog)) continue;
+            if (!data.resetLogs.hasOwnProperty(resetLog)) continue; //only print when both stages are added
         const log = data.resetLogs[resetLog];
+        if(log.stage1.currentTeamwork > 0) {
+            teamworkFound = true;
+        }
         rows += `
             <tr>
-                <td style="padding:2px 4px;">${index}</td>
-                <td style="padding:2px 4px;">
-                    ${!log.stage1 ? "-" : `${log.stage1.legacyGained} / ${secondsToTime(log.stage1.secondsPerReset)}` }
+                <td style="padding-right:15px;">${log.stage1.resetCount}</td>
+                <td style="padding-right:15px;">
+                    ${!log.stage1 ? "-" : `
+                    ${secondsToTime(log.stage1.secondsPerReset)} |
+                    ${log.stage1.hatl1Time ? secondsToTime(log.stage1.hatl1Time) : "-"} 
+                    `}
                 </td>
-                <td style="padding:2px 4px;">
-                    ${!log.stage2 ? "-" : `${log.stage2.legacyGained} / ${log.stage2.ancientCoin}` }
+                <td style="padding-right:15px;">
+                    ${!log.stage1 ? "-" : `
+                    ${intToString(log.stage1.currentMomentum)} | 
+                    ${intToString(log.stage1.currentFear)} | 
+                    ${intToString(log.stage1.currentLegacy)}
+                    ${log.stage1.currentTeamwork > 0 ?` | ${intToString(log.stage1.currentTeamwork)}`:""}
+                    `}
+                </td>
+                <td style="">
+                    ${!log.stage2 ? "-" : `${intToString(log.stage2.legacyGained)} | ${intToString(log.stage2.ancientCoin)}` }
                 </td>
             </tr>
         `;
-        index++;
     }
     return `
-        <div>
-            <div style="font-size:20px; font-weight:bold; margin:0 0 6px 0;">Recent Run Statistics (Last 5)</div>
-            <table style="width:100%; border-collapse:collapse; font-size:16px;">
+        <div style="overflow-x:auto">
+            <div style="font-size:20px; font-weight:bold; margin:0 0 6px 0;">Recent Run Statistics (Last 10)</div>
+            <table style="width:100%;border-collapse:collapse;font-size:16px;white-space:nowrap">
                 <thead>
                     <tr>
-                        <th style="padding:2px 4px; text-align:left;">#</th>
-                        <th style="padding:2px 4px; text-align:left;">Stage 1<br>(Legacy, Time)</th>
-                        <th style="padding:2px 4px; text-align:left;">Stage 2<br>(Legacy Gained, Ancient Coin Gained)</th>
+                        <th style="padding-right:15px; text-align:left;">#</th>
+                        <th style="padding-right:15px; text-align:left;">Times<br>(Reset | HATL 1)</th>
+                        <th style="padding-right:15px; text-align:left;">Stage 1<br>(Momentum | Fear | Legacy${teamworkFound ?` | Teamwork`:""})</th>
+                        <th style="padding-right:15px; text-align:left;">Stage 2<br>(Legacy Gained | Ancient Coin Gained)</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -1003,25 +1069,27 @@ function renderResetLog() {
 
 function setAllCaches() {
     queueCache("totalMomentum");
-    queueCache("totalMomentum2");
-    queueCache("HATLLevel");
     queueCache("secondsPerReset");
     queueCache("openUseAmuletButton");
     queueCache("openViewAmuletButton");
     queueCache("ancientCoin");
     queueCache("ancientCoin2");
-    queueCache("totalSpellPower");
-    queueCache("totalSpellPower2");
+    queueCache("maxSpellPower");
+    queueCache("maxSpellPower2");
+    queueCache("spellPowerErrorMessage");
+    queueCache("spellPowerWarningMessage");
     queueCache("bonusTime");
     queueCache("killTheLichMenu");
     queueCache("attDisplay");
     queueCache("bonusDisplay");
     queueCache("killTheLichMenuButton2");
+    queueCache("hearAboutTheLichActionPower2");
     queueCache("ancientCoinDisplay");
     queueCache("spellPowerDisplay");
     queueCache("jobDisplay");
     queueCache("useAmuletMenu");
     queueCache("amuletEnabledContainer");
+    queueCache("amuletMenuTitle");
 
     for(let actionVar in data.actions) {
         view.cached[actionVar + "ActionPower"] = document.getElementById(actionVar + "ActionPower");
@@ -1047,5 +1115,5 @@ function clearCacheQueue() {
     for(let id of idsToCache) {
         view.cached[id] = document.getElementById(id);
     }
-    idsToCache = {};
+    idsToCache = [];
 }

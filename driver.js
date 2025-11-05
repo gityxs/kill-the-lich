@@ -84,7 +84,6 @@ function secondPassed() {
 
 
 function gameTick() {
-    data.lastVisit = Date.now();
     data.currentGameState.totalTicks++;
     data.gameSettings.ticksForSeconds++;
 
@@ -119,13 +118,14 @@ function gameTick() {
 
         for(let downstreamVar of dataObj.downstreamVars) {
             if (isAttentionLine(actionVar, downstreamVar)) {
-                const key = `${downstreamVar}FocusMult`;
-                if(data.upgrades.rememberWhatIFocusedOn.upgradePower === 0) {
+                const key = `${downstreamVar}TempFocusMult`;
+                let power = data.upgrades.learnToFocusMore.upgradePower;
+                if(power === 0) {
                     continue;
                 }
-                actionObj[key] += 1 / data.gameSettings.ticksPerSecond / 3600;
-                if(actionObj[key] > data.focusLoopMax) {
-                    actionObj[key] = data.focusLoopMax;
+                actionObj[key] += power / data.gameSettings.ticksPerSecond / 600;
+                if(actionObj[key] > power + 2) {
+                    actionObj[key] = power + 2;
                 }
             }
         }
@@ -191,7 +191,11 @@ function tickActionTimer(actionVar) {
 }
 
 function getInstabilityReduction() {
-    return data.atts.control.attMult / 10;
+    return Math.pow(data.atts.control.attMult, .5);
+}
+
+function calcInstabilityEffect(instability) {
+    return Math.pow(1+instability/100, 2)
 }
 
 
@@ -203,10 +207,13 @@ function tickGameObject(actionVar) {
         return;
     }
 
-    let momentumMaxRate = actionObj.isGenerator ? actionObj.generatorSpeed / data.gameSettings.ticksPerSecond :
+    let momentumMaxRate = actionObj.isGenerator ? dataObj.generatorSpeed / data.gameSettings.ticksPerSecond :
         actionObj.resource * actionObj.tierMult() / data.gameSettings.ticksPerSecond;
+    if(actionObj.isGenerator && actionObj.isPaused) {
+        momentumMaxRate = 0;
+    }
     let isMaxLevel = actionObj.maxLevel !== undefined && actionObj.level >= actionObj.maxLevel;
-    let momentumToAdd = (isMaxLevel || !actionObj.unlocked) ? 0 : momentumMaxRate;
+    let momentumToAdd = (!actionObj.unlocked || (!dataObj.generatesPastMax && isMaxLevel)) ? 0 : momentumMaxRate;
     let resourceToAddInefficient = momentumToAdd * (actionObj.efficiency / 100);
 
     resourceToAddInefficient = resourceToAddInefficient < .0000001 ? 0 : resourceToAddInefficient;
@@ -224,7 +231,7 @@ function tickGameObject(actionVar) {
 
     if(actionObj.instability > 0) {
         actionObj.instability -= getInstabilityReduction() / data.gameSettings.ticksPerSecond;
-        actionObj.progressMax = actionObj.progressMaxBase * actionObj.progressMaxMult * (1+actionObj.instability/100);
+        actionObj.progressMax = actionObj.progressMaxBase * actionObj.progressMaxMult * calcInstabilityEffect(actionObj.instability);
         if(actionObj.instability < 0) {
             actionObj.instability = 0;
         }
@@ -238,6 +245,7 @@ function tickGameObject(actionVar) {
     }
 
     // Reset and calculate total resources sent to all downstream actions this tick.
+    //TODO calculate twice - once for the values, and once for dividing the values between available resources if needed
     actionObj.totalSend = 0;
     for (let downstreamVar of dataObj.downstreamVars) {
         let downstreamObj = data.actions[downstreamVar];
@@ -252,8 +260,8 @@ function tickGameObject(actionVar) {
             continue;
         }
 
-        let mult = data.actions[actionVar][`downstreamRate${downstreamVar}`] / 100;
-        let taken = calculateTaken(actionVar, downstreamVar, actionObj, mult);
+        let sliderSetting = data.actions[actionVar][`downstreamRate${downstreamVar}`] / 100;
+        let taken = calculateTaken(actionVar, downstreamVar, actionObj, sliderSetting);
 
         // Keep track of the total sent out per second for the final calculation.
         actionObj.totalSend += taken * data.gameSettings.ticksPerSecond;
@@ -262,14 +270,40 @@ function tickGameObject(actionVar) {
         giveResourceTo(actionObj, downstreamObj, taken);
     }
 
+    //Calc resource retrieval
+	let resourceParentVar = actionData[actionObj.actionVar].parentVar;
+    let isQuiet = actionObj.unlocked && isMaxLevel && actionObj.resourceIncrease === 0 && actionObj.totalSend === 0;
+    if(!isQuiet || !actionObj.hasUpstream || data.upgrades.retrieveMyUnusedResources.upgradePower === 0 || resourceHeads[actionObj.resourceName] === actionVar || data.gameState === "KTL" || actionVar === "reinvest") {
+        actionObj.resourceRetrieved = 0;
+    } else {
+        actionObj.resourceRetrieved = (actionObj.resource/100 * [0, 1, 2, 5][data.upgrades.retrieveMyUnusedResources.upgradePower] + 10) / data.gameSettings.ticksPerSecond;
+        if(actionObj.resourceRetrieved > actionObj.resource) {
+            actionObj.resourceRetrieved = actionObj.resource;
+        }
+        if(resourceParentVar) {
+            let parentObj = data.actions[resourceParentVar];
+            giveResourceTo(actionObj, parentObj, actionObj.resourceRetrieved);
+            //Because generators don't get resourceIncrease from giveResourceTo
+            parentObj.resourceIncrease += actionObj.resourceRetrieved * data.gameSettings.ticksPerSecond;
+        }
+    }
+}
 
+let resourceHeads = {
+    "momentum":"overclock",
+    "gold":"spendMoney",
+    "conversations":"meetPeople",
+    "research":"researchBySubject",
+    "fortune":"buildFortune",
+    "mana":"poolMana"
 }
 
 function calculateTaken(actionVar, downstreamVar, actionObj, mult) {
-    let permFocusMult = actionObj[downstreamVar + "FocusMult"] >= 1 ? actionObj[downstreamVar + "FocusMult"] : 1;
+    let permFocusMult = actionObj[downstreamVar + "PermFocusMult"];
+    let tempFocusMult = actionObj[downstreamVar + "TempFocusMult"];
 
-    let totalTakenMult = actionObj.tierMult() * (actionObj.efficiency / 100) * permFocusMult *
-        (isAttentionLine(actionVar, downstreamVar) ? data.focusMult : 1);
+    let totalTakenMult = actionObj.tierMult() * (actionObj.efficiency / 100) * permFocusMult * tempFocusMult *
+        (isAttentionLine(actionVar, downstreamVar) ? tempFocusMult : 1);
     if (totalTakenMult > 1) {
         totalTakenMult = 1; // Cap at 100%/s
     }
@@ -279,27 +313,45 @@ function calculateTaken(actionVar, downstreamVar, actionObj, mult) {
 
 
 function checkProgressCompletion(actionObj, dataObj) {
-    let isMaxLevel = actionObj.maxLevel !== undefined && actionObj.level >= actionObj.maxLevel;
-    if(actionObj.progress >= actionObj.progressMax && !isMaxLevel) {
+	function isDoneLeveling() {
+		return actionObj.maxLevel !== undefined && actionObj.level >= actionObj.maxLevel && !dataObj.generatesPastMax;
+	};
+	
+    if(actionObj.progress >= actionObj.progressMax && (!isDoneLeveling())) {
         actionObj.progress -= actionObj.progressMax;
         if(dataObj.onCompleteCustom) {
             dataObj.onCompleteCustom();
         }
         actionAddExp(actionObj);
+		
+		//If we're at max level "refund" the remaining "paid" amount.  Realistically, this mostly matters for spells like Overclock
+		//This won't retroactivly refund nodes that overleveled in a previoius version, but that'll be fixed when the amulet
+		//resets everything
+		if(isDoneLeveling()) {
+			actionObj.resource += actionObj.progress;
+			actionObj.progress = 0;
+		}
         return true;
     }
+	
     return false;
 }
 
 
 function giveResourceTo(actionObj, downstreamObj, amount) {
     if (!downstreamObj) {
-        console.log(actionObj.title + " is failing to give to downstream.");
+        console.log(actionObj.actionVar + " is failing to give to downstream.");
         return;
+    }
+    if(amount < 0) { //NaN protection
+        amount = 0;
     }
     // This function now correctly handles the state change for both actions.
     addResourceTo(downstreamObj, amount);
     actionObj.resource -= amount;
+    if(actionObj.resource < 0) { //NaN protection
+        actionObj.resource = 0;
+    }
 }
 
 function addResourceTo(downstreamObj, amount) {
@@ -309,8 +361,8 @@ function addResourceTo(downstreamObj, amount) {
         amount = 0;
     }
     if (!downstreamObj.unlocked && downstreamObj.unlockCost <= 0 && (!downstreamDataObj.isUnlockCustom || downstreamDataObj.isUnlockCustom())) {
-        unlockAction(downstreamObj);
         amount = -1 * downstreamObj.unlockCost; // Get the leftovers back.
+        unlockAction(downstreamObj);
         downstreamObj.unlockCost = 0;
     }
 

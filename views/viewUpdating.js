@@ -36,11 +36,11 @@ let views = {
         let toViewAmulet = data.doneAmulet && data.gameState !== "KTL";
         views.updateVal(`ancientCoinDisplay`, data.doneKTL ? "" : "none", "style.display");
 
-        views.updateVal(`spellPowerDisplay`, data.totalSpellPower > 0 ? "" : "none", "style.display");
+        views.updateVal(`spellPowerDisplay`, data.maxSpellPower > 0 ? "" : "none", "style.display");
 
         views.updateVal(`jobDisplay`, data.displayJob ? "" : "none", "style.display");
 
-        let shouldShowKTLButton = data.actions.hearAboutTheLich.level >= 1 && data.totalSpellPower > 0 && data.gameState !== "KTL";
+        let shouldShowKTLButton = data.actions.hearAboutTheLich.level >= 1 && data.gameState !== "KTL";
         views.updateVal(`killTheLichMenuButton2`, shouldShowKTLButton?"":"none", "style.display")
     },
     scheduleUpdate: function(elementId, value, type) {
@@ -86,6 +86,9 @@ let views = {
             let actionObj = data.actions[actionVar];
             views.updateAction(actionObj);
         }
+        for(let actionVar of data.currentPinned) {
+            views.updatePinned(actionVar);
+        }
     },
     updateActions:function() {
         views.updateAura();
@@ -127,6 +130,17 @@ let views = {
                 // views.updateVal(`${entry.id}SmallVersionContainer`,`inset ${getResourceColor(actionObj)} 0px 0px ${Math.min(ratio * 15)}px ${Math.min(ratio * 5)}px`,"style.boxShadow");
             }
         }
+    },
+    updatePinned:function(actionVar) {
+        let actionObj = data.actions[actionVar];
+        let isMaxLevel = actionObj.maxLevel !== undefined && actionObj.level >= actionObj.maxLevel;
+
+        views.updateVal(`${actionVar}Level3`, actionObj.level, "innerText", 1);
+        if(actionObj.maxLevel >= 0) {
+            views.updateVal(`${actionVar}MaxLevel3`, actionObj.maxLevel, "innerText", 1);
+        }
+        views.updateVal(`${actionVar}PinnedLevels`, isMaxLevel?"var(--max-level-color)":"var(--text-primary)", "style.color");
+        views.updateVal(`${actionVar}PinnedLevels`, actionObj.visible?"1":".6", "style.opacity");
     },
     updateAction:function(actionObj) {
         //Handle visibility
@@ -197,10 +211,14 @@ let views = {
         let actionVar = actionObj.actionVar;
         let dataObj = actionData[actionVar];
 
-        views.updateVal(`${actionVar}HighestLevelContainer2`, data.upgrades.rememberWhatIDid.isFullyBought ? "" : "none", "style.display");
-        views.updateVal(`${actionVar}LockContainer`, !actionObj.unlocked?"":"none", "style.display");
+        views.updateVal(`${actionVar}LockContainer`, (!actionObj.unlocked && actionObj.currentMenu!=="automation")?"":"none", "style.display");
+        views.updateVal(`${actionVar}ResourceInfoContainer`, (!actionObj.unlocked && actionObj.currentMenu==="automation")?"none":"", "style.display");
 
-        let effColor = `rgb(${Math.round(20+189*(1-(actionObj.efficiency/100)))},${Math.round(20+189*(actionObj.efficiency/100))}, 100)`
+        let efficiencyToUse = actionObj.efficiency;
+        if(dataObj.backwardsEfficiency) {
+            efficiencyToUse = 100 - actionObj.efficiency;
+        }
+        let effColor = `rgb(${Math.round(20+189*(1-(efficiencyToUse/100)))},${Math.round(20+189*(efficiencyToUse/100))}, 100)`
         views.updateVal(`${actionVar}Efficiency`, effColor, "style.color");
 
         //Update the numbers
@@ -215,7 +233,10 @@ let views = {
             let instaColor = `rgb(${Math.round(20+189*(actionObj.instability/100/data.atts.control.attMult))}, ${Math.round(20+189*(1-(actionObj.instability/100/data.atts.control.attMult)))}, 100)`;
             views.updateVal(`${actionVar}Instability`, instaColor, "style.color");
             roundedNumbers.push(["instability", 2]);
-            views.updateVal(`${actionVar}InstabilityToAdd`, actionObj.instabilityToAdd/(actionObj.efficiency/100), "textContent", 2);
+            views.updateVal(`${actionVar}InstabilityToAdd`, dataObj.instabilityToAdd/(actionObj.efficiency/100), "textContent", 2);
+            if(actionObj.power) {
+                views.updateVal(`${actionVar}SpellPower`, actionObj.power, "textContent", 1);
+            }
         }
 
         for(let numberObj of roundedNumbers) {
@@ -234,6 +255,58 @@ let views = {
                 }
             }
         }
+
+        //if icon menu is open
+        if(dataObj.hoveringIcon) {
+            let shouldShowLevels = dataObj.plane !== 2 && !data.isSpell;
+            views.updateVal(`${actionVar}HighestLevelContainer`, shouldShowLevels&&data.upgrades.rememberWhatIDid.isFullyBought && actionObj.highestLevel >= 0 ? "" : "none", "style.display");
+            views.updateVal(`${actionVar}SecondHighestLevelContainer`, shouldShowLevels&&data.upgrades.rememberHowIGrew.isFullyBought && actionObj.secondHighestLevel >= 0 ? "" : "none", "style.display");
+            views.updateVal(`${actionVar}ThirdHighestLevelContainer`, shouldShowLevels&&data.upgrades.rememberMyMastery.isFullyBought && actionObj.thirdHighestLevel >= 0 ? "" : "none", "style.display");
+
+            if(dataObj.plane !== 1) {
+                views.updateVal(`${actionVar}CurrentUnlockTimeContainer`, actionObj.unlockTime ? "" : "none", "style.display");
+                views.updateVal(`${actionVar}CurrentUnlockTime`, actionObj.unlockTime, "textContent", "time");
+                views.updateVal(`${actionVar}PrevUnlockTimeContainer`, actionObj.prevUnlockTime ? "" : "none", "style.display");
+                views.updateVal(`${actionVar}PrevUnlockTime`, actionObj.prevUnlockTime, "textContent", "time");
+                if (actionObj.prevUnlockTime && actionObj.unlockTime) {
+                    views.updateVal(`${actionVar}DeltaUnlockTimeContainer`, "", "style.display");
+                    views.updateVal(`${actionVar}DeltaUnlockTime`, Math.abs(actionObj.unlockTime - actionObj.prevUnlockTime), "textContent", "time");
+                    views.updateVal(`${actionVar}DeltaUnlockTime`, actionObj.unlockTime - actionObj.prevUnlockTime < 0 ? "green" : "red", "style.color");
+                }
+            }
+
+            if(dataObj.plane === 1) {
+                views.updateVal(`${actionVar}CurrentLevel1TimeContainer`, actionObj.level1Time ? "" : "none", "style.display");
+                views.updateVal(`${actionVar}CurrentLevel1Time`, actionObj.level1Time, "textContent", "time");
+                views.updateVal(`${actionVar}PrevLevel1TimeContainer`, actionObj.prevLevel1Time ? "" : "none", "style.display");
+                views.updateVal(`${actionVar}PrevLevel1Time`, actionObj.prevLevel1Time, "textContent", "time");
+                if (actionObj.prevLevel1Time && actionObj.level1Time) {
+                    views.updateVal(`${actionVar}DeltaLevel1TimeContainer`, "", "style.display");
+                    views.updateVal(`${actionVar}DeltaLevel1Time`, Math.abs(actionObj.level1Time - actionObj.prevLevel1Time), "textContent", "time");
+                    views.updateVal(`${actionVar}DeltaLevel1Time`, actionObj.level1Time - actionObj.prevLevel1Time < 0 ? "green" : "red", "style.color");
+                }
+            }
+        }
+
+        //When action should be dim
+        let isMaxLevel = actionObj.maxLevel !== undefined && actionObj.level >= actionObj.maxLevel;
+		//If resources are flowing "upstream" that counts as no resources flowing since it's not "active".
+		let isResourcesQuiet = (actionObj.resourceIncrease === 0 && actionObj.resourceDecrease === 0) || actionObj.resourceRetrieved !== 0;
+        let isQuiet = isMaxLevel && isResourcesQuiet && !actionObj.mouseOnThis;
+        if(!isQuiet) {
+            dataObj.blinkDelay = 1;
+        } else {
+            dataObj.blinkDelay -= 1/(data.gameSettings.ticksPerSecond*3);
+            if(dataObj.blinkDelay < 0) {
+                dataObj.blinkDelay = 0;
+            }
+        }
+        let opacityRatio = 0.6 + (dataObj.blinkDelay * 0.4);
+        views.updateVal(`${actionVar}LargeVersionContainer`, opacityRatio, "style.opacity");
+        views.updateVal(`${actionVar}Container`, actionObj.mouseOnThis?"100":"0", "style.zIndex");
+
+        views.updateVal(`${actionVar}ResourceRetrieved`, actionObj.resourceRetrieved > 0 ? "" : "none", "style.display");
+        views.updateVal(`${actionVar}ResourceRetrieved`, actionObj.resourceRetrieved > 0 ?`(-${intToString(actionObj.resourceRetrieved * data.gameSettings.ticksPerSecond, 2)}/s)`:"", "textContent");
     },
     updateActionLockedViews: function(actionObj) {
         let actionVar = actionObj.actionVar;
@@ -245,6 +318,7 @@ let views = {
     },
     updateActionUnlockedViews: function(actionObj) {
         let actionVar = actionObj.actionVar;
+        let dataObj = actionData[actionVar];
 
         //Needle
         let needlePosition = views.helpers.calcBalanceNeedle(actionObj.resourceIncrease, actionObj.resourceDecrease);
@@ -259,31 +333,14 @@ let views = {
         views.updateVal(`${actionVar}ExpBarInner`, `${(exp > 100 ? 100 : exp)}%`, "style.width");
 
 
-        //When action should be dim
+
+
         let isMaxLevel = actionObj.maxLevel !== undefined && actionObj.level >= actionObj.maxLevel;
-        let isQuiet = isMaxLevel && actionObj.resourceIncrease === 0 && actionObj.resourceDecrease === 0 && !actionObj.mouseOnThis;
-        views.updateVal(`${actionVar}LargeVersionContainer`, isQuiet?".6":"1", "style.opacity");
-        views.updateVal(`${actionVar}Container`, actionObj.mouseOnThis?"100":"0", "style.zIndex");
-
-
         views.updateVal(`${actionVar}LargeVersionContainer`, isMaxLevel?`var(--${actionObj.resourceName}-color-bg)`:"var(--bg-secondary)", "style.backgroundColor");
         //--bg-secondary-max
 
-        //Menu-specific updates
         if(actionObj.currentMenu === "info") {
-            views.updateVal(`${actionVar}CurrentUnlockTimeContainer`, actionObj.unlockTime ? "" : "none", "style.display");
-            views.updateVal(`${actionVar}CurrentUnlockTime`, actionObj.unlockTime, "textContent", "time");
-            views.updateVal(`${actionVar}PrevUnlockTimeContainer`, actionObj.prevUnlockTime ? "" : "none", "style.display");
-            views.updateVal(`${actionVar}PrevUnlockTime`, actionObj.prevUnlockTime, "textContent", "time");
-            if(actionObj.prevUnlockTime && actionObj.unlockTime) {
-                views.updateVal(`${actionVar}DeltaUnlockTimeContainer`, "", "style.display");
-                views.updateVal(`${actionVar}DeltaUnlockTime`, Math.abs(actionObj.unlockTime - actionObj.prevUnlockTime), "textContent", "time");
-                views.updateVal(`${actionVar}DeltaUnlockTime`, actionObj.unlockTime - actionObj.prevUnlockTime < 0 ? "green" : "red", "style.color");
-            }
 
-            views.updateVal(`${actionVar}HighestLevelContainer`, data.upgrades.rememberWhatIDid.isFullyBought ? "" : "none", "style.display");
-            views.updateVal(`${actionVar}SecondHighestLevelContainer`, data.upgrades.rememberHowIGrew.isFullyBought ? "" : "none", "style.display");
-            views.updateVal(`${actionVar}ThirdHighestLevelContainer`, data.upgrades.rememberMyMastery.isFullyBought ? "" : "none", "style.display");
         }
 
         if(actionObj.currentMenu === "atts") {
@@ -300,28 +357,26 @@ let views = {
 
         }
 
-        if (actionObj.currentMenu === "downstream") {
-            views.updateActionDownstreamViews(actionObj);
-            //if downstream menu is showing, hide all 0 / all 100 buttons if no downstream visible
-            views.updateVal(`${actionVar}_downstreamButtonContainer`, hasDownstreamVisible(actionObj) ? "" : "none", "style.display");
-        }
+        views.updateActionDownstreamViews(actionObj, actionObj.currentMenu === "downstream");
 
         //Update the numbers
         let roundedNumbers = [
             ["progress", 2], ["progressMax", 2], ["progressGain", 2],
             ["resource", 2], ["resourceDelta", 2], ["level", 1],
-            ["exp", 2], ["expToLevel", 2], ["expToAdd2", 2],
-            ["resourceIncrease", 3], ["resourceDecrease", 3],
-            ["highestLevel2", 1]
+            ["exp", 2], ["expToLevel", 2], ["expToAdd2", 3],
+            ["resourceIncrease", 3], ["resourceDecrease", 3]
         ];
         if(actionObj.isGenerator && actionVar !== "hearAboutTheLich") {
             roundedNumbers.push(["resourceToAdd", 2]);
-            roundedNumbers.push(["actionPowerMult", 3]);
+            roundedNumbers.push(["actionPower", 4]);
+        }
+        if(actionVar === "study") {
+            roundedNumbers.push(["resourceToAdd", 2]);
         }
         if(actionVar === "hearAboutTheLich") {
-            roundedNumbers.push(["actionPower", 2]);
+            roundedNumbers.push(["actionPower2", 2]);
         }
-        if(actionObj.currentMenu === "info") {
+        if(dataObj.hoveringIcon) {
             roundedNumbers.push(["highestLevel", 1]);
             roundedNumbers.push(["secondHighestLevel", 1]);
             roundedNumbers.push(["thirdHighestLevel", 1]);
@@ -345,37 +400,56 @@ let views = {
         }
 
     },
-    updateActionDownstreamViews: function(actionObj) {
+    updateActionDownstreamViews: function(actionObj, downstreamSelected) {
         let actionVar = actionObj.actionVar;
         let dataObj = actionData[actionVar];
         if(!dataObj.downstreamVars) {
             return;
         }
+        if(downstreamSelected) {
+            views.updateVal(`${actionVar}_downstreamButtonContainer`, hasDownstreamVisible(actionObj) ? "" : "none", "style.display");
+        }
+
         for(let downstreamVar of dataObj.downstreamVars) {
             let downstreamObj = data.actions[downstreamVar];
-            if(!downstreamObj || !downstreamObj.hasUpstream) {
+            if (!downstreamObj || !downstreamObj.hasUpstream) {
                 return;
             }
-
-            let rangeValue = data.actions[actionVar][`downstreamRate${downstreamVar}`] || 0;
-
-            let mult = rangeValue/100;
-            let taken = calculateTaken(actionVar, downstreamVar, actionObj, mult);
-            views.updateVal(`${actionVar}DownstreamSendRate${downstreamVar}`, taken * data.gameSettings.ticksPerSecond, "textContent", 4);
-
             let isAttention = isAttentionLine(actionVar, downstreamVar);
-            views.updateVal(`${actionVar}DownstreamAttentionBonus${downstreamVar}`, isAttention ? "" : "none", "style.display");
-            if(isAttention) {
-                views.updateVal(`${actionVar}DownstreamAttentionBonus${downstreamVar}`, `x${intToString(data.focusMult, 1)}`, "textContent");
-                views.updateVal(`${actionVar}_${downstreamVar}_Line_Inner_Top`, `x${intToString(data.focusMult, 1)}`, "textContent");
+            let focusShowing = actionObj[`${downstreamVar}PermFocusMult`] > 1 && downstreamObj.hasUpstream;
+
+            if (downstreamSelected) {
+                let rangeValue = data.actions[actionVar][`downstreamRate${downstreamVar}`] || 0;
+
+                let mult = rangeValue / 100;
+                let permFocusMult = actionObj[downstreamVar + "PermFocusMult"];
+                let tempFocusMult = actionObj[downstreamVar + "TempFocusMult"];
+
+                let totalTakenMult = actionObj.tierMult() * (actionObj.efficiency / 100) * permFocusMult * tempFocusMult *
+                    (isAttention ? tempFocusMult : 1);
+                let maxed = false;
+                if (totalTakenMult > 1) {
+                    totalTakenMult = 1; // Cap at 100%/s
+                    maxed = true;
+                }
+                let toReturn = actionObj.resource / data.gameSettings.ticksPerSecond * totalTakenMult * mult;
+                let taken = toReturn < .0000001 ? 0 : toReturn;
+
+                views.updateVal(`${actionVar}DownstreamSendRate${downstreamVar}`, taken * data.gameSettings.ticksPerSecond, "textContent", 4);
+
+                views.updateVal(`${actionVar}DownstreamAttentionBonusTemp${downstreamVar}`, isAttention ? "" : "none", "style.display");
+                views.updateVal(`${actionVar}DownstreamAttentionBonusPerm${downstreamVar}`, focusShowing ? "" : "none", "style.display");
             }
 
-            let focusShowing = actionObj[`${downstreamVar}FocusMult`] > 1.005 && downstreamObj.resourceName === actionObj.resourceName;
-            views.updateVal(`${actionVar}DownstreamAttentionBonusLoop${downstreamVar}`, focusShowing ? "" : "none", "style.display");
+            if(isAttention) {
+                views.updateVal(`${actionVar}DownstreamAttentionBonusTemp${downstreamVar}`, `x${intToString(actionObj[downstreamVar + "TempFocusMult"], data.upgrades.learnToFocusMore.upgradePower?3:1)}`, "textContent");
+                views.updateVal(`${actionVar}_${downstreamVar}_Line_Inner_Top`, `x${intToString(actionObj[downstreamVar + "TempFocusMult"], data.upgrades.learnToFocusMore.upgradePower?3:1)}`, "textContent");
+            }
+
             views.updateVal(`${actionVar}_${downstreamVar}_Line_Inner_Bottom`, focusShowing ? "" : "none", "style.display");
             if(focusShowing) {
-                views.updateVal(`${actionVar}DownstreamAttentionBonusLoop${downstreamVar}`, `x${intToString(actionObj[downstreamVar + "FocusMult"], 3)}`);
-                views.updateVal(`${actionVar}_${downstreamVar}_Line_Inner_Bottom`, `x${intToString(actionObj[downstreamVar + "FocusMult"], 3)}`);
+                views.updateVal(`${actionVar}DownstreamAttentionBonusPerm${downstreamVar}`, `x${intToString(actionObj[downstreamVar + "PermFocusMult"], 3)}`);
+                views.updateVal(`${actionVar}_${downstreamVar}_Line_Inner_Bottom`, `x${intToString(actionObj[downstreamVar + "PermFocusMult"], 3)}`);
             }
 
         }
@@ -414,8 +488,8 @@ let views = {
         }
 
         const typeKey = `lastValue_${type}`;
-        // let lastVal = prevValue[typeKey] ?? null;
-        let lastVal = null;
+        let lastVal = prevValue[typeKey] ?? null;
+        // let lastVal = null;
 
         if (lastVal !== newVal) {
             if (type.includes(".")) {
@@ -443,26 +517,22 @@ let views = {
 
 function updateGlobals() {
     let totalMometum = 0;
-    let totalSpellPower = 0;
     for(let actionVar in data.actions) {
         let actionObj = data.actions[actionVar];
         if(actionObj.resourceName === "momentum" && gameStateMatches(actionObj)) {
             totalMometum += actionObj.resource;
         }
-        if(actionObj.power) {
-            totalSpellPower += actionObj.power * actionObj.level;
-        }
     }
     data.totalMomentum = totalMometum;
-    data.totalSpellPower = totalSpellPower;
 
-    views.updateVal(`totalSpellPower`, totalSpellPower, "textContent", 1);
+    views.updateVal(`maxSpellPower`, data.maxSpellPower, "textContent", 1);
     views.updateVal(`totalMomentum`, totalMometum, "textContent", 1);
 
     if(KTLMenuOpen) { //only update if menu is open
-        views.updateVal(`totalMomentum2`, totalMometum, "textContent", 1);
-        views.updateVal(`totalSpellPower2`, totalSpellPower, "textContent", 1);
-        views.updateVal(`HATLLevel`, data.actions.hearAboutTheLich.level, "textContent", 1);
+        views.updateVal(`maxSpellPower2`, data.maxSpellPower, "textContent", 1);
+        views.updateVal(`maxSpellPower2`, data.maxSpellPower>0?"#0ec3cf":"red", "style.color");
+        views.updateVal(`spellPowerErrorMessage`, data.maxSpellPower===0?"":"none", "style.display");
+        views.updateVal(`spellPowerWarningMessage`, data.actions.trainWithTeam.unlocked?"":"none", "style.display");
     }
 
     views.updateVal(`secondsPerReset`, data.secondsPerReset, "textContent","time");
@@ -496,7 +566,7 @@ function isActionVisible(actionVar) {
 
     return elementScreenX < window.innerWidth &&
         elementScreenX + elementScreenWidth > 0 &&
-        elementScreenY < window.innerHeight &&
+        elementScreenY < (window.innerHeight+50) &&
         elementScreenY + elementScreenHeight > 0;
 }
 

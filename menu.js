@@ -328,7 +328,7 @@ function createOptionsMenu() {
     <div class="menuSeparator"></div>
     
     <button onclick="exportSave()" style="padding:10px 16px;background:#007BFF;color:#fff;border:none;border-radius:4px;font-size:14px;cursor:pointer;width:160px;">Export to clipboard</button>
-    <label for="exportImportSave" style="font-size:13px;">Put your save here to import (import a clear save to hard reset):</label>
+    <label for="exportImportSave" style="font-size:13px;">Put your save here to import. Warning: Export/import from a file is much safer, due to save file sizes. Import a clear save to hard reset:</label>
     <input type="text" id="exportImportSave" style="border:1px solid #aaa;padding:8px;border-radius:4px;font-size:13px;width:100%;" oncontextmenu="event.stopPropagation(); return true;">
     <div>
         <input type="checkbox" id="confirmImportCheckbox" style="width:14px;height:14px;cursor:pointer;">
@@ -344,16 +344,6 @@ function updateSliderDisplay(currentValue) {
     // recalcInterval(currentValue);
     data.gameSettings.ticksPerSecond = parseInt(currentValue);
     document.getElementById('sliderValue').textContent = currentValue;
-}
-
-function changeNumberType() {
-    if(data.gameSettings.numberType === "numberSuffix") {
-        data.gameSettings.numberType = "scientific";
-    } else if(data.gameSettings.numberType === "scientific") {
-        data.gameSettings.numberType = "numberSuffix";
-    }
-
-    document.getElementById("numberTypeButton").textContent = "Change numbers to " + (data.gameSettings.numberType === "numberSuffix"?"scientific":"numberSuffix");
 }
 
 function toggleNumberType() {
@@ -573,7 +563,107 @@ function createChangelogMenu() {
     return Raw.html`
         <div class="menuTitle">Changelog</div>
         <div class="menuSeparator"></div><br>
-        v1.4.2 9/9 (current):<br>
+        v2.0.11 11/3 (current):<br>
+            <li>Retrieve My Unused resources moves to parent (thanks Guri). The effect is x10 as a result</li>
+            <li>Fixed border color highlight</li>
+            <li>Excess progress on max level goes back to the action's resource (thanks Guri). </li>
+            <li>Actions dim over 3 seconds instead of instant</li>
+            <li>Action submenus (Info, Stats, Story) can be scrolled on mobile</li>
+        <ul>
+        </ul><br>
+        v2.0.10 11/2:<br>
+        <ul>
+            <li>Bonus time setting refreshes correctly</li>
+            <li>Reset ", together" on amulet use (should only be added with TWT)</li>
+            <li>Amulet menu clears correctly on use</li>
+            <li>Renamed personal library to spell shack</li>
+            <li>Fixed TWT starting early</li>
+            <li>Fixed not getting leftovers on unlock</li>
+            <li>Fixed floating point math on northern wastes menu</li>
+            <li>Pausing the game should not affect offline time gain now when you come back</li>
+            <li>Increased Brythal Legacy gain (more legacy balancing to come)</li>
+        </ul><br>
+        v2.0.9 11/1:<br>
+        <ul>
+            <li>Fixed HATL levels increasing past what they should, again</li>
+            <li>Fixed shorter runs not enabling automation on next runs (manual unlock is a one-and-done-forever)</li>
+            <li>Train with Team keeps generating teamwork/using charges even when max level</li>
+            <li>Buy Nicer Stuff properly capped at 3 upgrades. Refund given</li>
+            <li>Statistic of "ancient coin gained" keeps working if you refresh while in Northern Wastes (was giving NaN)</li>
+            <li>Renamed KTL to Northern Wastes in some descriptions</li>
+            <li>Fixed upgrades with reduced levels (via bug fixes) from appearing odd in the UI</li>
+            <li>Adjusted menu heights and added scrolls (for mobile)</li>
+            <li>Increased statistics to 10 times, added time to first HATL level</li>
+            <li>Fixed a performance bug</li>
+            <li>Added levels to Pinned, and dim if the action is not revealed</li>
+            <li>Added a message before going to Northern Wastes to prevent wasting Remember What I Focused On permanent bonus</li>
+        </ul><br>
+        v2.0.8 10/31:<br>
+        <ul>
+            <li>Fixed an upgrade being able to be bought an extra time, breaking the game</li>
+            <li>Resource Retrieval no longer shows on most upstream actions</li>
+            <li>Automation split into two options: 1) Enable upstream on reveal 2) Disable upstream on max level</li>
+            <li>Automation's wording/value has been flipped around: The toggle being On means automation will be on/will work for that action. Actions by default start with automation On, and all actions have been set to on. This will overwrite existing settings, so you'll have to fix this for the actions you want to change.</li>
+            <li>If action has no previous unlock time, when the action is revealed the immediate parent's slider is still off, with the further upstream actions enabling to that point (requires manual only for the last step)</li>
+            <li>Automation menu can be clicked and edited while the action is still locked.</li>
+            <li>Fixed Remember What I Focused On's description to say on entering northern wastes, instead of using amulet (correcting description to behavior)</li>
+            <li>Pause visuals remember on load </li>
+            <li>Nerfed power/efficiency/wizardry of last few magic - it gained a little too much fight increase for their cost increase, and the efficiency started at 100% always</li>
+            <li>Nerfed upgrade Keep My Magic Ready to reset per amulet, but it will work with highest spell power for each spell - get everything to 1, one time for max</li>
+        </ul><br>
+        v2.0.7 10/29:<br>
+        <ul>
+            <li>Actually fixed the AC refund from 1.X versions</li>
+            <li>Removed extra HATL levels gained through reloading</li>
+            <li>Renamed Earth Magic to Dirt Magic</li>
+            <li>Remember What I Did and subsequent upgrades don't apply in Northern Wastes or for Spells, and visually updates</li>
+            <li>Reinforce Armor and Restore Equipment unlock properly</li>
+            <li>Reinforce Armor won't grow in cost</li>
+            <li>Fixed some minor text issues</li>
+            <li>Focus bonus on flow lines update always (previously just when Downstream tab was selected)</li>
+        </ul><br>
+        v2.0.6 10/27:<br>
+        <ul>
+            <li>Fixed a bug that Earth Magic was not showing up initially.</li>
+            <li>Fixed a bug that automation was not re-enabling when spells used charges</li>
+        </ul><br>
+        v2.0.4 10/26:<br>
+        <ul>
+            <li>Fixed a bug that paused spells didn't count towards spell power</li>
+            <li>Fight the Lich's Forces button (under HATL) appears with HATL level and stays visible</li>
+            <li>Reworked the Fight The Lich's Forces menu to show the error with spell power, and a message to pause actions if needed with train with team</li>
+            <li>Refunded AC properly</li>
+            <li>A couple upgrade descriptions fixed</li>
+            <li>Initial study info should be correct</li>
+            <li>Spark Decay, on level, unveils the actions its supposed to show on unlock, just in case</li>
+            <li>Floating early extra jobs shouldn't be seen without the Ask About Better Work upgrade</li>
+        </ul><br>
+        v2.0 10/26:<br>
+        <ul>
+            <li>Tons of extra actions and upgrades, greatly expanding available content</li>
+            <li>Spark Mana renamed to Spark Decay and efficiency color reversed</li>
+            <li>Fixed upgrade Start A Little Quicker to do what it says (previously was giving 10, 20, 30 per second)</li>
+            <li>Fixed first complete of Overclock Targeting The Lich not working</li>
+            <li>Actions are a little wider, for progress bar numbers</li>
+            <li>Instability's effect is squared, and control's reduction is square rooted. Instability increase per spell charge use is lowered.</li>
+            <li>Changed legacy gain formula/numbers in KTL to balance the increased gain later.</li>
+            <li>Increased doom gain by ~x2</li>
+            <li>Moved unlock time, previous unlock time, delta to the action icon (gear/lightning)</li>
+            <li>Center screen button works per screen</li>
+            <li>Hopefully fixed resources going to NaN sometimes (rarely, a number minus itself results in a negative number, due to rounding errors in the math)</li>
+            <li>Moved unlocks and on-level info to the icon, to be visible before and after unlocking the action</li>
+            <li>Spell Power shows on Spells</li>
+            <li>Actions in Magic record level 1 time (and show delta to previous) instead of unlock time</li>
+            <li>Switched saving algorithms to allow for more data to be saved</li>
+            <li>New actions after the pre-KTL ones, will default to automationOff, which can only be changed once they are unlocked.</li>
+            <li>Moved View Amulet Upgrades to bottom right</li>
+            <li>Added pinning actions to the side, to click to focus on. Unlocked at first amulet for now (later will be a QoL purchase)</li>
+            <li>Log also records current reset number, momentum, fear, and teamwork</li>
+            <li>Reworked focus bonus and focus bonus upgrades. There is now an in-loop and a permanent bonus, separately. Refunded the cost of the previous upgrades</li>
+            <li>Renamed Kill the Lich [3] to Northern Wastes</li>
+            <li>Renamed Kill the Lich button to Fight the Lich's Forces!</li>
+        </ul><br>
+        v1.4.2 9/9:<br>
         <ul>
             <li>Fixed mobile drag, changed default size on mobile, prevented zoom on menus making the screen stuck, and added a close button to the main menu</li>
             <li>Fixed screen jumping issue on distant actions</li>
@@ -588,7 +678,7 @@ function createChangelogMenu() {
             <li>Amulet upgrades can be sorted by cost</li>
             <li>Fixed a bug with bonus speed save/load settings</li>
             <li>Log for new actions, with clickable names to jump to them. Log clears on amulet use</li>
-            <li>Overboost/Overdrive will default to prevent automation when first unlocked</li>
+            <li>Overboost/Overponder will default to prevent automation when first unlocked</li>
             <li>Rearranged ancient coin info to not be hidden by the button</li>
         </ul><br>
         v1.4, 9/5:<br>
