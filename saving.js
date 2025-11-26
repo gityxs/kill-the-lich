@@ -15,7 +15,7 @@ function resetActionToBase(actionVar) {
     actionSetBaseVariables(data.actions[actionVar], actionData[actionVar]);
 }
 
-data.saveVersion = 3;
+data.saveVersion = 5;
 function load() {
     initializeData();
 
@@ -121,9 +121,9 @@ function load() {
         data.maxSpellPower = toLoad.maxSpellPower ?? 0;
         data.resetCount = toLoad.resetCount ?? 1;
         data.ancientCoinGained = toLoad.ancientCoinGained ?? 0;
+        data.queuedReveals = toLoad.queuedReveals ?? {};
 
         data.currentGameState = toLoad.currentGameState;
-        // data.gameSettings = toLoad.gameSettings;
 
         //data correction
         if(toLoad.gameSettings.viewAdvancedSliders === undefined) { //defaults off on new saves
@@ -132,6 +132,7 @@ function load() {
         if(toLoad.actions.poolMana.visible) {
             actionData.poolMana.generatorSpeed = 6;
         }
+
 
         refundAmount += saveFileCorrection(saveVersionFromLoad)
 
@@ -148,8 +149,7 @@ function load() {
     }
 
     initializeDisplay();
-    setSlidersOnLoad(toLoad, saveVersionFromLoad);
-    // recalcInterval(data.options.updateRate);
+    adjustUIAfterLoad(toLoad, saveVersionFromLoad);
     views.updateView();
 
 
@@ -173,22 +173,37 @@ function applyUpgradeEffects() {
     }
 }
 
-function setSlidersOnLoad(toLoad, saveVersion) {
+function adjustUIAfterLoad(toLoad, saveVersionFromLoad) {
     updateSliderContainers(); //show hide according to setting
 
     for(let actionVar in data.actions) {
+        let actionObj = data.actions[actionVar];
         let dataObj = actionData[actionVar];
         for(let downstreamVar of dataObj.downstreamVars) {
             if (!document.getElementById(actionVar + "NumInput" + downstreamVar)
                 || !toLoad.actions || !toLoad.actions[actionVar] ||
                 toLoad.actions[actionVar]["downstreamRate" + downstreamVar] === undefined ||
-                dataObj.creationVersion > saveVersion) {
+                dataObj.creationVersion > saveVersionFromLoad) {
                 continue;
             }
             setSliderUI(actionVar, downstreamVar, toLoad.actions[actionVar]["downstreamRate" + downstreamVar]); //from save file
         }
+
+        if(dataObj.storyVersion > actionObj.readStory) {
+            views.updateVal(`${actionVar}_storyMenuButton`, "yellow", "style.color");
+        }
+
+        //correct old versions from boolean to number
+        if(toLoad.actions && toLoad.actions[actionVar]) {
+            if (dataObj.hasUpstream && (toLoad.actions[actionVar].automationOnReveal === true || toLoad.actions[actionVar].automationOnReveal === undefined)) {
+                setSliderUI(actionVar, "Automation", data.upgrades.stopLettingOpportunityWait.upgradePower * 50);
+            } else if (actionObj.automationOnReveal === false) {
+                actionObj.automationOnReveal = 0;
+            }
+        }
     }
-    attachCustomSliderListeners();
+
+    attachSliderListeners();
 }
 
 function mergeExistingOnly(data, toLoad, varName, skipList = []) {
@@ -245,6 +260,7 @@ function updateUIOnLoad() {
     refreshResetLog()
     rebuildLog()
     rebuildPinned()
+    clickUpgradeTab("default");
 
     document.getElementById('viewDeltasSwitch').firstElementChild.style.left = data.gameSettings.viewDeltas ? "50%" : "0";
     document.getElementById('numberTypeSwitch').firstElementChild.style.left = data.gameSettings.numberType==="numberSuffix" ? "66.666%" : (data.gameSettings.numberType==="scientific" ? "33.333%" : "0");
@@ -252,13 +268,17 @@ function updateUIOnLoad() {
     document.getElementById('viewTotalMomentumSwitch').firstElementChild.style.left = data.gameSettings.viewTotalMomentum ? "50%" : "0";
     document.getElementById('viewZeroButtonsSwitch').firstElementChild.style.left = data.gameSettings.viewAll0Buttons ? "50%" : "0";
     document.getElementById('viewAdvancedSlidersSwitch').firstElementChild.style.left = data.gameSettings.viewAdvancedSliders ? "50%" : "0";
+    document.getElementById("showCompleteUpgrades").checked = data.gameSettings.showCompletedToggle;
+    document.getElementById("showUnaffordableUpgrades").checked = data.gameSettings.showUnaffordable;
+    document.getElementById("sortByCost").checked = data.gameSettings.sortByCost;
 
-    if(data.gameSettings.bonusSpeed > 1) {
+        if(data.gameSettings.bonusSpeed > 1) {
         data.gameSettings.bonusSpeed = 1;
          //set it to 3 or set the checked correctly on load
     }
     data.options.bonusRate = 3;
     updateBonusSpeedButton();
+
 
     for (let actionVar in data.actions) {
         let actionObj = data.actions[actionVar];
@@ -272,7 +292,7 @@ function updateUIOnLoad() {
         actionObj.currentMenu = "";
         clickActionMenu(actionVar, menuFromSave);
         if (actionObj.visible) {
-            revealActionAtts(actionObj);
+            revealAttsOnAction(actionObj);
         }
         if (data.gameSettings.viewDeltas) {
             views.updateVal(`${actionVar}DeltasDisplayContainer`, "", "style.display");
@@ -280,46 +300,45 @@ function updateUIOnLoad() {
         if (data.gameSettings.viewRatio) {
             views.updateVal(`${actionVar}BalanceNeedleContainer`, "", "style.display");
         }
-        if (data.gameSettings.viewAll0Buttons) {
+        if (data.gameSettings.viewAll0Buttons && dataObj.plane !== 2) {
             views.updateVal(`${actionVar}ToggleDownstreamButtons`, "", "style.display");
         }
         if (data.gameSettings.viewTotalMomentum) {
             views.updateVal(`${actionVar}TotalDownstreamContainer`, "", "style.display");
         }
-        if (actionObj.hasUpstream) {
-            let showRevealAutomation = data.upgrades.stopLettingOpportunityWait.upgradePower > 0;
+        if (dataObj.hasUpstream || dataObj.keepParentAutomation) {
+            let showRevealAutomation = data.upgrades.stopLettingOpportunityWait.upgradePower > 0 && dataObj.hasUpstream;
             let showMaxLevelAutomation = data.upgrades.knowWhenToMoveOn.upgradePower > 0;
             views.updateVal(`${actionVar}_automationMenuButton`, dataObj.plane !== 2 && (showRevealAutomation || showMaxLevelAutomation) ? "" : "none", "style.display");
-            views.updateVal(`${actionVar}_automationMaxLevelContainer`, dataObj.plane !== 2 && showRevealAutomation ? "" : "none", "style.display");
-            views.updateVal(`${actionVar}_automationRevealContainer`, dataObj.plane !== 2 && showMaxLevelAutomation ? "" : "none", "style.display");
+            views.updateVal(`${actionVar}_automationMaxLevelContainer`, dataObj.plane !== 2 && showMaxLevelAutomation ? "" : "none", "style.display");
+            if(dataObj.hasUpstream) {
+                views.updateVal(`${actionVar}_automationRevealContainer`, dataObj.plane !== 2 && showRevealAutomation ? "" : "none", "style.display");
+            }
         }
 
         if(data.doneAmulet) {
             views.updateVal(`${actionVar}PinButton`, "", "style.display");
         }
-        if(actionObj.hasUpstream) {
-            if (actionObj.automationOnReveal) {
+        if(dataObj.hasUpstream) {
+            if (actionObj.automationOnReveal > 0) {
                 views.updateVal(`${actionVar}_checkbox`, true, "checked");
                 views.updateVal(`${actionVar}_track`, "#2196F3", "style.backgroundColor");
                 views.updateVal(`${actionVar}_knob`, "translateX(26px)", "style.transform");
-            } else {
-                views.updateVal(`${actionVar}_checkbox`, false, "checked");
-                views.updateVal(`${actionVar}_track`, "#ccc", "style.backgroundColor");
-                views.updateVal(`${actionVar}_knob`, "translateX(0px)", "style.transform");
             }
+        }
+        if(dataObj.hasUpstream || dataObj.keepParentAutomation) {
             if (actionObj.automationOnMax) {
                 views.updateVal(`${actionVar}_checkbox2`, true, "checked");
                 views.updateVal(`${actionVar}_track2`, "#2196F3", "style.backgroundColor");
                 views.updateVal(`${actionVar}_knob2`, "translateX(26px)", "style.transform");
-            } else {
-                views.updateVal(`${actionVar}_checkbox2`, false, "checked");
-                views.updateVal(`${actionVar}_track2`, "#ccc", "style.backgroundColor");
-                views.updateVal(`${actionVar}_knob2`, "translateX(0px)", "style.transform");
             }
         }
         if(dataObj.isSpell || dataObj.isSpellConsumer) {
             updatePauseActionVisuals(actionVar);
         }
+        views.updateVal(`${actionVar}_storyMenuButton`, actionObj.readStory!==undefined?"":"#2196F3", "style.color");
+
+
     }
     if (data.planeUnlocked[1] || data.planeUnlocked[2]) {
         for (let i = 0; i < data.planeUnlocked.length; i++) {
@@ -345,9 +364,7 @@ function updateUIOnLoad() {
         views.updateVal(`ancientCoinDisplay`, "", "style.display");
         revealAtt("legacy");
     }
-    if(data.displayJob) {
-        document.getElementById("jobDisplay").style.display = "";
-    }
+    views.updateVal(`jobDisplay`, data.displayJob ? "" : "none", "style.display");
     changeJob(data.currentJob);
 
     for(let i = 0; i < data.toastStates.length; i++) {
@@ -377,7 +394,7 @@ function reapplyAttentionSelected() {
     if (!data.focusSelected) return;
 
     for(let focusObj of data.focusSelected) {
-        highlightLine(focusObj.borderId);
+        highlightLine(focusObj.borderId, focusObj.lineData);
     }
 }
 

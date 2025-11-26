@@ -127,9 +127,8 @@ function createHelpForRealMenu() {
     return Raw.html`
         <div class="menuTitle">How to Provide Feedback</div>
         <div class="menuSeparator"></div><br>
-        You'll help me, for real? Wow, I didn't know you were cool like that.<br>
-        My discord to discuss everything is here: <a href="https://discord.gg/dnKA6Xd" target="_blank">Stop_Sign Gaming</a>. I would really appreciate hearing about your experience, 
-        and how you felt while playing! 
+        You'll help me, for real?<br>
+        My discord to discuss everything is here: <a href="https://discord.gg/dnKA6Xd" target="_blank">Stop_Sign Gaming</a>. I would really appreciate hearing about your suggestions and experience!
         You can also talk about the game in the discord with others, and share strategies.<br><br>
         No AI was used in the writing of the story, and no AI-art will be added to the game.<br><br>
         Thanks for playing! -Stop_Sign
@@ -139,9 +138,28 @@ function createHelpForRealMenu() {
 function createHelpMenu() {
     return Raw.html`
         <div class="menuTitle">Help</div>
-        <div class="menuSeparator"></div><br>
-        You'll help? Oh, you <i>want</i> help. Well, use the sliders to move resources to actions that haven't been unlocked yet. 
-        Other than that, it's just reading the numbers that are visible and figuring out which is the optimal path. I'm sure you can do it.
+        <div class="menuSeparator"></div>
+        <div style="font-size:20px;">How to Play</div>
+        Overclock generates the primary resource of the game - momentum. The gameplay is, to start, moving the momentum around to the actions that need it, for unlocking and leveling. When you level most actions, you get attributes that reduce the Exp required to level (the purple icons are for this) or increase the Speed at which resources flow (the blue icons are for this).<br><br>
+        Later, you will gain the ability to reset the game, and with choices of various upgrades to improve the game, incluing automation which makes moving resources automatic. The gameplay at that point is to understand the flow of the game, to know when to reset to get the most resources you want, and which upgrade is the best to get next or work towards.
+        <div class="menuSeparator"></div>
+        <div style="font-size:20px;">Controls to Move Around</div>
+        Click/right click and drag to move the game window. WASD works also, with Shift making it move x3 faster. Use the mouse scroll wheel or the [+] and [-] to zoom in and out.
+        <div class="menuSeparator"></div>
+        <div style="font-size:20px;">Attributes</div>
+         Each attribute is a 10% increase to bonus, shown in the Attributes window. There are a few colors for attributes surrounding actions.
+        <ol>
+            <li>Green: Adds the attribute on level</li>
+            <li>Purple: Reduces the progress required to complete if it is an action, reduces exp required to level if it is a generator</li>
+            <li>Blue: Increases speed. For actions, speed is the send and consume rate. For generators, it is the generator speed, generator amount, and send rate.</li>
+        </ol><br>
+        When you click on an attribute, it will highlight actions with the color of how it uses or gains the attribute, and the action will be colored white if it both uses and gains the attribute.
+        <div class="menuSeparator"></div>
+        <div style="font-size:20px;">Max Level</div>
+        Most actions have max levels, shown in their title card. When the level is at the maximum, the resource will no longer be consumed: it can send 100% of the resources without taking any. Actions that are max level without incoming or outgoing resources will also visually dim.
+        <div class="menuSeparator"></div>
+        <div style="font-size:20px;">Finding New Actions</div>
+        The icon text will tell you if something unique happens when the action unlocks, levels, or hits a level threshold. If the text shows ???, you must purchase the relevant action in the Amulet Upgrades shop. A few actions purchase conditionally purchase others. Purchasing actions is a permament effect.
 `;
 }
 
@@ -168,7 +186,7 @@ function createStoryMenu() {
 
 &nbsp;&nbsp;&nbsp;&nbsp;We were bound with rope, and kept within the cursed side. The Gryndallans debated on what to do with us: whether to bring us one a time across the border for staged duels to appease the egos of their gathered warriors, or whether it would be too large of a risk for, and they should kill us all without such theatrics. It was during this moment that the situation suddenly changed: after 13 years of our Talents being frozen and inert, they suddenly sprang alive and became active, all at once. Some of my fellows became unbound through their various Talents of escape, cutting, or fire, and freed most of us before it was noticed and the chaos of battle truly started.<br><br>
 
-&nbsp;&nbsp;&nbsp;&nbsp;Later we would learn the curse broke because our Emperor had died from assassination, but at the moment we only had thoughts of survival. When I understood our Talents were active again, and I checked Overclock, something new happened to me: Overclock slammed into me with a metaphysical weight I had never experienced. Over the 13 years it had not been truly inactive, but instead building a reservoir behind a locked gate. It had become far, far more than a "a little more". My legs moved on their own, my eyes only tracked my next step, and I ducked and weaved according to whims and currents I had never felt before. Fate herself bent to see my target enacted, and my escape was a circus of coincidences, unforseen Talent ineractions, timing windows, and beginner mistakes from trained veterans that opened a gap large enough for me - and only me - to slip through.<br><br> 
+&nbsp;&nbsp;&nbsp;&nbsp;Later we would learn the curse broke because our Emperor had died from assassination, but at the moment we only had thoughts of survival. When I understood our Talents were active again, and I checked Overclock, something new happened to me: Overclock slammed into me with a metaphysical weight I had never experienced. Over the 13 years it had not been truly inactive, but instead building a reservoir behind a locked gate. It had become far, far more than a "a little more". My legs moved on their own, my eyes only tracked my next step, and I ducked and weaved according to whims and currents I had never felt before. Fate herself bent to see my target enacted, and my escape was a circus of coincidences, unforseen Talent interactions, timing windows, and beginner mistakes from trained veterans that opened a gap large enough for me - and only me - to slip through.<br><br> 
 
 &nbsp;&nbsp;&nbsp;&nbsp;Going with the flow of Overclock - for I had neither the will nor the inclination to change its course - it carried me out of combat, out of war, and eventually out of danger entirely. In the few weeks that it guided my path, I continued the repeated miraculous luck even as the effect diminished steadily over time. From finding abandoned horses and supplies, to hearing just the right thing in a conversation, to staying in just the right spot to not be discovered while I slept. Ultimately, [Get Somewhere Safe] had gotten me... Somewhere Safe.<br><br>
         
@@ -222,8 +240,9 @@ function updatePreviousTipsMenu() {
         if(data.toastStates[toastObj.id] !== 'closed') {
             continue;
         }
-        tipStr += `<span style="font-size:14px;">Tip #${toastObj.id}: ${toastObj.title}</span><br>
-            ${toastObj.message}<br><br>`;
+        tipStr += `<span style="font-size:20px;">Tip #${toastObj.id+1}: ${toastObj.title}</span><br>
+            ${toastObj.message}
+        <div class="menuSeparator"></div><br>`;
     }
 
     document.getElementById("previousTipsTextContainer").innerHTML = tipStr;
@@ -308,7 +327,7 @@ function createOptionsMenu() {
     
     <div style="display:flex;align-items:center;gap:10px;">
         <label for="FPSSlider" style="font-size:14px;">FPS: <span id="sliderValue" style="font-weight:bold;">20</span></label>
-        <input type="range" id="FPSSlider" min="1" max="60" value="20" oninput="updateSliderDisplay(this.value)" style="flex:1;cursor:pointer;">
+        <input type="range" id="FPSSlider" min="1" max="20" value="20" oninput="updateSliderDisplay(this.value)" style="flex:1;cursor:pointer;">
     </div>
     <p style="margin:0;font-size:13px;">Auto save every 20 seconds and on pause, but if you want a button to click:</p>
     <button onclick="save()" style="padding:10px 16px;background:#007BFF;color:#fff;border:none;border-radius:4px;font-size:14px;cursor:pointer;width:160px;">Save</button>
@@ -342,7 +361,7 @@ function createOptionsMenu() {
 
 function updateSliderDisplay(currentValue) {
     // recalcInterval(currentValue);
-    data.gameSettings.ticksPerSecond = parseInt(currentValue);
+    data.gameSettings.fps = parseInt(currentValue);
     document.getElementById('sliderValue').textContent = currentValue;
 }
 
@@ -434,11 +453,8 @@ function toggleViewAll0Buttons() {
         slider.style.left = '0';
     }
     for(let actionVar in data.actions) {
-        if (data.gameSettings.viewAll0Buttons) {
-            views.updateVal(`${actionVar}ToggleDownstreamButtons`, "", "style.display");
-        } else {
-            views.updateVal(`${actionVar}ToggleDownstreamButtons`, "none", "style.display");
-        }
+        let dataObj = actionData[actionVar];
+        views.updateVal(`${actionVar}ToggleDownstreamButtons`, data.gameSettings.viewAll0Buttons && dataObj.plane !== 2 ? "" : "none", "style.display");
     }
 }
 
@@ -456,9 +472,12 @@ function toggleAdvancedSliders() {
         for(let actionVar in data.actions) {
             let dataObj = actionData[actionVar];
             for (let downstreamVar of dataObj.downstreamVars) {
-                if(data.actions[downstreamVar].hasUpstream) {
+                if(actionData[downstreamVar].hasUpstream) {
                     setSliderUI(actionVar, downstreamVar, convertToNearest(data.actions[actionVar][`downstreamRate${downstreamVar}`]));
                 }
+            }
+            if(dataObj.hasUpstream) {
+                setSliderUI(actionVar, "Automation", convertToNearest(data.actions[actionVar].automationOnReveal));
             }
         }
     }
@@ -483,9 +502,10 @@ function changeDarkMode() {
 }
 
 function addMenuTextContainer(menuVar, menuText) {
-    let menuContainer = "<div id='" + menuVar + "TextContainer' style='display:none;padding:10px;text-align:left;font-size:16px;height:100%;max-height:100%;overflow-y:auto;box-sizing:border-box;'>" +
-        menuText +
-        "</div>";
+    let menuContainer = `
+        <div id='${menuVar}TextContainer' class="menuDisplay" style="display:none;">
+            ${menuText}
+        </div>`;
 
     let child = document.createElement("template");
     child.innerHTML = menuContainer;
@@ -494,24 +514,20 @@ function addMenuTextContainer(menuVar, menuText) {
 
 function createMenu() {
     let helpMenu = `
-   <div id="helpMenu" class="fullScreenGrey" style="display:none;" onclick="clickMenuButton()">
-    <div class="centerMenuBox"
-        onclick="stopClicks(event)"
-        style="background:var(--bg-secondary);padding:20px;border-radius:6px;max-width:1200px;min-width:600px;width:90%;text-align:center;position:relative;color:var(--text-primary);border:1px solid var(--border-color);height:90vh;max-height:90vh;display:block;overflow:hidden;">
-        <div class="button" onclick="clickMenuButton()" style="position:absolute;top:5px;right:5px;">X</div>
-        <div class="menuTitle" style="box-sizing:border-box;">Options and Info Menu</div>
-        <div class="menuSeparator" style="box-sizing:border-box;"></div>
-        
-        <div style="width:100%;height:calc(100% - 60px);min-height:0;position:relative;display:block;overflow:hidden;font-size:0;">
-            <div id="menuIndexContainer"
-                style="display:inline-block;width:30%;background-color:var(--menu-tab-background-color);vertical-align:top;height:100%;overflow-y:auto;min-height:0;box-sizing:border-box;font-size:16px;">
-            </div>
-            <div id="menuTextDisplayContainer"
-                style="display:inline-block;width:70%;background-color:var(--menu-background-color);vertical-align:top;height:100%;min-height:0;box-sizing:border-box;overflow-y:auto;position:relative;font-size:16px;">
+    <div id="helpMenu" class="fullScreenGrey" style="display:none;" onclick="clickMenuButton()">
+        <div class="centerMenuBox" onclick="stopClicks(event)">
+            <div class="button" onclick="clickMenuButton()" style="position:absolute;top:5px;right:5px;">X</div>
+            <div class="menuTitle" style="box-sizing:border-box;">Options and Info Menu</div>
+            <div class="menuSeparator" style="box-sizing:border-box;"></div>
+            
+            <div style="display:flex;height:calc(75vh - 100px);min-height:0;position:relative;overflow:hidden;font-size:0;">
+                <div id="menuIndexContainer" class="menuOptionContainer">
+                </div>
+                <div id="menuTextDisplayContainer" class="menuDisplayContainer">
+                </div>
             </div>
         </div>
     </div>
-</div>
     `;
     document.getElementById("helpMenuContainer").innerHTML = helpMenu;
 }
@@ -522,9 +538,7 @@ let selectedMenu = null;
 function addMenuTab(menuVar) {
     menuInfo.push(menuVar);
     let newMenu = Raw.html`
-        <div id="${menuVar}MenuTab" onclick="clickMenuTab('${menuVar}')" 
-            style="border:1px solid;width:99%;height:60px;border-radius:3px;background-color:var(--menu-tab-button-color);
-            cursor:pointer;font-size:20px;display:flex;align-items:center;justify-content:center;">
+        <div id="${menuVar}MenuTab" onclick="clickMenuTab('${menuVar}')" class="menuTab">
             ${decamelizeWithSpace(menuVar)}
         </div>`;
 
@@ -536,7 +550,7 @@ function addMenuTab(menuVar) {
 function clickMenuTab(menuVar) {
     if(selectedMenu) {
         document.getElementById(selectedMenu+"TextContainer").style.display = "none";
-        document.getElementById(selectedMenu+"MenuTab").style.background = "var(--menu-tab-button-color)";
+        document.getElementById(selectedMenu+"MenuTab").style.background = "";
         if(selectedMenu === menuVar) {
             selectedMenu = null;
             return;
@@ -544,10 +558,25 @@ function clickMenuTab(menuVar) {
     }
     selectedMenu = menuVar;
     document.getElementById(menuVar+"TextContainer").style.display = "";
-    document.getElementById(selectedMenu+"MenuTab").style.background = "#8b5cf6";
+    document.getElementById(selectedMenu+"MenuTab").style.background = "var(--menu-tab-selected-color)";
     if(selectedMenu === "statistics") {
         resizeCanvas();
     }
+}
+
+let selectedUpgradeMenu = null;
+function clickUpgradeTab(menuVar) {
+    if(selectedUpgradeMenu) {
+        document.getElementById(selectedUpgradeMenu+"UpgradeContainer").style.display = "none";
+        document.getElementById(selectedUpgradeMenu+"UpgradeTab").style.background = "";
+        if(selectedUpgradeMenu === menuVar) {
+            selectedUpgradeMenu = null;
+            return;
+        }
+    }
+    selectedUpgradeMenu = menuVar;
+    document.getElementById(menuVar+"UpgradeContainer").style.display = "";
+    document.getElementById(selectedUpgradeMenu+"UpgradeTab").style.background = "var(--menu-tab-selected-color)";
 }
 
 function addMenuOptionsTab() {
@@ -563,13 +592,48 @@ function createChangelogMenu() {
     return Raw.html`
         <div class="menuTitle">Changelog</div>
         <div class="menuSeparator"></div><br>
-        v2.0.11 11/3 (current):<br>
+        v2.1.2 11/25 (current):<br>
+        <ul>
+            <li>Reworked menu css; it works better at all screen sizes</li>
+            <li>Reworked Amulet menu to separate attribute upgrades into a different tab</li>
+            <li>Amulet sort settings save now</li>
+            <li>Made it more clear that downstream rates cannot be changed in northern wastes.</li>
+            <li>New Upgrade: Temper My Desires [100 AC]. Gain a custom slider for setting automation. The sliders are in the Automation tab under the toggle, change with advanced/basic sliders, and can be set while in Northern Wastes.</li>
+            <li>Added the automation menu for the action right after resource changes. This adds the option to let HATL disable Gossip (and above) when HATL is max level, and let Study (and above) disable when all research is done. Default is on.</li>
+            <li>Fixed an automation bug that when a max level was added, it was checking the wrong toggle.</li>
+            <li>Adjusted position of focus text on vertical connecting lines, to not be hidden by actions</li>
+            <li>Fixed Delta time showing when it shouldn't be</li>
+            <li>HATL properly unlocks only at gossip level 5</li>
+            <li>Reworked Tutorial - existing players will see the tips popup one more time</li>
+            <li>Filled out Help Menu with actual information</li>
+            <li>v2.1.1 - Automation adjustment</li>
+            <li>v2.1.2 - Handled an issue with old saves</li>
+        </ul><br>
+        v2.0.13 11/17:<br>
+        <ul>
+            <li>Fixing icon/unlock issues</li>
+        </ul><br>
+        v2.0.12 11/16:<br>
+        <ul>
+            <li>Reworked icon text to be dynamic. This means action reveal points will be ??? until purchased, wages will adjust to your number display setting, and Northern Wastes' legacy/AC gains will be accurate.</li>
+            <li>Automation upgrades, when bought, show the correct one their text says it does.</li>
+            <li>Sliders cannot be changed in Northern Wastes</li>
+            <li>Actions will only become visible if their parents are visible</li>
+            <li>Border color change on locked slider hover fixed</li>
+            <li>Locked actions show highest levels</li>
+            <li>Unread story menus will be blue, and once clicked, story text that has been changed since you read it last will be colored yellow</li>
+            <li>Temp Focus (the yellow one) no longer applies twice</li>
+            <li>Fixed resource sending calculations</li>
+            <li>Fixed FPS slider affecting game tick rate instead of FPS</li>
+            <li>If your total send rate is higher than 100% (most noticeable on overclock, with Perm Focus Mults), it now balances correctly according to your slider's ratios, up to the max of 100%/s (or 5% per tick)</li>
+        </ul><br>
+        v2.0.11 11/3:<br>
+        <ul>
             <li>Retrieve My Unused resources moves to parent (thanks Guri). The effect is x10 as a result</li>
             <li>Fixed border color highlight</li>
             <li>Excess progress on max level goes back to the action's resource (thanks Guri). </li>
             <li>Actions dim over 3 seconds instead of instant</li>
             <li>Action submenus (Info, Stats, Story) can be scrolled on mobile</li>
-        <ul>
         </ul><br>
         v2.0.10 11/2:<br>
         <ul>

@@ -55,7 +55,7 @@ function resetKTLSpiral() {
             if (downstreamDataObj.hasUpstream === false) {
                 continue;
             }
-            setSliderUI(actionVar, downstreamVar, 0);
+            setSliderUI(actionVar, downstreamVar, 100);
         }
     }
 }
@@ -91,11 +91,12 @@ function refreshResetLog() {
     document.getElementById("resetLogContainer").innerHTML = renderResetLog();
 }
 
-function initializeKTL() {
-    if (!document.getElementById('confirmKTL').checked ||
-        !(isDebug || (data.actions.hearAboutTheLich.level >= 1 && data.maxSpellPower >= 1))) {
+function initializeKTL(forceReset) {
+    if (!forceReset && (!document.getElementById('confirmKTL').checked ||
+        !(isDebug || (data.actions.hearAboutTheLich.level >= 1 && data.maxSpellPower >= 1)))) {
         return;
     }
+    data.gameState = "KTL";
     trackFirst();
     logKTL();
 
@@ -103,7 +104,12 @@ function initializeKTL() {
 
     for (let actionVar in data.actions) {
         let actionObj = data.actions[actionVar];
-        actionObj.isRunning = actionObj.plane === 2;
+        let dataObj = actionData[actionVar];
+        actionObj.isRunning = dataObj.plane === 2;
+
+        if(dataObj.plane === 2) {
+            views.updateVal(`${actionVar}UnlockText`, generateUnlockText(actionVar), "innerHTML");
+        }
     }
 
     unveilPlane(2);
@@ -121,7 +127,7 @@ function initializeKTL() {
     }
 
     for (let focusObj of data.focusSelected) {
-        unhighlightLine(focusObj.borderId);
+        unhighlightLine(focusObj.borderId, focusObj.lineData);
         let power = data.upgrades.rememberWhatIFocusedOn.upgradePower + 1;
         if (data.upgrades.rememberWhatIFocusedOn.upgradePower > 0) {
             let actionObj = data.actions[focusObj.lineData.from];
@@ -143,16 +149,15 @@ function initializeKTL() {
 
     views.updateVal("killTheLichMenu", "none", "style.display")
 
-    data.gameState = "KTL";
 
 
     revealAtt("doom");
     revealAtt("courage");
     data.actions.fightTheEvilForces.unlockCost = 0;
-    unveilAction('worry');
-    unveilAction('resolve');
-    unveilAction('fightTheEvilForces');
-    unveilAction('overclockTargetingTheLich');
+    revealAction('worry');
+    revealAction('resolve');
+    revealAction('fightTheEvilForces');
+    revealAction('overclockTargetingTheLich');
     unlockAction(data.actions.worry);
     unlockAction(data.actions.resolve);
     unlockAction(data.actions.fightTheEvilForces);
@@ -182,6 +187,7 @@ function openUseAmuletMenu(isUseable) {
     views.updateVal(`amuletEnabledContainer`, isUseable ? "" : 'none', 'style.display');
 
     refreshUpgradeVisibility();
+    toggleSortByCost();
     updateCardAffordabilityBorders();
 }
 
@@ -207,7 +213,7 @@ function useAmulet() {
 
     chartData = [];
     for (let focusObj of data.focusSelected) {
-        unhighlightLine(focusObj.borderId);
+        unhighlightLine(focusObj.borderId, focusObj.lineData);
     }
     data.focusSelected = [];
     data.doneAmulet = true;
@@ -245,8 +251,8 @@ function useAmulet() {
             views.updateVal(`${actionVar}${attVarObj[0]}InsideContainereff`, "none", "style.display");
             views.updateVal(`${actionVar}AttEfficiencyContainer`, "none", "style.display");
         }
+        views.updateVal(`${actionVar}UnlockText`, generateUnlockText(actionVar), "innerHTML");
     }
-
 
     //For each action, reset the base atts and set max level
     for (let actionVar in data.actions) {
@@ -285,7 +291,7 @@ function useAmulet() {
 
         //happens after reset
         dataObj.downstreamVars.forEach(function (downstreamVar) {
-            if (data.actions[downstreamVar] && data.actions[downstreamVar].hasUpstream) {
+            if (data.actions[downstreamVar] && actionData[downstreamVar].hasUpstream) {
                 setSliderUI(actionObj.actionVar, downstreamVar, 0); //reset with amulet
             }
 
@@ -316,12 +322,12 @@ function useAmulet() {
     views.updateVal(`planeButton2`, "none", "style.display");
 
     showAttColors("awareness");
-    revealActionAtts(data.actions.reflect);
+    revealAttsOnAction(data.actions.reflect);
     //Unveil will also show the relevant atts/att
-    unveilAction('echoKindle')
-    unveilAction('sparkMana')
-    unveilAction('poolMana')
-    unveilAction('expelMana')
+    revealAction('echoKindle')
+    revealAction('sparkMana')
+    revealAction('poolMana')
+    revealAction('expelMana')
     actionTitleClicked("overclock", true);
 
     //force the UI reset:
@@ -338,8 +344,8 @@ function useAmulet() {
     document.getElementById("jobTitle").textContent = data.actions[data.currentJob] ? actionData[data.currentJob].title : data.currentJob;
     document.getElementById("jobWage").textContent = intToString(data.currentWage, 2);
 
-    setSliderUI("overclock", "reflect", getUpgradeSliderAmount());
-    setSliderUI("poolMana", "expelMana", getUpgradeSliderAmount());
+    setSliderUI("overclock", "reflect", data.actions["reflect"].automationOnReveal);
+    setSliderUI("poolMana", "expelMana", data.actions["expelMana"].automationOnReveal);
 
     views.updateVal(`killTheLichMenuButton2`, "Fight the Lich's Forces!");
 }

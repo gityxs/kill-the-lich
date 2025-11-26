@@ -56,10 +56,9 @@ data.currentLog = [];
 data.currentPinned = [];
 data.maxFocusAllowed = 2;
 data.options = {};
-data.options.updateRate = 20;
-data.options.autosaveRate = 10;
 data.options.bonusRate = 3;
 data.lastVisit = Date.now();
+data.queuedReveals = {}
 let chartData = []; // Stores { time: number, value: number }
 let chartScale = 'linear'; // 'linear' or 'logarithmic'
 
@@ -78,7 +77,10 @@ data.gameSettings = {
     viewTotalMomentum:false,
     viewAdvancedSliders:false,
     numberType:"numberSuffix",
-    redeemedBonusCodes:{}
+    redeemedBonusCodes:{},
+    showCompletedToggle:true,
+    showUnaffordable:true,
+    sortByCost:false
 };
 
 // --- Dynamic Game State ---
@@ -111,16 +113,14 @@ function debug() {
     }
 
     document.getElementById("bonus50").style.display = "";
-    // data.gameSettings.bonusSpeed = 1;
-    // data.currentGameState.KTLBonusTimer = 0;
     data.ancientCoin = 100000;
 
     // gameSpeed = 1;
     data.currentGameState.bonusTime = 1000 * 60 * 60 * 24 * 7;
-
-
+    // buyUpgrade("temperMyDesires")
+    
     //temp data corrections:
-    // unveilAction('visitShrineBehindWaterfall')
+    // revealAction('visitShrineBehindWaterfall')
     // document.getElementById('confirmKTL').checked = true;
     // initializeKTL()
 
@@ -131,9 +131,9 @@ function debug() {
     // data.displayJob = true;
 
     //only if the save has skipped the unlock point
-    // unveilAction('invest');
-    // unveilAction('feelAGentleTug');
-    // unveilAction('learnToInquire');
+    // revealAction('invest');
+    // revealAction('feelAGentleTug');
+    // revealAction('learnToInquire');
 
     //foreach action, automation on
     // for(let actionVar in data.actions) {
@@ -242,9 +242,9 @@ function debug() {
     // unlockAction(data.actions['echoKindle']);
     // statAddAmount("legacy", 385423)
 
-    // unveilAction('earthMagic');
-    // unveilAction('gossipAroundCoffee');
-    // unveilAction('hearAboutTheLich');
+    // revealAction('earthMagic');
+    // revealAction('gossipAroundCoffee');
+    // revealAction('hearAboutTheLich');
 
     // data.actions.earthMagic.unlockCost = 0;
     // levelAllCharges();
@@ -264,9 +264,6 @@ function debug() {
 }
 
 function initializeData() {
-    if(globalVisible) {
-        document.getElementById("jobDisplay").style.display = "";
-    }
     createUpgrades();
     createAndLinkNewAttribute("doom", "doom");
     createAndLinkNewAttribute("echoes", "legacy");

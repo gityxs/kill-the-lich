@@ -22,7 +22,7 @@ function initializeDisplay() {
     initializeAmuletCards();
     setAllCaches(); //happens after generation
     showAttColors("awareness");
-    revealActionAtts(data.actions.reflect);
+    revealAttsOnAction(data.actions.reflect);
     data.actions.overclock.downstreamRatereflect = 0;
 
     updateUIOnLoad(); //update the elements after create
@@ -99,6 +99,8 @@ function generateActionDisplay(actionVar) {
     queueCache(`${actionVar}DeltaLevel1TimeContainer`)
     queueCache(`${actionVar}DeltaLevel1Time`);
 
+
+
     let iconImgName = (actionObj.isGenerator?"gear":actionObj.isSpell?"spell":"lightning") + actionObj.tier;
 
     let icon = Raw.html`
@@ -107,9 +109,8 @@ function generateActionDisplay(actionVar) {
             <div class="showthisUp" style="font-size:16px;width:350px">
                 <div style="font-size:20px;">Tier ${actionObj.tier + (actionObj.isGenerator?" Generator":actionObj.isSpell?" Spell":" Action")} 
                 </div>
-                
-                ${dataObj.iconText ? dataObj.iconText[language]+"<br>" : ""}
-                
+                <span id="${actionVar}IconText"></span>
+            
                 <div id="${actionVar}HighestLevelContainer" style="display:none">
                     <br>
                     Highest level: <span id="${actionVar}HighestLevel" style="font-weight:bold;"></span>
@@ -184,7 +185,7 @@ function generateActionDisplay(actionVar) {
             <span style="font-size:14px;position:relative;color:var(--text-muted)">
                 ${!actionObj.isSpell?"Level ":"Charges "}<span id="${actionVar}Level" style="color:var(--text-primary);font-weight:bold;">0</span>
                 ${actionObj.maxLevel !== undefined ? ` / <span id="${actionVar}MaxLevel" style="color:var(--text-primary);font-weight:bold;">0</span>` : ""} | 
-                <span id="${actionVar}Efficiency" style="color:var(--text-primary);font-weight:bold;"></span>% efficiency
+                <span id="${actionVar}Efficiency" style="color:var(--text-primary);font-weight:bold;"></span>% speed
                 ${!actionObj.wage ? "" : ` | Wage: $<span id="${actionVar}Wage" style="color:var(--wage-color);font-weight:bold;"></span>`}
                 ${!actionObj.isSpell ? "" : ` | <span id="${actionVar}Instability" style="color:var(--text-primary);font-weight:bold;">0</span>% instability
                 (+<span id="${actionVar}InstabilityToAdd" style="color:var(--text-primary);font-weight:bold;"></span>)` }
@@ -199,7 +200,6 @@ function generateActionDisplay(actionVar) {
     queueCache(`${actionVar}_automationMenuButton`);
     queueCache(`${actionVar}MenuButtons`);
 
-
     let menuContainer = Raw.html`
         <div id="${actionVar}MenuButtons" style="position:absolute;top:-20px;font-size:13px;left:3px;width:315px;">
             ${!dataObj.parentVar?"":`<span onclick="actionTitleClicked('${dataObj.parentVar}')" 
@@ -213,7 +213,7 @@ function generateActionDisplay(actionVar) {
         <span id="${actionVar}_storyMenuButton" onclick="clickActionMenuButton(event, '${actionVar}', 'story')" class="buttonSimple" 
             style="display:${dataObj.storyText?"":"none"};margin-right:3px;width:30px;height:30px;text-align:center;cursor:pointer;padding:0 4px;">Story</span>
         <span id="${actionVar}_automationMenuButton" onclick="clickActionMenuButton(event, '${actionVar}', 'automation')" class="buttonSimple" 
-            style="display:${actionObj.hasUpstream?"":"none"};margin-right:3px;width:30px;height:30px;text-align:center;cursor:pointer;padding:0 4px;">Automation</span>
+            style="display:${dataObj.hasUpstream?"":"none"};margin-right:3px;width:30px;height:30px;text-align:center;cursor:pointer;padding:0 4px;">Automation</span>
         </div>`;
 
     queueCache(`${actionVar}ResourceIncrease`);
@@ -342,8 +342,8 @@ let maxLevelTop = (data.gameSettings.viewDeltas && data.gameSettings.viewRatio) 
     let levelInfoContainer = Raw.html`
         <div id="${actionVar}_infoContainer" style="display:none;padding:5px;max-height:220px;overflow-y:auto;">
             Tier <b>${actionObj.tier}</b> ${actionObj.isSpell ? "Spell" : actionObj.isGenerator ? "Generator" : "Action"}<br>
-            Efficiency, found in the title, is Expertise Mult * Base Efficiency (x<b><span id="${actionVar}EfficiencyBase"></span></b>), capping at <b>100</b>%.<br>
-            ${actionObj.isGenerator?"":(`Consume and send rate is ${actionObj.tierMult()*100}% of ${dataObj.resourceName} * efficiency.<br>`)}<br>
+            Speed, found in the title, is Expertise Mult * Base Speed (x<b><span id="${actionVar}EfficiencyBase"></span></b>), capping at <b>100</b>%.<br>
+            ${actionObj.isGenerator?"":(`Consume and send rate is ${actionObj.tierMult()*100}% of ${dataObj.resourceName} * speed.<br>`)}<br>
             ${onComplete}
             ${onLevelText}
             ${dataObj.extraInfo ? dataObj.extraInfo[language]:""}
@@ -365,19 +365,48 @@ let maxLevelTop = (data.gameSettings.viewDeltas && data.gameSettings.viewRatio) 
     queueCache(`${actionVar}_checkbox2`);
     queueCache(`${actionVar}_track2`);
     queueCache(`${actionVar}_knob2`);
+    queueCache(`${actionVar}_automation_slider_advanced`)
+    queueCache(`${actionVar}_automation_slider_basic`)
+    queueCache(`${actionVar}SliderContainerAutomation`)
 
-    let preventParentSliderText = !actionObj.hasUpstream ? "": `
+    let preventParentSliderText = "";
+    if(dataObj.hasUpstream) {
+        preventParentSliderText += `
             <span id="${actionVar}_automationRevealContainer">
                 Enable automation to enable upstream sliders to this action when it is revealed, or when the max level increases:
-               
                 <label onclick="toggleAutomationOnReveal('${actionVar}')" style="position:relative;display:inline-block;width:50px;height:14px;cursor:pointer;">
                     <input id="${actionVar}_checkbox" type="checkbox" style="opacity:0;width:0;height:0;" checked="true">
                     <div id="${actionVar}_track" style="position:absolute;top:0;left:0;right:0;bottom:0;background-color:#ccc;border-radius:14px;">
                         <div id="${actionVar}_knob" style="position:absolute;height:16px;width:16px;left:4px;bottom:-1px;background-color:white;border-radius:50%;"></div>
                     </div>
                 </label><br>
+    
+                <div id="${actionVar}SliderContainerAutomation" style="display:none;">
+                    <div id="${actionVar}_automation_slider_advanced">
+                        <input type="number" id="${actionVar}NumInputAutomation" value="0" min="0" max="100" 
+                            style="margin-right:3px;font-size:10px;width:37px;vertical-align: top;"
+                            oninput="validateInput('${actionVar}', 'Automation')" onchange="downstreamNumberChanged('${actionVar}', 'Automation')" >
+                                
+                        <div id="${actionVar}_Automation_track_container" style="display:inline-block;width:250px;height:20px; 
+                            user-select:none;padding: 0 10px;box-sizing:border-box;cursor:pointer;">
+                            <div id="${actionVar}TrackAutomation" style="margin-top:6px;width:100%;height:5px; 
+                                background:linear-gradient(to right, red 10%, #ddd 10%, #ddd 90%, green 90%);position:relative;">
+                                <div id="${actionVar}ThumbAutomation" style="width:10px;height:20px;background-color: 
+                                    ${resourceColor};position:absolute;top:50%;transform:translate(-50%, -50%);pointer-events:none;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="${actionVar}_automation_slider_basic" style="display:flex;">
+                        ${createBasicSliderHTML(actionVar, 'Automation')}
+                    </div>
+    
+                </div>
             </span>
-            
+        `
+    }
+    if(dataObj.hasUpstream || dataObj.keepParentAutomation) {
+        preventParentSliderText += `
             <span id="${actionVar}_automationMaxLevelContainer">
                 Enable automation to disable upstream sliders to this action when it is max level:
                
@@ -388,7 +417,9 @@ let maxLevelTop = (data.gameSettings.viewDeltas && data.gameSettings.viewRatio) 
                     </div>
                 </label><br>
             </span>
-    `
+            
+        `
+    }
 
     let automationContainer = Raw.html`
         <div id="${actionVar}_automationContainer" style="display:none;padding:10px;max-height:220px;overflow-y:auto;
@@ -408,6 +439,7 @@ let maxLevelTop = (data.gameSettings.viewDeltas && data.gameSettings.viewRatio) 
     queueCache(`${actionVar}LockContainer`);
     queueCache(`${actionVar}UnlockCost`);
     queueCache(`${actionVar}UnlockCostContainer`);
+    queueCache(`${actionVar}UnlockText`);
 
     let lockOverAll = Raw.html`
         <div id="${actionVar}LockContainer" 
@@ -419,7 +451,9 @@ let maxLevelTop = (data.gameSettings.viewDeltas && data.gameSettings.viewRatio) 
                     Needs <span style="font-weight:bold;" id="${actionVar}UnlockCost">0</span> ${dataObj.resourceName}<br>
                     sent from <b>${data.actions[dataObj.parentVar]?actionData[dataObj.parentVar].title:"WAIT"}</b>.
                 </div>
-                ${dataObj.unlockMessage ? dataObj.unlockMessage[language]:""}
+                <div id="${actionVar}UnlockText">
+                    ${generateUnlockText(actionVar)}
+                </div>
             </span>
         </div>`;
 
@@ -579,7 +613,7 @@ function generateOutsideAttDisplay(actionObj, attObj, type) {
     if (type === "add") {
         tooltipText = `${text} to ${capitalizeFirst(statName)} per level.`;
     } else if (type === "eff") {
-        tooltipText = `${text} of ${capitalizeFirst(statName)}'s bonus is multiplied to base efficiency`;
+        tooltipText = `${text} of ${capitalizeFirst(statName)}'s bonus is multiplied to base speed`;
     } else if (type === "exp") {
         let target = actionObj.isGenerator ? "exp to level" : "progress to complete";
         tooltipText = `${text} of ${capitalizeFirst(statName)} bonus reduces ${target}`;
@@ -668,7 +702,7 @@ function generateActionEfficiencyAtts(actionObj) {
 
     queueCache(`${actionVar}AttEfficiencyContainer`);
     let expertiseModsStr =
-        `<div id="${actionVar}AttEfficiencyContainer" style="display:none;">${isFirst?"":"<br>"}<u>Stat Modifiers to Efficiency:</u><br>`;
+        `<div id="${actionVar}AttEfficiencyContainer" style="display:none;">${isFirst?"":"<br>"}<u>Stat Modifiers to Speed:</u><br>`;
 
     for(let attObj of dataObj.efficiencyAtts) {
         let attVar = attObj[0];
@@ -691,10 +725,28 @@ function generateActionEfficiencyAtts(actionObj) {
     queueCache(`${actionVar}EfficiencyMult`);
     queueCache(`${actionVar}EfficiencyBase`);
     expertiseModsStr += Raw.html`
-        <span style="color:var(--text-muted);">Total Expertise Mult = x</span><b><span id="${actionVar}EfficiencyMult"></span></b>
+        <span style="color:var(--text-muted);">Total Speed Mult = x</span><b><span id="${actionVar}EfficiencyMult"></span></b>
     </div>`;
     
     return expertiseModsStr;
+}
+
+function generateUnlockText(actionVar) {
+    let dataObj = actionData[actionVar];
+    let unlockText = "On Unlock:<br>";
+    let unlockTextFound = false;
+    for(let actionTrigger of dataObj.actionTriggers) {
+        let when = actionTrigger[0];
+        let type = actionTrigger[1];
+        let info = actionTrigger[2];
+        let extra = actionTrigger[3]; //used for numbers
+
+        if(when === "unlock") {
+            unlockTextFound = true;
+            unlockText += actionTriggerText(type, info, extra) + "<br>"
+        }
+    }
+    return (unlockTextFound ? unlockText:"") + (dataObj.unlockMessage ? dataObj.unlockMessage[language]:"");
 }
 
 function createDownStreamSliders(actionObj, dataObj) {
@@ -703,7 +755,7 @@ function createDownStreamSliders(actionObj, dataObj) {
         return "";
     }
     for(let downstreamVar of dataObj.downstreamVars) {
-        if(!data.actions[downstreamVar] || !data.actions[downstreamVar].hasUpstream) {
+        if(!data.actions[downstreamVar] || !actionData[downstreamVar].hasUpstream) {
             continue;
         }
         let title = data.actions[downstreamVar] ? actionData[downstreamVar].title : downstreamVar;
@@ -769,12 +821,15 @@ function createBasicSliderHTML(actionVar, downstreamVar) {
     ];
 
     let optionsHTML = '';
+    let dataObj = actionData[actionVar];
+    let plane = dataObj.plane;
     for (let option of options) {
         const elementId = `${actionVar}_${downstreamVar}_option_${option.value}`;
         const initialBgColor = option.value === 0 ? 'blue' : 'transparent';
+        let opacity = (plane === 2 && option.value !== 100) ? ".5" : "1";
         optionsHTML += `
-            <div id="${elementId}" style="border:2px solid ${option.color};padding:5px 20px;margin:2px;cursor:pointer;user-select:none;background-color:${initialBgColor};border-radius:5px;"
-                onmouseover="handleSliderMouseOver('${elementId}')" onmouseout="handleSliderMouseOut('${elementId}', '${option.color}')"
+            <div id="${elementId}" style="opacity:${opacity};border:2px solid ${option.color};padding:5px 20px;margin:2px;cursor:pointer;user-select:none;background-color:${initialBgColor};border-radius:5px;"
+                onmouseover="handleSliderMouseOver('${actionVar}', '${downstreamVar}', '${elementId}')" onmouseout="handleSliderMouseOut('${elementId}', '${option.color}')"
                 onclick="handleSliderClick('${elementId}', '${actionVar}', '${downstreamVar}', ${option.value})">
                 ${option.label}
             </div>
@@ -783,27 +838,107 @@ function createBasicSliderHTML(actionVar, downstreamVar) {
     return `${optionsHTML}`;
 }
 
-function handleSliderMouseOver(elementId) {
-    document.getElementById(elementId).style.borderColor = 'yellow';
+function handleSliderMouseOver(actionVar, downstreamVar, elementId) {
+    if(downstreamVar === "Automation" && actionData[actionVar].hasUpstream) {
+        document.getElementById(elementId).style.borderColor = "yellow";
+        return;
+    }
+    document.getElementById(elementId).style.borderColor = data.gameState === "KTL" ? "red" : "yellow";
 }
 
 function handleSliderMouseOut(elementId, originalColor) {
     document.getElementById(elementId).style.borderColor = originalColor;
 }
 
-function handleSliderClick(clickedId, actionVar, downstreamVar, value) {
-    // const allValues = [0, 10, 50, 100];
-    // for (let val of allValues) {
-    //     const optionId = `${actionVar}_${downstreamVar}_option_${val}`;
-    //     document.getElementById(optionId).style.backgroundColor = 'transparent';
-    // }
-    //
-    // document.getElementById(clickedId).style.backgroundColor = getResourceColor(data.actions[actionVar]);
+function replaceIconText(actionVar) {
+    let actionObj = data.actions[actionVar];
+    let dataObj = actionData[actionVar];
 
+    let iconTextContainer = document.getElementById(`${actionVar}IconText`);
+    iconTextContainer.replaceChildren(); //clears all, including listeners
+
+    let iconText = "";
+    for(let actionTrigger of dataObj.actionTriggers) {
+        let when = actionTrigger[0];
+        let type = actionTrigger[1];
+        let info = actionTrigger[2];
+        let extra = actionTrigger[3]; //used for numbers
+        if(type === "purchase" && data.actions[info].purchased) {
+            continue;
+        }
+
+        let text = "";
+        if(when === "info") {
+            if(type === "wage") {
+                text += `Base wage: $${intToString(actionData[info].wage, 2)}<br>`
+                text += `Current wage: $${intToString(data.actions[info].wage, 2)}<br>`
+            } else if(type === "text") {
+                text += info + "<br>";
+            } else if(type === "cap") {
+                text += "Market Cap: " + intToString(actionData[info][extra], 3) + "<br>"
+            }
+        } else if(when === "unlock") {
+            text += "On Unlock: "
+            text += actionTriggerText(type, info, extra) + "<br>"
+        } else if(when.indexOf("level_") >= 0) {
+            let level = when.substring("level_".length);
+            text += `Level ${level}: `
+            text += actionTriggerText(type, info, extra) + "<br>"
+        } else if(when === "level") {
+            text += "On Level: "
+            text += actionTriggerText(type, info, extra) + "<br>"
+        } else if(when === "complete") {
+            text += "On Complete: "
+            text += actionTriggerText(type, info, extra) + "<br>"
+        }
+
+        if(text === "") {
+            console.log("error: didn't properly handle icon data: ");
+            console.log(actionTrigger);
+        }
+        iconText += text;
+    }
+    iconTextContainer.innerHTML = iconText;
+}
+
+function actionTriggerText(type, info, extra) {
+    let text = "";
+    if(type === "reveal") {
+        text += `Reveal ${data.actions[info].purchased ? actionData[info].title:"???"}`
+    } else if(type === "purchase") {
+        if(data.actions[info].purchased) {
+            // text += `<s>Purchase ${actionData[info].title}</s>`
+        } else {
+            text += `Purchase ${actionData[info].title}`
+        }
+    } else if(type === "unlock") {
+        text += `Unlock ${data.actions[info].purchased ? actionData[info].title:"???"}`
+    } else if(type === "addMaxLevels") {
+        text += `Add <b>+${extra}</b> max level${extra > 1?"s":""} to ${data.actions[info].purchased ? actionData[info].title:"???"}`
+    } else if(type === "revealUpgrade") {
+        text += `Show Upgrade: ${upgradeData[info].title}`
+    } else if(type === "addLegacy") {
+        let levelMult = 1;
+        if(info) {
+            levelMult += data.actions[info].level/10;
+        }
+        let legacyGain = extra * levelMult * (data.gameState === "KTL" ? data.legacyMultKTL : 1);
+        text += `+<b>${intToString(legacyGain, 2)}</b> Legacy`
+    } else if(type === "addAC") {
+        let ancientCoinGain = extra * (data.gameState === "KTL" ? data.ancientCoinMultKTL : 1);
+        text += `+<b>${intToString(ancientCoinGain, 1)}</b> Ancient Coins`
+    }
+    return text;
+}
+
+function handleSliderClick(clickedId, actionVar, downstreamVar, value) {
+    if(downstreamVar !== "Automation" && data.gameState === "KTL") {
+        return;
+    }
     setSliderUI(actionVar, downstreamVar, value);
 }
 
-function attachCustomSliderListeners() {
+function attachSliderListeners() {
     for (let actionVar in data.actions) {
         let dataObj = actionData[actionVar];
         let actionObj = data.actions[actionVar];
@@ -815,121 +950,136 @@ function attachCustomSliderListeners() {
         })
 
         for (let downstreamVar of dataObj.downstreamVars) {
-            const container = document.getElementById(`${actionVar}_${downstreamVar}_track_container`);
-            const thumb = document.getElementById(`${actionVar}Thumb${downstreamVar}`);
-
-            let downstreamObj = data.actions[downstreamVar];
-            if (!downstreamObj.hasUpstream) {
-                continue;
-            }
-
-            container.addEventListener('mouseenter', () => {
-                thumb.style.border = (actionObj.isRunning && dataObj.plane !== 2) ? "2px solid yellow" : "2px solid red";
-            });
-
-            container.addEventListener('mouseleave', () => {
-                thumb.style.border = "";
-            });
-
-            const handleDrag = (event) => {
-                event.preventDefault();
-                const track = document.getElementById(`${actionVar}Track${downstreamVar}`);
-                if (!track) return;
-
-                const trackRect = track.getBoundingClientRect();
-                let newLeft = event.clientX - trackRect.left;
-
-                if (newLeft < 0) newLeft = 0;
-                if (newLeft > trackRect.width) newLeft = trackRect.width;
-
-                const newValue = Math.round((newLeft / trackRect.width) * 100);
-
-                if (data.actions[actionVar][`downstreamRate${downstreamVar}`] === newValue) {
-                    return;
-                }
-
-                data.actions[actionVar][`downstreamRate${downstreamVar}`] = newValue;
-                setSliderUI(actionVar, downstreamVar, newValue);
-            };
-
-            const stopDrag = () => {
-                document.removeEventListener('mousemove', handleDrag);
-                document.removeEventListener('mouseup', stopDrag);
-            };
-
-            container.addEventListener('mousedown', (event) => {
-                if(!actionObj.isRunning || dataObj.plane === 2) {
-                    return;
-                }
-                handleDrag(event);
-                document.addEventListener('mousemove', handleDrag);
-                document.addEventListener('mouseup', stopDrag);
-            });
-
-            const hoverTargetContainer = document.getElementById(`${actionVar}SliderContainer${downstreamVar}`);
-            const line = document.getElementById(`${actionVar}_${downstreamVar}_Line_Outer`);
-            const lockContainer = document.getElementById(`${downstreamVar}LockContainer`);
-
-            hoverTargetContainer.addEventListener('mouseenter', () => {
-                line.style.borderColor = "yellow";
-                views.updateVal(`${downstreamVar}LargeVersionContainer`, "yellow", "style.borderColor");
-                lockContainer.style.borderColor = "yellow";
-            });
-
-            hoverTargetContainer.addEventListener('mouseleave', () => {
-                line.style.borderColor = "black";
-                setBorderColor(downstreamVar, selectedStat);
-            });
+            attachSliderListenersHelper(actionVar, downstreamVar);
+        }
+        if(actionObj.hasUpstream) {
+            attachSliderListenersHelper(actionVar, "Automation");
         }
     }
 }
 
+function attachSliderListenersHelper(actionVar, downstreamVar) {
+    const container = document.getElementById(`${actionVar}_${downstreamVar}_track_container`);
+    const thumb = document.getElementById(`${actionVar}Thumb${downstreamVar}`);
 
+    let dataObj = actionData[actionVar];
+    let actionObj = data.actions[actionVar];
+    if ((downstreamVar === "Automation" && !dataObj.hasUpstream) ||
+        (downstreamVar !== "Automation" && !actionData[downstreamVar].hasUpstream)) {
+        return;
+    }
 
-function highlightLine(borderId) {
-    const line = document.getElementById(borderId);
-    let miniVersion = scaleByPlane[data.planeTabSelected] < .55;
-    if (line) {
-        if(miniVersion) {
-            line.style.boxShadow = '0 0 40px 11px yellow';
-        } else {
-            line.style.boxShadow = '0 0 18px 5px yellow';
+    container.addEventListener('mouseenter', () => {
+        thumb.style.border = (actionObj.isRunning && dataObj.plane !== 2) ? "2px solid yellow" : "2px solid red";
+    });
+
+    container.addEventListener('mouseleave', () => {
+        thumb.style.border = "";
+    });
+
+    const handleDrag = (event) => {
+        event.preventDefault();
+        const track = document.getElementById(`${actionVar}Track${downstreamVar}`);
+        if (!track) return;
+
+        const trackRect = track.getBoundingClientRect();
+        let newLeft = event.clientX - trackRect.left;
+
+        if (newLeft < 0) newLeft = 0;
+        if (newLeft > trackRect.width) newLeft = trackRect.width;
+
+        const newValue = Math.round((newLeft / trackRect.width) * 100);
+
+        setSliderUI(actionVar, downstreamVar, newValue);
+    };
+
+    const stopDrag = () => {
+        document.removeEventListener('mousemove', handleDrag);
+        document.removeEventListener('mouseup', stopDrag);
+    };
+
+    container.addEventListener('mousedown', (event) => {
+        if(!actionObj.isRunning || dataObj.plane === 2) {
+            return;
         }
-        line.querySelector(".line-label-top").style.opacity = "1";
+        handleDrag(event);
+        document.addEventListener('mousemove', handleDrag);
+        document.addEventListener('mouseup', stopDrag);
+    });
+
+
+    if(downstreamVar === "Automation") {
+        const hoverTargetContainer = document.getElementById(`${actionVar}_automationRevealContainer`);
+        let parentVar = dataObj.parentVar;
+        const line = document.getElementById(`${parentVar}_${actionVar}_Line_Outer`);
+        hoverTargetContainer.addEventListener('mouseenter', () => {
+            line.style.borderColor = "yellow";
+            views.updateVal(`${parentVar}LargeVersionContainer`, "yellow", "style.borderColor");
+            views.updateVal(`${parentVar}LockContainer`, "yellow", "style.borderColor");
+        });
+
+        hoverTargetContainer.addEventListener('mouseleave', () => {
+            line.style.borderColor = "black";
+            setBorderColor(parentVar, selectedStat);
+        });
+    }
+    if(downstreamVar !== "Automation") {
+        const hoverTargetContainer = document.getElementById(`${actionVar}SliderContainer${downstreamVar}`);
+        const line = document.getElementById(`${actionVar}_${downstreamVar}_Line_Outer`);
+        hoverTargetContainer.addEventListener('mouseenter', () => {
+            line.style.borderColor = "yellow";
+            views.updateVal(`${downstreamVar}LargeVersionContainer`, "yellow", "style.borderColor");
+            views.updateVal(`${downstreamVar}LockContainer`, "yellow", "style.borderColor");
+        });
+
+        hoverTargetContainer.addEventListener('mouseleave', () => {
+            line.style.borderColor = "black";
+            setBorderColor(downstreamVar, selectedStat);
+        });
     }
 }
-function unhighlightLine(borderId) {
+
+
+
+function highlightLine(borderId, lineData) {
+    if(data.actions[lineData.from][lineData.to + "TempFocusMult"] < 2) { //for loading
+        data.actions[lineData.from][lineData.to + "TempFocusMult"] = 2;
+    }
+
     const line = document.getElementById(borderId);
-    if (line) {
-        line.style.boxShadow = '';
-        line.querySelector(".line-label-top").style.opacity = "0";
-    }
+    line.style.boxShadow = scaleByPlane[data.planeTabSelected] < .55 ? '0 0 40px 11px yellow' : '0 0 18px 5px yellow';
+    line.querySelector(".line-label-top").style.opacity = "1";
 }
-
-
+function unhighlightLine(borderId, lineData) {
+    const line = document.getElementById(borderId);
+    line.style.boxShadow = '';
+    line.querySelector(".line-label-top").style.opacity = "0";
+}
 function handleLineClick(borderId, lineData) {
     const existingIndex = data.focusSelected.findIndex(entry => entry.borderId === borderId);
 
     if (existingIndex !== -1) {
-        unhighlightLine(borderId);
+        unhighlightLine(borderId, lineData);
         data.focusSelected.splice(existingIndex, 1);
     } else {
         if (data.focusSelected.length >= data.maxFocusAllowed) {
             const removed = data.focusSelected.shift();
-            unhighlightLine(removed.borderId);
+            unhighlightLine(removed.borderId, removed.lineData);
         }
         data.focusSelected.push({ borderId, lineData });
-        highlightLine(borderId);
+        highlightLine(borderId, lineData);
     }
 }
 
 function getLabelOrientation(angle) {
     const norm = ((angle % 360) + 360) % 360;
 
-    if ((norm >= 60 && norm <= 120) || (norm >= 240 && norm <= 300)) {
-        return "vertical"; // counter-rotate
+    if (norm >= 60 && norm <= 120) {
+        return "vertical1";
+    } else if(norm >= 240 && norm <= 300) {
+        return "vertical2";
     } else if (norm > 120 && norm < 240) {
-        return "flipped"; // upside-down, but visually consistent
+        return "flipped";
     } else {
         return "horizontal";
     }
@@ -961,7 +1111,7 @@ function generateLinesBetweenActions() {
             let lineId = `${actionVar}_${downstreamVar}_Line_Inner`;
 
 
-            //Rotated retangle with inner line ready to adjust width of.
+            //Rotated rectangle with inner line ready to adjust width of.
             let length = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
             let angle = Math.atan2(y2 - y1, x2 - x1) * (180 / Math.PI);
 
@@ -970,11 +1120,13 @@ function generateLinesBetweenActions() {
             let topY = "-12px";
             let bottomY = "12px";
             let labelWrapperTransform = "translate(-50%, -50%) ";
+            let labelDistance = "50%";
 
-            if (labelMode === "vertical") {
+            if (labelMode === "vertical1" || labelMode === "vertical2") {
                 labelWrapperTransform += `rotate(${-angle}deg)`;
                 topY = "";
                 bottomY = "";
+                labelDistance = labelMode === "vertical1" ? "60%" : "40%";
             } else if (labelMode === "flipped") {
                 labelWrapperTransform += `rotate(180deg)`;
             }
@@ -994,7 +1146,7 @@ function generateLinesBetweenActions() {
                      onclick="${onclickText}">
                      
                     <div id="${lineId}" style="width: 100%; height: 0; background-color: ${targetBackgroundColor}; position: relative;text-align:center;">
-                        <div id="${lineId}_Container" style="display: flex;position: absolute;left: 50%;top: 50%;
+                        <div id="${lineId}_Container" style="display: flex;position: absolute;left: ${labelDistance};top: 50%;
                             transform:${labelWrapperTransform};flex-direction: column;align-items: center;pointer-events: none;">
                             <div id="${lineId}_Top" class="line-label-top hyperVisible" style="opacity:0;position:relative;color: yellow;font-size: 14px;font-weight: bold;line-height: 1;top:${topY}">
                                 x2

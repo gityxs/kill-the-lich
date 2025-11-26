@@ -18,9 +18,20 @@ function setSliderUI(fromAction, toAction, newValue) {
     }
 
     document.getElementById(fromAction + "NumInput" + toAction).value = newValue;
-    document.getElementById(fromAction + "_" + toAction + "_Line_Inner").style.height = (newValue / 100 * 20) + "px";
+    if(toAction !== "Automation") {
+        document.getElementById(fromAction + "_" + toAction + "_Line_Inner").style.height = (newValue / 100 * 20) + "px";
+    }
     updateCustomThumbPosition(fromAction, toAction, newValue);
-    data.actions[fromAction]["downstreamRate" + toAction] = Math.max(0, newValue);
+
+    let actionObj = data.actions[fromAction];
+
+    if(toAction === "Automation") {
+        actionObj.automationOnReveal = newValue;
+        views.updateVal(`${fromAction}_checkbox`, newValue > 0, "checked");
+        updateAutomationSwitch(fromAction);
+    } else {
+        actionObj["downstreamRate" + toAction] = Math.max(0, newValue);
+    }
 
     const allValues = [0, 10, 50, 100];
     for (let val of allValues) {
@@ -50,6 +61,9 @@ function validateInput(fromAction, toAction) {
 }
 function downstreamNumberChanged(fromAction, toAction) {
     let newValue = document.getElementById(fromAction + "NumInput" + toAction).value;
+    if(data.gameState === "KTL") {
+        return;
+    }
     setSliderUI(fromAction, toAction, newValue); //number input changed
 }
 
@@ -57,7 +71,8 @@ function toggleAllZero(actionVar) {
     let dataObj = actionData[actionVar];
     dataObj.downstreamVars.forEach(function (toAction) {
         let downstreamObj = data.actions[toAction];
-        if(!downstreamObj || !downstreamObj.hasUpstream || !downstreamObj.visible) {
+        let downstreamDataObj = actionData[toAction];
+        if(!downstreamObj || !downstreamDataObj.hasUpstream || !downstreamObj.visible) {
             return;
         }
         setSliderUI(actionVar, toAction, 0); //0 button
@@ -67,7 +82,8 @@ function toggleAllHundred(actionVar) {
     let dataObj = actionData[actionVar];
     dataObj.downstreamVars.forEach(function (toAction) {
         let downstreamObj = data.actions[toAction];
-        if(!downstreamObj || !downstreamObj.hasUpstream || !downstreamObj.visible) {
+        let downstreamDataObj = actionData[toAction];
+        if(!downstreamObj || !downstreamDataObj.hasUpstream || !downstreamObj.visible) {
             return;
         }
         setSliderUI(actionVar, toAction, 100); //100 button
@@ -153,6 +169,7 @@ function centerScreen() {
 }
 
 function hoveringIcon(actionVar) {
+    replaceIconText(actionVar);
     actionData[actionVar].hoveringIcon = true;
 }
 function stopHoveringIcon(actionVar) {
@@ -390,8 +407,12 @@ function toggleAutomationOnReveal(actionVar) {
     let actionObj = data.actions[actionVar];
     const checkbox = document.getElementById(`${actionVar}_checkbox`);
 
-    actionObj.automationOnReveal = checkbox.checked;
+    setSliderUI(actionVar, "Automation", checkbox.checked ? 100 : 0);
+    updateAutomationSwitch(actionVar);
+}
 
+function updateAutomationSwitch(actionVar) {
+    const checkbox = document.getElementById(`${actionVar}_checkbox`);
     if (checkbox.checked) {
         views.updateVal(`${actionVar}_track`, "#2196F3", "style.backgroundColor");
         views.updateVal(`${actionVar}_knob`, "translateX(26px)", "style.transform");
@@ -453,6 +474,12 @@ function clickActionMenu(actionVar, menuVar) {
     views.updateVal(`${actionVar}_${menuVar}MenuButton`, "var(--selection-color)", "style.backgroundColor");
 
     actionObj.currentMenu = menuVar;
+
+    //if story is clicked, clear the color
+    if(menuVar === "story") {
+        views.updateVal(`${actionVar}_${menuVar}MenuButton`, "", "style.color");
+        actionObj.readStory = data.saveVersion;
+    }
 }
 
 function clickMenuButton() {

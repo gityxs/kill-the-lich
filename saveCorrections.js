@@ -65,6 +65,12 @@ function saveFileCorrection(saveVersionFromLoad) {
             if(actionObj.unlocked || actionObj.prevUnlockTime || actionObj.unlockTime || actionObj.highestLevel > 0) {
                 actionObj.hasBeenUnlocked = true;
             }
+
+            for(let downstreamVar of dataObj.downstreamVars) {
+                if(!isAttentionLine(actionVar, downstreamVar)) {
+                    actionObj[downstreamVar + "TempFocusMult"] = 1;
+                }
+            }
         }
         data.upgrades.buyNicerStuff.upgradesAvailable = 3;
         if(data.upgrades.buyNicerStuff.upgradePower === 3) {
@@ -80,6 +86,13 @@ function saveFileCorrection(saveVersionFromLoad) {
             data.upgrades.retrieveMyUnusedResources.isFullyBought = true;
         }
     }
+    if(saveVersionFromLoad <= 4) {
+        data.actions.harnessOverflow.maxLevel = 10 + data.actions.remember.level*3;
+
+        for(let id in data.toastStates) {
+            data.toastStates[id] = 'hidden';
+        }
+    }
     return refundAmount;
 }
 
@@ -88,11 +101,24 @@ function saveFileCorrectionAfterLoad(saveVersionFromLoad) {
     if(saveVersionFromLoad <= 2) {
         if(data.actions.studyAdvancedEarthMagic.level >= 2) {
             purchaseAction('reinforceArmor')
-            unveilAction('reinforceArmor');
+            revealAction('reinforceArmor');
         }
         if(data.actions.studyAdvancedEarthMagic.level >= 3) {
             purchaseAction('restoreEquipment')
-            unveilAction('restoreEquipment');
+            revealAction('restoreEquipment');
+        }
+    }
+    if(saveVersionFromLoad <= 4) {
+        if(data.actions.moveEarth.level >= 1) { revealAction('digFoundation') }
+        if(data.actions.hardenEarth.level >= 1) { revealAction('stoneCompression') }
+        if(data.actions.shapeEarth.level >= 1) { revealAction('shapeBricks') }
+        if(data.actions.practicalMagic.level >= 1) { revealAction('tidyMagesmithShop') }
+        if(data.actions.illuminate.level >= 1) { revealAction('clearTheBasement') }
+        if(data.actions.moveIron.level >= 1) { revealAction('moldBarsFromScrap') }
+
+
+        if(data.upgrades.stopLettingOpportunityWait.upgradePower === 2) {
+            revealUpgrade("temperMyDesires")
         }
     }
 }
