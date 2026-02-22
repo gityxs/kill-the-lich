@@ -29,26 +29,34 @@
     --menu-text-background-color: #ffffff;
     --text-color: #e0e0e0;
 
+    --menu-tab-button-color-2: #132a2d;
+    --menu-tab-hover-color-2: #164e53;
+    --menu-tab-selected-color-2: #0d9488;
+    --menu-tab-button-color-3: #1a2416;
+    --menu-tab-hover-color-3: #2d4a1e;
+    --menu-tab-selected-color-3: #65a30d;
+    --menu-tab-button-color-4: #2b1212;
+    --menu-tab-hover-color-4: #6b1d1d;
+    --menu-tab-selected-color-4: #f87171;
+    --AC-color: #0d9488;
+    --AW-color: #65a30d;
 
-    /* World 0: Physical (Deeper, more subtle slate) */
+
     --world-0-bg-primary: #1e1e2e;
     --world-0-bg-secondary: #262639;
     --world-0-bg-tertiary: #33334d;
 
-    /* World 1: Mana (Deeper, glowing ocean abyss) */
     --world-1-bg-primary: #0c2b40;
     --world-1-bg-secondary: #0f3b59;
     --world-1-bg-tertiary: #15517a;
 
-    /* World 2: Combat (Smoldering embers, dried blood) */
     --world-2-bg-primary: #3a1919;
     --world-2-bg-secondary: #512323;
     --world-2-bg-tertiary: #6d3030;
 
-    /* World 3: Essence (Faint, mystical shadow) */
-    --world-3-bg-primary: #2a1e2e;
-    --world-3-bg-secondary: #3d2b42;
-    --world-3-bg-tertiary: #533b58;
+    --world-3-bg-primary: #042d1d;
+    --world-3-bg-secondary: #06462d;
+    --world-3-bg-tertiary: #085f3f;
 
 
     /*--world-0-bg-primary: #1e1e2e;*/
@@ -86,12 +94,12 @@
     --legacy-color: #db9812;
     --legacy-color-dim: #a47413;
     --legacy-color-bg: #5c4003;
-    --doom-color: #781a78;
-    --doom-color-dim: #5c155c;
-    --doom-color-bg: #2e082e;
-    --gold-color: #a99102;
-    --gold-color-dim: #766607;
-    --gold-color-bg: #363107;
+    --hope-color: #4A148C;
+    --hope-color-dim: #3e1175;
+    --hope-color-bg: #2a0b51;
+    --coins-color: #a99102;
+    --coins-color-dim: #766607;
+    --coins-color-bg: #363107;
     --fortune-color: #9333ea;
     --fortune-color-dim: #6b21a8;
     --fortune-color-bg: #2a0c3f;
@@ -113,12 +121,30 @@
     --bravery-color: #b23c22;
     --bravery-color-dim: #802e1d;
     --bravery-color-bg: #391610;
-    --spark-color: #1a9480;
-    --spark-color-dim: #15675a;
-    --spark-color-bg: #0b2e29;
+    --charge-color: #cdbb22;
+    --charge-color-dim: #948718;
+    --charge-color-bg: #58500e;
+    --echoes-color: #dcd0e7;
+    --echoes-color-dim: #90839b;
+    --echoes-color-bg: #5d5269;
     --arcana-color: #c620f5;
     --arcana-color-dim: #a122c4;
     --arcana-color-bg: #2a0932;
+    --essence-color: #1fa1f2;
+    --essence-color-dim: #1983c5;
+    --essence-color-bg: #0e4769;
+    --deathEnergy-color: #a290b5;
+    --deathEnergy-color-dim: #7e708d;
+    --deathEnergy-color-bg: #5c5167;
+    --lifeEnergy-color: #52db12;
+    --lifeEnergy-color-dim: #41b10e;
+    --lifeEnergy-color-bg: #32800c;
+    --silt-color: #b08d57;
+    --silt-color-dim: #8c6f45;
+    --silt-color-bg: #5c492d;
+    /*--exp-color: #25b1cc;*/
+    /*--exp-color-dim: #1e899e;*/
+    /*--exp-color-bg: #0a2e36;*/
 
     --wage-color: #ffdd00;
 }
@@ -183,8 +209,8 @@ body.lightMode {
     --legacy-color-dim: rgba(219, 152, 18, 0.5);
     --mana-color:#74c7ec;
     --mana-color-dim: rgba(116, 199, 236, 0.5);
-    --gold-color:#FFD700;
-    --gold-color-dim: rgba(255, 215, 0, 0.5);
+    --coins-color:#FFD700;
+    --coins-color-dim: rgba(255, 215, 0, 0.5);
     --conversations-color: #c8fff4;
     --conversations-color-dim: rgba(200, 255, 244, 0.5);
     --fear-color: #d2062a;
@@ -346,6 +372,27 @@ body {
 
 .menuTab:hover {
     background-color:var(--menu-tab-hover-color);
+}
+
+.menuColor2 {
+    background-color:var(--menu-tab-button-color-2);
+}
+.menuColor2:hover {
+    background-color:var(--menu-tab-hover-color-2);
+}
+
+.menuColor3 {
+    background-color:var(--menu-tab-button-color-3);
+}
+.menuColor3:hover {
+    background-color:var(--menu-tab-hover-color-3);
+}
+
+.menuColor4 {
+    background-color:var(--menu-tab-button-color-4);
+}
+.menuColor4:hover {
+    background-color:var(--menu-tab-hover-color-4);
 }
 
 .menuDisplay {
@@ -766,4 +813,69 @@ input {
 .card-footer-info {
     font-size: 14px;
     color: #a0a0a0;
+}
+
+
+
+.trigger-form-box {
+    border: 1px solid #ccc;
+    background: var(--menu-tab-background-color);
+    padding: 10px;
+    margin: 5px 0;
+    border-radius: 4px;
+}
+
+.trigger-num-input {
+    width: 60px;
+}
+
+.trigger-form-actions {
+    margin-top: 8px;
+    display: flex;
+    align-items: center;
+}
+
+/* Saved Item Styles */
+.custom-trigger-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--menu-tab-background-color);
+    border-left: 3px solid #4CAF50;
+    margin-top: 5px;
+    padding: 6px 10px;
+    border-radius: 3px;
+    font-size: 0.9em;
+}
+
+.trigger-delete {
+    cursor: pointer;
+    color: #999;
+    font-weight: bold;
+    margin-left: 10px;
+}
+.trigger-delete:hover {
+    color: red;
+}
+
+.trigger-info-box {
+    padding: 10px;
+    margin-top: 10px;
+}
+
+.trigger-info-line {
+    margin-bottom: 4px;
+}
+
+.action-link {
+    font-weight: bold;
+    cursor: pointer;
+    /*transition: color 0.2s, background-color 0.2s;*/
+    padding: 0 2px;
+    border-radius: 3px;
+}
+
+.action-link:hover {
+    background-color: #000000;
+    text-decoration: underline;
 }

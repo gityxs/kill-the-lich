@@ -19,16 +19,14 @@ function setSliderUI(fromAction, toAction, newValue) {
 
     document.getElementById(fromAction + "NumInput" + toAction).value = newValue;
     if(toAction !== "Automation") {
-        document.getElementById(fromAction + "_" + toAction + "_Line_Inner").style.height = (newValue / 100 * 20) + "px";
+        views.updateVal(`${fromAction}_${toAction}_Line_Inner`, (newValue / 100 * 20) + "px", "style.height");
     }
     updateCustomThumbPosition(fromAction, toAction, newValue);
 
     let actionObj = data.actions[fromAction];
 
     if(toAction === "Automation") {
-        actionObj.automationOnReveal = newValue;
-        views.updateVal(`${fromAction}_checkbox`, newValue > 0, "checked");
-        updateAutomationSwitch(fromAction);
+        changeAutomationOnReveal(fromAction, newValue);
     } else {
         actionObj["downstreamRate" + toAction] = Math.max(0, newValue);
     }
@@ -42,8 +40,67 @@ function setSliderUI(fromAction, toAction, newValue) {
     const targetId = `${fromAction}_${toAction}_option_${newValue}`;
     const targetElement = document.getElementById(targetId);
     if (targetElement) {
-        targetElement.style.backgroundColor = getResourceColor(data.actions[fromAction]);
+        targetElement.style.backgroundColor = getResourceColor(fromAction);
     }
+}
+
+function adjustNWLevels() {
+    data.actions.destroyEasternMonolith.maxLevel = 1 + data.lichKills;
+}
+
+//only need to happen on amulet use, since they're saved to the action
+function adjustBrythalMaxLevels() {
+    data.actions.bodyAwareness.maxLevel = actionData.bodyAwareness.maxLevel +
+        data.upgrades.valueMyBody.upgradePower;
+    if(data.upgrades.pickUpValuablePlants.upgradePower > 0) {
+        revealAction("makeMoney")
+        revealAction("spendMoney")
+    }
+    if(data.upgrades.startCasualChats.upgradePower > 0) {
+        revealAction("socialize")
+        revealAction("meetPeople")
+    }
+    applyUpgradeEffects()
+}
+
+//because the magic actions load unlocked, they don't re-trigger adding maxing levels
+function adjustMagicMaxLevels() {
+    data.actions.spellResearch.maxLevel = actionData.spellResearch.maxLevel +
+        data.upgrades.valueMyResearch.upgradePower;
+    data.actions.etchTheCircle.maxLevel = 1 +
+        data.actions.chargeInk.level +
+        (data.actions.locateWeakness.unlocked?1:0) +
+        (data.actions.boldenLines.unlocked?1:0) +
+        (data.actions.chargeInk.unlocked?1:0);
+    data.actions.condenseMana.maxLevel = 5 +
+        (data.actions.spinMana.unlocked?5:0)+
+        (data.actions.accelerateManaFlow.unlocked?5:0)+
+        (data.actions.loopTheCircuit.unlocked?5:0);
+    data.actions.infuseTheHide.maxLevel = 1 +
+        (data.actions.boldenLines.unlocked?2:0) +
+        (data.actions.grindPigments.unlocked?2:0);
+    data.actions.castToFail.maxLevel = 0 +
+        (data.actions.overcharge.unlocked?1:0) +
+        (data.actions.overboost.unlocked?1:0) +
+        (data.actions.overponder.unlocked?1:0) +
+        (data.actions.overwork.unlocked?1:0) +
+        (data.actions.overproduce.unlocked?1:0) +
+        (data.actions.overdrive.unlocked?1:0) +
+        (data.actions.overtalk.unlocked?1:0) +
+        (data.actions.overhear.unlocked?1:0) +
+        (data.actions.overhype.unlocked?1:0) +
+        (data.actions.createMounds.unlocked?1:0) +
+        (data.actions.hardenDirt.unlocked?1:0) +
+        (data.actions.shapeDefenses.unlocked?1:0) +
+        (data.actions.mendSmallCracks.unlocked?1:0) +
+        (data.actions.restoreEquipment.unlocked?1:0) +
+        (data.actions.reinforceArmor.unlocked?1:0) +
+        (data.actions.unblemish.unlocked?1:0) +
+        (data.actions.lightHeal.unlocked?1:0) +
+        (data.actions.mendAllWounds.unlocked?1:0) +
+        (data.actions.illuminate.unlocked?1:0) +
+        (data.actions.identifyItem.unlocked?1:0) +
+        (data.actions.detectMagic.unlocked?1:0);
 }
 
 
@@ -97,9 +154,9 @@ window.addEventListener('resize', () => {
 
 function resizeStatMenu() {
     let bonusDisplay = view.cached[`bonusDisplay`];
-    let reduction = 210;
+    let reduction = 240;
     if(bonusDisplay.style.display !== "none") {
-        reduction += 70;
+        reduction += 90;
     }
 
     if(view.cached[`attDisplay`]) {
@@ -404,14 +461,18 @@ function actionTitleClicked(actionVar, setAll) {
 }
 
 function toggleAutomationOnReveal(actionVar) {
-    let actionObj = data.actions[actionVar];
     const checkbox = document.getElementById(`${actionVar}_checkbox`);
-
     setSliderUI(actionVar, "Automation", checkbox.checked ? 100 : 0);
-    updateAutomationSwitch(actionVar);
+    updateAutomationOnRevealToggle(actionVar);
 }
 
-function updateAutomationSwitch(actionVar) {
+function changeAutomationOnReveal(actionVar, newValue) {
+    data.actions[actionVar].automationOnReveal = newValue;
+    views.updateVal(`${actionVar}_checkbox`, newValue > 0, "checked");
+    updateAutomationOnRevealToggle(actionVar);
+}
+
+function updateAutomationOnRevealToggle(actionVar) {
     const checkbox = document.getElementById(`${actionVar}_checkbox`);
     if (checkbox.checked) {
         views.updateVal(`${actionVar}_track`, "#2196F3", "style.backgroundColor");
@@ -422,12 +483,21 @@ function updateAutomationSwitch(actionVar) {
     }
 }
 
-function toggleAutomationOnMaxLevel(actionVar) {
+function toggleAutomationCanDisableLevel(actionVar) {
     let actionObj = data.actions[actionVar];
     const checkbox = document.getElementById(`${actionVar}_checkbox2`);
-
     actionObj.automationCanDisable = checkbox.checked;
+    updateAutomationCanDisableToggle(actionVar);
+}
 
+function changeAutomationCanDisable(actionVar, newValue) {
+    data.actions[actionVar].automationCanDisable = newValue;
+    views.updateVal(`${actionVar}_checkbox2`, newValue, "checked");
+    updateAutomationCanDisableToggle(actionVar);
+}
+
+function updateAutomationCanDisableToggle(actionVar) {
+    const checkbox = document.getElementById(`${actionVar}_checkbox2`);
     if (checkbox.checked) {
         views.updateVal(`${actionVar}_track2`, "#2196F3", "style.backgroundColor");
         views.updateVal(`${actionVar}_knob2`, "translateX(26px)", "style.transform");
@@ -520,7 +590,7 @@ function clickedAttName(attVar, scrollToIt) {
 
     updateAttActionContainers();
 
-    if(!scrollToIt) {
+    if(!scrollToIt || attVar === "legacy") {
         return;
     }
     const container = view.cached[`attDisplay`];
@@ -586,7 +656,7 @@ function updateAttActionContainers() {
         for (let attObj of dataObj.efficiencyAtts) {
             let attVar = attObj[0];
             views.updateVal(`${actionVar}${attVar}OutsideContainereff`, selectedStat && selectedStat === attVar ? "var(--text-selected-color)" : "var(--attribute-use-eff-color)", "style.borderColor");
-            views.updateVal(`${actionVar}${attVar}InsideContainereff`, selectedStat && selectedStat === attVar ? "var(--text-selected-color)" : "transparent", "style.borderColor");
+            // views.updateVal(`${actionVar}${attVar}InsideContainereff`, selectedStat && selectedStat === attVar ? "var(--text-selected-color)" : "transparent", "style.borderColor");
         }
     }
 }
@@ -637,13 +707,16 @@ function resetGamespeed() {
 
 function statMenuHideButton() {
     let button = document.getElementById("attDisplayShowButton");
+    let button2 = document.getElementById("attDisplayHideButton")
     let attDisplay = view.cached.attDisplay;
     if(attDisplay.style.display !== "none") {
         attDisplay.style.display = "none";
         button.style.display = "inline-block";
+        button2.style.display = "none"
     } else {
         attDisplay.style.display = "inline-block";
         button.style.display = "none";
+        button2.style.display = "inline-block"
     }
 }
 
@@ -654,10 +727,74 @@ function bonusMenuHideButton() {
         bonusDisplay.style.display = "none";
         button.style.display = "";
     } else {
-        bonusDisplay.style.display = "block";
+        bonusDisplay.style.display = "flex";
         button.style.display = "none";
     }
     resizeStatMenu();
+}
+let isSkipping = false;
+
+//skip [time] minutes
+function skipTime(time) {
+    if (isSkipping) return;
+
+    let ticksToUse = time * 60 * 1000;
+    if(data.currentGameState.instantTime < ticksToUse) {
+        return;
+    }
+
+    isSkipping = true;
+    toggleSkipButtons(true);
+
+    data.currentGameState.instantTime -= ticksToUse;
+
+    setTimeout(() => {
+        let origPause = data.gameSettings.stop;
+        data.gameSettings.stop = false;
+        data.gameSettings.ticksPerSecond = 1;
+
+        for (let i = 0; i < time * 60; i++) {
+            gameTick();
+            secondPassed();
+        }
+
+        data.gameSettings.ticksPerSecond = 20;
+        data.gameSettings.stop = origPause;
+        save();
+
+        setTimeout(() => {
+            isSkipping = false;
+            toggleSkipButtons(false);
+        }, 250);
+    }, 0);
+}
+
+function toggleSkipButtons(disable) {
+    const ids = ['skipTime1', 'skipTime10', 'skipTime60'];
+    for (let id of ids) {
+        let btn = document.getElementById(id);
+        if (btn) {
+            btn.style.backgroundColor = disable ? "grey" : "darkblue";
+            btn.style.pointerEvents = disable ? "none" : "auto";
+        }
+    }
+}
+
+function convertBonusTime() {
+    let btn = document.getElementById('convertBtn');
+    if (btn.innerText.indexOf("Use in") !== -1) return;
+
+    let amountToConvert;
+    if (data.currentGameState.bonusTime >= 120 * 60 * 1000) {
+        amountToConvert = 120 * 60 * 1000;
+    } else {
+        amountToConvert = data.currentGameState.bonusTime;
+    }
+
+    data.currentGameState.bonusTime -= amountToConvert;
+    data.currentGameState.instantTime += amountToConvert;
+    data.currentGameState.instantTimerCooldown += 30 * 60;
+    updateConvertButtonUI();
 }
 
 function toggleBonusSpeed() {
@@ -882,6 +1019,12 @@ function addLogMessage(text, type) {
     if(isScrolledToBottom) {
         logContainer.scrollTop = logContainer.scrollHeight;
     }
+
+    const logWrapper = document.getElementById('logWrapper');
+    const openLogButton = document.getElementById('openLogButton');
+    if(logWrapper.style.display === 'none') {
+        openLogButton.innerHTML = `<span style="color:yellow">•</span> Open Log`
+    }
 }
 
 function expandLogMessage(logData) {
@@ -928,10 +1071,17 @@ function toggleLog() {
     }
 }
 
+function hoverLog() {
+    const openLogButton = document.getElementById('openLogButton');
+    openLogButton.innerHTML = `Open Log`
+}
+
 function clearLog() {
     const logMessages = document.getElementById('logMessages');
     logMessages.replaceChildren();
     data.currentLog = [];
+    const openLogButton = document.getElementById('openLogButton');
+    openLogButton.innerHTML = `Open Log`
 }
 
 function rebuildLog() {

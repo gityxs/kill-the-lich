@@ -10,8 +10,8 @@ function getAttColor(attVar) {
     if(attVar === "legacy") {
         return "var(--legacy-color)"
     }
-    if(attVar === "doom") {
-        return "var(--doom-color)"
+    if(attVar === "hope") {
+        return "var(--hope-color)"
     }
     const stat = data.atts[attVar];
 
@@ -35,20 +35,22 @@ function getAttColor(attVar) {
 }
 
 
-function gameStateMatches(actionObj) {
-    return (data.gameState === "default" && !actionObj.isKTL) || (data.gameState==="KTL" && actionObj.isKTL);
+function gameStateMatches(dataObj) {
+    return (data.gameState === "default" && !dataObj.isKTL) || (data.gameState==="KTL" && dataObj.isKTL);
 }
 
-function getResourceColor(actionObj) {
-    if(!actionObj.resourceName) {
+function getResourceColor(actionVar) {
+    let dataObj = actionData[actionVar]
+    if(!dataObj.resourceName) {
         return "var(--momentum-color)";
     }
-    return `var(--${actionObj.resourceName}-color)`;
+    return `var(--${dataObj.resourceName}-color)`;
 }
 
-function getResourceColorDim(actionObj) {
-    if(!actionObj.resourceName) {
+function getResourceColorDim(actionVar) {
+    let dataObj = actionData[actionVar]
+    if(!dataObj.resourceName) {
         return "var(--momentum-color-dim)";
     }
-    return `var(--${actionObj.resourceName}-color-dim)`;
+    return `var(--${dataObj.resourceName}-color-dim)`;
 }

@@ -71,16 +71,16 @@ const actionTextData = `
         ]]></english>
     </reflect>
     
-    <distillInsight>
+    <harnessOverflow>
         <version>1</version>
         <english><![CDATA[
             I managed some form of abstract thoughts, watching how I was thinking. It was difficult, and required immense concentration, but as I held the concept and momentum continued to flow to it, I found the additional concentration made the "container" for Reflection smaller, more compact, more defined - I had a better target to aim for, it felt, and a better understanding of how momentum should sit inside that container.<br><br>
             
             The thoughts kept slipping out of my control, though. The momentum didn't want to stay still, and no matter the direction I pointed it in, it would splash over the container. I mentally collected what I could and redirected it, but it was tough work. After some useless attempts at redirection, I went back to simply reflecting and observing, and came to a new question: how was it that Overclock was spilling over in the first place?
         ]]></english>
-    </distillInsight>
+    </harnessOverflow>
     
-    <harnessOverflow>
+    <distillInsight>
         <version>1</version>
         <english><![CDATA[
             As my awareness and concentration grew, I realized a new truth about my ability: it was spinning. My increasing awareness was able to get a feel for the nature of the movement contained with Overclock, and I found that it was not like a waterfall, but instead like a whirlpool. The momentum - from wherever Overclock pulled it from - was cycling in a shape I could not yet recognize. The effects I had been feeling - the pushes to act - were the small splashes of conceptual momentum falling outside the vortex. I had been directing the main stream, but there were plenty of splashes that didn't immediately coalesce into it.<br><br>
@@ -89,7 +89,7 @@ const actionTextData = `
             
             Knowing this, I could harness the overflow more intentionally. I redirected the splashes of momentum back into Overclock, and the vortex sped up faster and faster, becoming larger and creating even more spillage. There seemed to be a limit, but as long as I kept intentionally bringing the overflow back and using it to speed the cycle, more momentum spilled into the main stream.
         ]]></english>
-    </harnessOverflow>
+    </distillInsight>
     
     
     <takeNotes>
@@ -149,7 +149,7 @@ const actionTextData = `
             
             Being conscripted was simple: Sovvgor's recruiters came with shiny equipment and even brighter words, though with a demand that each hamlet must provide some able-bodied adults for the war. I saw them eyeing Gary and his large build, even though he was apprenticed to our town's herbalist, and felt it necessary to volunteer to fill the quota before they crippled our hamlet's future. I had intended to return after it was over, and limited my mother to only a quick goodbye. I wondered of their fates, and if I would ever learn the truth now. I had many small regrets from that day, and felt many complicated things, but my decision to leave carried no shame.<br><br>
             
-            The training that Sovvgor forced upon us was sudden and poorly coordinated. My equipment had came from smiths without the Talent for it, guided by commanders who actually had to learn from books and communication instead of being naturally gifted. We swung swords for a week before they decided maces would work better against Talented armor, and then switched to spears yet again later. I rememberd the feeling of training, and how unaccustomed I was at the types of movements being asked of me. I resolved to find a better trainer later, if only to rewrite the memories into something new.<br><br>
+            The training that Sovvgor forced upon us was sudden and poorly coordinated. My equipment had came from smiths without the Talent for it, guided by commanders who actually had to learn from books and communication instead of being naturally gifted. We swung swords for a week before they decided maces would work better against Talented armor, and then switched to spears yet again later. I remembered the feeling of training, and how unaccustomed I was at the types of movements being asked of me. I resolved to find a better trainer later, if only to rewrite the memories into something new.<br><br>
             
             In Talented combat, there were certain archetypes to fill to create versatile squads of warriors. In Talented war, these squads were gathered according to the strongest Talent into a larger specialty group, largely fitting under four groups: vanguards, scouts, rearguards, and supports. The conscripted women were steadily poached to be trained as supports and archers, and the heavier men were poached to be the close range vanguards. I was eventually ordered into a scouting group, and given flexible leather armor and a light sword.<br><br>
             
@@ -209,7 +209,7 @@ const actionTextData = `
         <version>1</version>
         <english><![CDATA[
             (WIP)<br>
-            I was making gold again after living for months on only what I could make myself, and though it was a small amount to start, it helped me gain recognition of the village, and be recognized in turn. The chores Scott asked me for were varied, and I steadily learned who was who in the town.<br><br>
+            I was making coins again after living for months on only what I could make myself, and though it was a small amount to start, it helped me gain recognition of the village, and be recognized in turn. The chores Scott asked me for were varied, and I steadily learned who was who in the town.<br><br>
             
             He asked me to deliver lunch to the nearby woodsmen, to help an old man check that his stock was prepared for winter, and to give an order to the blacksmith.
         ]]></english>
@@ -220,9 +220,9 @@ const actionTextData = `
     <makeMoney>
         <version>1</version>
         <english><![CDATA[
-            Making money was an interesting action for momentum to latch onto. It seemed to be an endless vortex, consuming momentum as I worked, albeit inefficiently compared to other actions. My ability to work increased over time, and I got more gold for the increases as a result. Feeling my pockets heavier through the efforts of my own actions gave me a sense of accomplishment - and I cannot deny that it also gave me a sense of greed. These feelings combined gave me an ambition towards making more money. With Overclock's momentum pushing me forward, I was growing into becoming the equal of many workers at once. I resolved to take jobs that paid by the task, so that I could take advantage of the increasing speed with which I did tasks.<br><br>
+            Making money was an interesting action for momentum to latch onto. It seemed to be an endless vortex, consuming momentum as I worked, albeit inefficiently compared to other actions. My ability to work increased over time, and I got more coins for the increases as a result. Feeling my pockets heavier through the efforts of my own actions gave me a sense of accomplishment - and I cannot deny that it also gave me a sense of greed. These feelings combined gave me an ambition towards making more money. With Overclock's momentum pushing me forward, I was growing into becoming the equal of many workers at once. I resolved to take jobs that paid by the task, so that I could take advantage of the increasing speed with which I did tasks.<br><br>
             
-            Gold was a tool, and I would use it to improve my situation. The more coin I had and spent, the more prepared I would be for when I truly needed Overclock's fate-bending ability.
+            Coins were a tool, and I would use it to improve my situation. The more coin I had and spent, the more prepared I would be for when I truly needed Overclock's fate-bending ability.
         ]]></english>
     </makeMoney>
     
@@ -282,13 +282,13 @@ const actionTextData = `
 <!--        ]]></english>-->
 <!--    </buyShopItems>-->
 <!--    -->
-<!--    <reportForTraining>-->
-<!--        <version>4</version>-->
-<!--        <english><![CDATA[-->
-<!--            (WIP)-->
-<!--			-->
-<!--        ]]></english>-->
-<!--    </reportForTraining>-->
+    <reportForTraining>
+        <version>4</version>
+        <english><![CDATA[
+            (WIP)
+			"You, recruit. I like your drive. Come with me, I have things to teach you about your body."
+        ]]></english>
+    </reportForTraining>
 <!--    -->
 <!--    <basicTrainingWithJohn>-->
 <!--        <version>4</version>-->
@@ -624,13 +624,13 @@ const actionTextData = `
 	</leaveTheOpenRoad>
     
     
-	<findOverlook>
+	<climbATallTree>
         <version>1</version>
         <english><![CDATA[
             (WIP)
             I see a mountain with a cliff, and I decide to climb it. At the top, I can see across vast swathes of wilderness and little else. I hold up my amulet again for the direction and look closer at the tops of the trees I can see in that way. As I'm concentrating, I can suddenly distinguish a building standing out. As I trace the outline of the building with my vision, it reveals a full town, hidden in the wilderness. Deciding to follow my amulet's lead, I take the layout of the forest to get there and prepare to go.
         ]]></english>
-	</findOverlook>
+	</climbATallTree>
     
     
 	<discoverBurntTown>

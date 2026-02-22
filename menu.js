@@ -78,48 +78,16 @@ function createCheatMenu() {
 function createShopMenu() {
     return Raw.html`
         <div class="menuTitle">Shop</div>
-        <div class="menuSeparator"></div><br>Work in Progress. The shop will be completed for full release with the following plans. 
-        I will keep the game ad-free and AI-art free, and the demo will be open-source on my github.<br> 
-        I'm looking for feedback on the pricing for when the game lives on steam, outlined below.<br>
-        Disclaimer: Game will be balanced without these upgrades.<br><br>
-        <ul>
-            <li>$5 for 1k Soul Coins (SC)</li>
-            <li>$20 for 5k Soul Coins</li>
-        </ul>
-        There will be a "daily bonus" button for +100 soul coins (and 30m of bonus speed) every 23hr, 
-        and it upgrades to +200 in ~30 days.<br>
+        <div class="menuSeparator"></div><br>The shop will be available in the full release.
+        I will keep the game ad-free and AI-art free, and the demo will be remain open-source on my github.<br> 
+        The game will be balanced without the paid upgrades.<br>
+        Exact upgrades and pricing is a WIP.<br>
+        <div class="menuSeparator"></div>
         
-        <br>Unique Upgrades:<br>
-        <ul>
-            <li>Maximum Focus bars +1 (up to 4): 1k SC each</li>
-            <li>Focus Bars mult (up to x4): 1k SC each</li>
-            <li>Learn exact legacy/AC gained in KTL before switching Overclock targets: 500 SC</li>
-            <li>Unlock option for Bonus Speed to go x10: 100 SC</li>
-        </ul>
         
-        <br>Special Resource Bonuses:<br>
-        <ul>
-            <li>+50% permanent momentum (up to 2): 500 SC, 1k SC</li>
-            <li>+50% permanent gold (up to 2): 500 SC, 1k SC</li>
-            <li>+50% permanent conversations (up to 2): 500 SC, 1k SC</li>
-            <li>+50% permanent mana (up to 2): 500 SC, 1k SC</li>
-        </ul>
+<!--        <span class="button" onclick="resetRun()">Reset run</span>-->
+<!--        Reset the run and gain offline time equal to the run time. -->
         
-        <br>Timed Resource Bonuses (repeated use adds to timer):<br>
-        <ul>
-            <li>x2 momentum for 24hr: 200 SC</li>
-            <li>x2 gold for 24hr: 200 SC</li>
-            <li>x2 conversations for 24hr: 200 SC</li>
-            <li>x2 mana for 24hr: 200 SC</li>
-            <li>x2 legacy for 24hr: 600 SC</li>
-            <li>x2 game speed for 24hr: 2000 SC</li>
-        </ul>
-
-        <br>Buy Bonus Time:<br>
-        <ul>
-            <li>1 hr for 200 SC</li>
-            <li>24hr for 2000 SC</li>
-        </ul>
 `;
 }
 
@@ -128,7 +96,7 @@ function createHelpForRealMenu() {
         <div class="menuTitle">How to Provide Feedback</div>
         <div class="menuSeparator"></div><br>
         You'll help me, for real?<br>
-        My discord to discuss everything is here: <a href="https://discord.gg/dnKA6Xd" target="_blank">Stop_Sign Gaming</a>. I would really appreciate hearing about your suggestions and experience!
+        My discord to discuss everything is here: <a href="https://discord.gg/ZcGJnQWT" target="_blank">Stop_Sign Gaming</a>. I would really appreciate hearing about your suggestions and experience!
         You can also talk about the game in the discord with others, and share strategies.<br><br>
         No AI was used in the writing of the story, and no AI-art will be added to the game.<br><br>
         Thanks for playing! -Stop_Sign
@@ -147,7 +115,7 @@ function createHelpMenu() {
         Click/right click and drag to move the game window. WASD works also, with Shift making it move x3 faster. Use the mouse scroll wheel or the [+] and [-] to zoom in and out.
         <div class="menuSeparator"></div>
         <div style="font-size:20px;">Attributes</div>
-         Each attribute is a 10% increase to bonus, shown in the Attributes window. There are a few colors for attributes surrounding actions.
+         Every +100 attribute is a x10 increase to bonus, shown in the Attributes window. There are a few colors for attributes surrounding actions.
         <ol>
             <li>Green: Adds the attribute on level</li>
             <li>Purple: Reduces the progress required to complete if it is an action, reduces exp required to level if it is a generator</li>
@@ -170,7 +138,7 @@ function createStoryMenu() {
 
 &nbsp;&nbsp;&nbsp;&nbsp;My Talent is Overclock, and the simple description of it is "Choose a valid target; get a little more out of it". In my youth, I used to change Overclock's target a dozen times a day, enjoying the extra "skips" in my "steps" as it hurried me along, so-to-speak. I used it to ease the daily life - doing chores and travelling, mostly. As a boy of 10 years, I had been playing a game of hide and seek with my friends when, without warning, the curse fell over us and all our Talents were locked, inert, and useless. My Overclock was locked with a Target of [Get Somewhere Safe], unable to be changed, and unable to help. For a few peaceful years our new reality was something to grieve and adjust to. We pined for what could have been, as we moved on to discover who we would become instead. However, we never got the chance; our neighbors only saw the curse as a weakness to exploit. <br><br> 
 
-&nbsp;&nbsp;&nbsp;&nbsp;Sovvgor's small, long-term ally on our western border, Gryndall, started giving us unfavorable deals. They had been formerly pacified by our might, but realized they had advantages that tipped the scales; they had materials that could be further refined with Talents, and products that were made quicker and with less expertise required, and we had to buy such items at a premium. They had enchanted items and magics that were only made viable through Talents that specialized in them, and we lacked anything to balance the scales. When we ran out of gold to give, their greed only increased and their sights turned to our resources. After a forced diplomatic incident turned into a cry for war, the Emperor had no choice but to prepare an army.<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;Sovvgor's small, long-term ally on our western border, Gryndall, started giving us unfavorable deals. They had been formerly pacified by our might, but realized they had advantages that tipped the scales; they had materials that could be further refined with Talents, and products that were made quicker and with less expertise required, and we had to buy such items at a premium. They had enchanted items and magics that were only made viable through Talents that specialized in them, and we lacked anything to balance the scales. When we ran out of coins to give, their greed only increased and their sights turned to our resources. After a forced diplomatic incident turned into a cry for war, the Emperor had no choice but to prepare an army.<br><br>
 
 &nbsp;&nbsp;&nbsp;&nbsp;I was conscripted, armed, and trained - clumsily - as a soldier. At first, they hardly knew what to do with us; before the curse, soldiers without a Talent for combat would be passed over, and those with relevant Talents would get training and placement accordingly. The locked target of Overclock became my mantra and my curse, forever locked on the one thing I desired - safety - and this was a rather painful irony during my training and subsequent marching. Sovvgor's mages still had their magic - albeit greatly diminished - and our army was greater in numbers than Gryndall could field... but while the town criers proclaimed an inevitable victory, the pale faces of our leaders and obvious fear in our heroes were the true heralds of our fate.<br><br>
 
@@ -213,21 +181,30 @@ function createDataMenu() {
         <div class="menuSeparator"></div><br>
         What do you want to know?<br><br>
         <div id="resetLogContainer"></div><br>
-    <div id="chartContainer" style="width: 80%; max-width: 800px; background-color: #2d3748; border-radius: 8px; 
-        box-shadow: 0 4px 12px rgba(0,0,0,0.4); padding: 20px;">
-        <h2 style="text-align: center; margin-top: 0; color: #e2e8f0;">Recent 100 Overclock Amounts</h2>
-        <canvas id="resourceChart" style="width: 100%; height: 400px; border-radius: 4px;"></canvas>
-        <div style="text-align: center; margin-top: 15px;">
-            <button id="linearBtn" style="padding: 10px 20px; border: 1px solid #63b3ed; background-color: #63b3ed; 
-                color: #1a202c; border-radius: 5px; cursor: pointer; font-weight: bold; transition: background-color 0.2s;">
-                Linear
-            </button>
-            <button id="logBtn" style="padding: 10px 20px; border: 1px solid #4a5568; background-color: #4a5568; 
-                color: #e2e8f0; border-radius: 5px; cursor: pointer; font-weight: bold; transition: background-color 0.2s;">
-                Logarithmic
-            </button>
+        <div id="highestLegacyContainer">
+            Highest Legacy: <span id="highestLegacy" style="color:var(--legacy-color)"></span>
         </div>
-    </div>
+        <div id="secondsPassedContainer">
+            Time Passed, total: <span id="secondsPassed"></span>
+        </div>
+        <div id="secondsThisLSContainer">
+            Time Passed, this Legacy Severance: <span id="secondsThisLS"></span>
+        </div>
+        <div id="chartContainer" style="width: 80%; max-width: 800px; background-color: #2d3748; border-radius: 8px; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4); padding: 20px;">
+            <h2 style="text-align: center; margin-top: 0; color: #e2e8f0;">Recent 100 Overclock Amounts</h2>
+            <canvas id="resourceChart" style="width: 100%; height: 400px; border-radius: 4px;"></canvas>
+            <div style="text-align: center; margin-top: 15px;">
+                <button id="linearBtn" style="padding: 10px 20px; border: 1px solid #63b3ed; background-color: #63b3ed; 
+                    color: #1a202c; border-radius: 5px; cursor: pointer; font-weight: bold; transition: background-color 0.2s;">
+                    Linear
+                </button>
+                <button id="logBtn" style="padding: 10px 20px; border: 1px solid #4a5568; background-color: #4a5568; 
+                    color: #e2e8f0; border-radius: 5px; cursor: pointer; font-weight: bold; transition: background-color 0.2s;">
+                    Logarithmic
+                </button>
+            </div>
+        </div>
 `
 }
 
@@ -321,14 +298,25 @@ function createOptionsMenu() {
                 </div>
             </div>
         </div>
+        
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+            <span style="font-size:14px;">Show estimated times to level</span>
+            <div id="viewEstimatedTimesSwitch" onclick="toggleEstimatedTimes()" style="position:relative;cursor:pointer;border:1px solid #aaa;border-radius:4px;padding:2px;width:200px;height:30px;">
+                <div style="position:absolute;left:2px;top:2px;width:calc(50% - 2px);height:calc(100% - 4px);background:#ccc;border-radius:2px;z-index:1;"></div>
+                <div style="position:relative;display:flex;z-index:2;height:100%;">
+                    <span style="flex:1;text-align:center;font-size:13px;font-weight:bold;line-height:26px;color:#000;">Off</span>
+                    <span style="flex:1;text-align:center;font-size:13px;font-weight:bold;line-height:26px;color:#000;">On</span>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div class="menuSeparator"></div>
     
-    <div style="display:flex;align-items:center;gap:10px;">
-        <label for="FPSSlider" style="font-size:14px;">FPS: <span id="sliderValue" style="font-weight:bold;">20</span></label>
-        <input type="range" id="FPSSlider" min="1" max="20" value="20" oninput="updateSliderDisplay(this.value)" style="flex:1;cursor:pointer;">
-    </div>
+<!--    <div style="display:flex;align-items:center;gap:10px;">-->
+<!--        <label for="FPSSlider" style="font-size:14px;">FPS: <span id="sliderValue" style="font-weight:bold;">20</span></label>-->
+<!--        <input type="range" id="FPSSlider" min="1" max="20" value="20" oninput="updateSliderDisplay(this.value)" style="flex:1;cursor:pointer;">-->
+<!--    </div>-->
     <p style="margin:0;font-size:13px;">Auto save every 20 seconds and on pause, but if you want a button to click:</p>
     <button onclick="save()" style="padding:10px 16px;background:#007BFF;color:#fff;border:none;border-radius:4px;font-size:14px;cursor:pointer;width:160px;">Save</button>
     <div style="display:flex;flex-direction:column;gap:10px;">
@@ -347,7 +335,7 @@ function createOptionsMenu() {
     <div class="menuSeparator"></div>
     
     <button onclick="exportSave()" style="padding:10px 16px;background:#007BFF;color:#fff;border:none;border-radius:4px;font-size:14px;cursor:pointer;width:160px;">Export to clipboard</button>
-    <label for="exportImportSave" style="font-size:13px;">Put your save here to import. Warning: Export/import from a file is much safer, due to save file sizes. Import a clear save to hard reset:</label>
+    <label for="exportImportSave" style="font-size:13px;">Put your save here to import. Warning: Export/import from a file is much safer, due to save file sizes.<br>Import a clear save to hard reset:</label>
     <input type="text" id="exportImportSave" style="border:1px solid #aaa;padding:8px;border-radius:4px;font-size:13px;width:100%;" oncontextmenu="event.stopPropagation(); return true;">
     <div>
         <input type="checkbox" id="confirmImportCheckbox" style="width:14px;height:14px;cursor:pointer;">
@@ -359,6 +347,7 @@ function createOptionsMenu() {
 `
 }
 
+//for fps slider, but not in use
 function updateSliderDisplay(currentValue) {
     // recalcInterval(currentValue);
     data.gameSettings.fps = parseInt(currentValue);
@@ -455,6 +444,20 @@ function toggleViewAll0Buttons() {
     for(let actionVar in data.actions) {
         let dataObj = actionData[actionVar];
         views.updateVal(`${actionVar}ToggleDownstreamButtons`, data.gameSettings.viewAll0Buttons && dataObj.plane !== 2 ? "" : "none", "style.display");
+    }
+}
+
+function toggleEstimatedTimes() {
+    const el = document.getElementById('viewEstimatedTimesSwitch');
+    const slider = el.firstElementChild;
+    data.gameSettings.viewEstimatedTimes = !data.gameSettings.viewEstimatedTimes;
+    if (data.gameSettings.viewEstimatedTimes) {
+        slider.style.left = '50%';
+    } else {
+        slider.style.left = '0';
+    }
+    for(let actionVar in data.actions) {
+        views.updateVal(`${actionVar}EstimatedTimesContainer`, data.gameSettings.viewEstimatedTimes ? "flex" : "none", "style.display");
     }
 }
 
@@ -576,7 +579,41 @@ function clickUpgradeTab(menuVar) {
     }
     selectedUpgradeMenu = menuVar;
     document.getElementById(menuVar+"UpgradeContainer").style.display = "";
-    document.getElementById(selectedUpgradeMenu+"UpgradeTab").style.background = "var(--menu-tab-selected-color)";
+    let selectedColor = "--menu-tab-selected-color"
+    if(menuVar === "actions") {
+        selectedColor += "-2";
+    } else if(menuVar === "lich") {
+        selectedColor += "-3";
+    } else if(menuVar === "challenges") {
+        selectedColor += "-4";
+    }
+    document.getElementById(selectedUpgradeMenu+"UpgradeTab").style.background = `var(${selectedColor})`;
+}
+
+//recheck 1-time triggers on load, for when creationVersion changes
+function checkActionTriggers() {
+    for(let actionVar in data.actions) {
+        let actionObj = data.actions[actionVar];
+        let dataObj = actionData[actionVar];
+        for(let actionTrigger of dataObj.actionTriggers) {
+            let when = actionTrigger[0];
+            let type = actionTrigger[1];
+            let info = actionTrigger[2];
+            let extra = actionTrigger[3];
+            let trigger = false;
+            if(when.indexOf("level_") >= 0) {
+                let level = parseInt(when.substring("level_".length));
+                if(actionObj.level >= level) {
+                    trigger = true;
+                }
+            } else if(when === "unlock" && actionObj.unlocked) {
+                trigger = true;
+            }
+            if(trigger && ["reveal", "purchase", "unlock", "revealUpgrade"].includes(type)) {
+                actionTriggerHelper(type, info, extra);
+            }
+        }
+    }
 }
 
 function addMenuOptionsTab() {
@@ -592,7 +629,28 @@ function createChangelogMenu() {
     return Raw.html`
         <div class="menuTitle">Changelog</div>
         <div class="menuSeparator"></div><br>
-        v2.1.4 11/26 (current):<br>
+        v3.0.2 2/18 (current): <br>
+            <ol>
+                <li>3.0.2 Custom triggers were not resetting on amulet use</li>
+                <li>3.0.1 Tips were not showing</li>
+                <li>3.0.1 The reset button was hidden on some screens</li>
+            </ol>
+        <br>
+        v3.0.0 2/18: <br>
+        Big changes, too many to list. Here are the big ones:<br>
+            <ol>
+                <li>All attributes are exponential: +100 attributes gives a x10 bonus. This means every action in the game has been modified.</li>
+                <li>Every exp reduction (purple icon) is 100%</li>
+                <li>Efficiency renamed to Speed. Speed is reduced when the attribute is below a target amount (blue icon)</li>
+                <li>Many actions changed, including most of Magic and how that works. Mana Quality is used instead of Spell Power. Train with Team is removed. Expanded socialization actions. Fear is not removed from HATL as its used, HATL has no max level, and gives x1.5 AC for each HATL level, multiplicatively. Overclock Targeting the Lich in Northern Wastes is changed.</li>
+                <li>Ancient Coins is now split into AC and AW: Ancient Whispers. AW is gained on its own and is used only for unlocking new action packs.</li>
+                <li>You can convert Bonus Time to Instant Bonus Time at a rate of 2 hours every 30 minutes, which can be used immediately with 1 minute or 10 minute buttons. The calculation fidelity is less precise when using instant, which affects the game more at the start of a run.</li>
+                <li>Eastern Monument is renamed according to where you are in the playthrough. When you max its level, a new 2nd tier reset will be available. Each 2nd tier reset will be customized with extra actions and upgrades.</li>
+                <li>In general, amulet loops are significantly more curated, and there should be little to no "walls" to push through.</li>
+                <li>Additional bug fixes and QoL</li>
+            </ol>
+        <br>
+        v2.1.4 11/26:<br>
         <ul>
             <li>Reworked automation. It should behave more along expectations now</li>
             <li>Added a "force" button in automation to turn on and off, to avoid ever needing to edit long chains</li>

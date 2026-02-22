@@ -130,7 +130,7 @@ function intToString(value, amount, hideSmall) {
     }
     let isNeg = value < 0;
     value *= isNeg ? -1 : 1;
-    if (value >= 10000) {
+    if (value + .0000001 >= 10000) {
         value += .0000001; //anti floating point rounding issues
         if(data.gameSettings.numberType === "numberSuffix") {
             return (isNeg ? "-" : "") + nFormatter(value, 3);
@@ -140,7 +140,7 @@ function intToString(value, amount, hideSmall) {
             return formatEngineering(value * (isNeg ? -1 : 1));
         }
     }
-    if (value >= 1000) { //1000 - 10000, should be 6,512 (.1) - 1 if base is > 2
+    if (value + .0000001 >= 1000) { //1000 - 10000, should be 6,512 (.1) - 1 if base is > 2
         value += .0000001; //anti floating point rounding issues
         if(amount >= 2) {
             baseValue = 1;
@@ -171,9 +171,28 @@ function intToStringRound(value) {
     return Math.floor(value);
 }
 
-function secondsToTime(seconds) {
+function numToOrdinal(n) {
+    const j = n % 10;
+    const k = n % 100;
+
+    if (j === 1 && k !== 11) {
+        return n + "st";
+    }
+    if (j === 2 && k !== 12) {
+        return n + "nd";
+    }
+    if (j === 3 && k !== 13) {
+        return n + "rd";
+    }
+    return n + "th";
+}
+
+function secondsToTime(seconds, useInfinity) {
     if(!seconds || seconds < 0) {
         seconds = "0";
+    }
+    if(useInfinity && (seconds === Infinity || seconds > 3.5e6)) {
+        return "∞"
     }
     seconds = Math.floor(seconds);
     const hours = Math.floor(seconds / 3600);
@@ -226,7 +245,6 @@ const rx = /\.0+$|(\.[0-9]*[1-9])0+$/u;
 
 function nFormatter(num, digits) {
     for (let i = 0; i < si.length; i++) {
-        // /1.000501 to handle rounding
         if ((num) >= si[i].value / 1.000501) {
             return (num / si[i].value).toPrecision(digits).replace(rx, "$1") + si[i].symbol;
         }

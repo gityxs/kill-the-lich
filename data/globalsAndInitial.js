@@ -3,32 +3,16 @@ let gameSpeed = 1;
 let stop = false;
 // let bonusTime = 0;
 
-let settings = {}; // Will be populated by the 'start' command.
 let timerId = null;
 let lastTickTime = 0;
-let ticksForSeconds = 0;
-let secondsPassed = 0;
-let totalTicks = 0;
 
-let View = {};
-
-let curTime = new Date();
-let gameTicksLeft = 0;
-let sudoStop = false;
-let totalTime = 0;
-//Store offline time
-let mainTickLoop;
-let lastSave = Date.now();
 
 //Saving globals
 let isFileSystem = !!location.href.match("file");
 let saveName = "KTLsave6"; //Blank if you don't want to save, change name to force user reset
 
-let forceStop = false;
-
-
-
-//Game globals - these initializations will be overriden in load TODO do i need these
+//Game globals - these initializations will be overriden in load
+//Needed for when load doesn't happen
 let data = {};
 data.actions = {};
 data.atts = {};
@@ -37,18 +21,24 @@ data.planeUnlocked = [true, false, false, false];
 data.planeTabSelected = 0;
 data.gameState = "default"; //KTL
 data.totalMomentum = 0;
+data.legacy = 0;
 data.ancientCoin = 0;
+data.ancientWhisper = 0;
+data.lichKills = 0;
+data.lichCoins = 0;
+data.highestLegacy = 0;
+
 data.useAmuletButtonShowing = false;
 data.secondsPerReset = 0;
+data.NWSeconds = 0;
 data.currentJob = "helpScottWithChores";
 data.currentWage = 1;
 data.doneKTL = false;
 data.doneAmulet = false;
+data.doneLS = 0;
 data.ancientCoinMultKTL = 1;
+data.ancientWhisperMultKTL = 1;
 data.legacyMultKTL = 1;
-data.maxSpellPower = 0;
-data.totalSpellPower = 0;
-data.chargedSpellPowers = {};
 data.focusSelected = [];
 data.resetLogs = [];
 data.resetCount = 1;
@@ -76,6 +66,7 @@ data.gameSettings = {
     viewAll0Buttons:false,
     viewTotalMomentum:false,
     viewAdvancedSliders:false,
+    viewEstimatedTimes:true,
     numberType:"numberSuffix",
     redeemedBonusCodes:{},
     showCompletedToggle:true,
@@ -86,9 +77,10 @@ data.gameSettings = {
 // --- Dynamic Game State ---
 data.currentGameState = {
     bonusTime: 0,
-    totalTicks: 0,
+    instantTime: 0,
+    instantTimerCooldown:0,
     secondsPassed: 0,
-    KTLBonusTimer: 0,
+    secondsThisLS: 0,
 };
 
 
@@ -107,208 +99,50 @@ data.upgrades = {};
 
 let isDebug = false; //SET FOR COMMIT
 // let isDebug = true;
+let debugLevel = 80; //to set the rough number of loops
 function debug() {
     if(!isDebug) {
         return;
     }
-
-    document.getElementById("bonus50").style.display = "";
-    data.ancientCoin = 100000;
-
-    // gameSpeed = 1;
-    data.currentGameState.bonusTime = 1000 * 60 * 60 * 24 * 7;
-    // buyUpgrade("temperMyDesires")
-    
-    //temp data corrections:
-    // revealAction('visitShrineBehindWaterfall')
-    // document.getElementById('confirmKTL').checked = true;
-    // initializeKTL()
-
-
-    // data.useAmuletButtonShowing = true;
-    // data.doneKTL = true;
-    // data.doneAmulet = true;
-    // data.displayJob = true;
-
-    //only if the save has skipped the unlock point
-    // revealAction('invest');
-    // revealAction('feelAGentleTug');
-    // revealAction('learnToInquire');
-
-    //foreach action, automation on
-    // for(let actionVar in data.actions) {
-    //     if(["overcharge", "overboost", "prepareInternalSpells", "earthMagic", "moveEarth", "hardenEarth", "shapeEarth", "moveIron", "reinforceArmor", "restoreEquipment", "practicalMagic", "illuminate", "unblemish", "manaTransfer"].includes(actionVar)) {
-    //         continue;
-    //     }
-    //     let actionObj = data.actions[actionVar];
-    //     let dataObj = actionData[actionVar];
-    //     actionObj.automationOff = false;
-    // }
-
-    // buyUpgrade("askAboutBetterWork"); //1, 30 --
-    // buyUpgrade("investMyGold"); //1, 20
-    // buyUpgrade("investMyGold"); //2, 40
-    // buyUpgrade("feelTheEchoesOfTheBurntTown"); //1, 20
-    // buyUpgrade("feelTheEchoesOfTheBurntTown"); //2, 40
-    // buyUpgrade("fightAlongsideAllies"); //1, 30 --
-    // buyUpgrade("increaseInitialInvestment"); //1, 40
-    //
-    //
-    //
-    // buyUpgrade("buyNicerStuff"); //1, 70
-    // buyUpgrade("investMyGold"); //3, 80
-    // buyUpgrade("increaseInitialInvestment"); //2, 60
-    // buyUpgrade("increaseInitialInvestment"); //3, 90
-    // buyUpgrade("feelTheEchoesOfTheBurntTown"); //3, 80 --
-    // buyUpgrade("learnFromTheLibrary"); //1, 200
-    //
-    //
-    //
-    // buyUpgrade("keepMyMagicReady"); //1, 100 --
-    // buyUpgrade("buyNicerStuff"); //2, 210
-    // buyUpgrade("buyNicerStuff"); //3, 630 --
-    // buyUpgrade("investMyGold"); //4, 160
-    // buyUpgrade("investMyGold"); //5, 320
-    // buyUpgrade("investMyGold"); //6, 640 --
-    // buyUpgrade("increaseInitialInvestment"); //4, 135
-    // buyUpgrade("increaseInitialInvestment"); //5, 202 --
-    // buyUpgrade("learnFromTheLibrary"); //2, 400
-    // buyUpgrade("learnFromTheLibrary"); //3, 800
-    // buyUpgrade("increaseMarketCap"); //1, 200
-    // buyUpgrade("increaseMarketCap"); //2, 300
-    // buyUpgrade("increaseMarketCap"); //3, 450
-    // buyUpgrade("increaseMarketCap"); //4, 675
-    // buyUpgrade("trainTogetherMore"); //1, 400
-    // buyUpgrade("stopBeingSoTense"); //1, 500 --
-    // buyUpgrade("refineMyLeverage"); //1, 100
-    // buyUpgrade("refineMyLeverage"); //2, 300
-    // buyUpgrade("refineMyWizardry"); //1, 200
-    //
-    // statAddAmount("legacy", 28e6)
-    // purchaseAction("overponder");
-    // buyUpgrade("createABetterFoundation"); //1, 500
-    // buyUpgrade("createABetterFoundation"); //2, 750
-    // buyUpgrade("createABetterFoundation"); //3, 1125
-    // buyUpgrade("workHarder"); //1, 600
-    // buyUpgrade("workHarder"); //2, 900
-    // buyUpgrade("haveBetterConversations"); //1, 800
-    // buyUpgrade("sparkMoreMana"); //1, 800
-    // buyUpgrade("studyHarder"); //1, 1000
-    // buyUpgrade("rememberWhatIDid"); //1, 600 --
-    // buyUpgrade("retrieveMyUnusedResources"); //1, 500
-    // buyUpgrade("retrieveMyUnusedResources"); //2, 750
-    // buyUpgrade("retrieveMyUnusedResources"); //3, 1125 --
-    //
-    // buyUpgrade("learnFromTheLibrary"); //4, 1600
-    // buyUpgrade("learnFromTheLibrary"); //5, 3200 --
-    // buyUpgrade("improveMyHouse"); //1, 400
-    // buyUpgrade("improveMyHouse"); //2, 1200
-    // buyUpgrade("improveMyHouse"); //3, 3600 --
-    //
-    // buyUpgrade("rememberHowIGrew"); //1, 2000 --
-    // buyUpgrade("rememberMyMastery"); //1, 6000 --
-    // buyUpgrade("increaseMarketCap"); //5, 1013 --
-    // buyUpgrade("trainTogetherMore"); //2, 800
-    // buyUpgrade("trainTogetherMore"); //3, 1600 --
-    // buyUpgrade("createABetterFoundation"); //4, 1688 --
-    // buyUpgrade("workHarder"); //3, 1200
-    // buyUpgrade("workHarder"); //4, 1800 --
-    // buyUpgrade("haveBetterConversations"); //2, 1200
-    // buyUpgrade("haveBetterConversations"); //3, 1800
-    // buyUpgrade("haveBetterConversations"); //4, 2700 --
-    // buyUpgrade("sparkMoreMana"); //2, 1600
-    // buyUpgrade("sparkMoreMana"); //3, 3200
-    // buyUpgrade("sparkMoreMana"); //4, 6400
-    // buyUpgrade("studyHarder"); //2, 1500
-    // buyUpgrade("studyHarder"); //3, 2250
-    // buyUpgrade("studyHarder"); //4, 3375 --
-
-
-
-
-
-
-
-    // setSliderUI("overclock", "reflect", 100);
-
-    //setup system to right before HATL:
-    // revealAtt("integration")
-    // revealAtt("legacy")
-    unveilPlane(0);
-    unveilPlane(1);
-    unveilPlane(2);
-    // statAddAmount("pulse", 10)
-    // statAddAmount("integration", 120)
-    // unlockAction(data.actions['echoKindle']);
-    // statAddAmount("legacy", 385423)
-
-    // revealAction('earthMagic');
-    // revealAction('gossipAroundCoffee');
-    // revealAction('hearAboutTheLich');
-
-    // data.actions.earthMagic.unlockCost = 0;
-    // levelAllCharges();
-    // data.actions.earthMagic.resource = 1e10;
-    // data.actions.gossipAroundCoffee.unlockCost = 0;
-    // data.actions.gossipAroundCoffee.resource += 1e8
-    // data.actions.overclock.resource = 1e20;
-    // statAddAmount("cycle", 40)
-    // statAddAmount("discernment", 200)
-
-
-
-
-
-
-
+    loadDebugValues()
 }
 
 function initializeData() {
-    createUpgrades();
+    createUpgrades(false);
     createAndLinkNewAttribute("doom", "doom");
-    createAndLinkNewAttribute("echoes", "legacy");
+    createAndLinkNewAttribute("synthesis", "integration");
+    createAndLinkNewAttribute("synthesis", "legacy");
+    createAndLinkNewAttribute("synthesis", "resonance");
+    createAndLinkNewAttribute("synthesis", "hope");
 
-    createAndLinkNewAttribute("introspection", "courage");
+
     createAndLinkNewAttribute("introspection", "awareness");
+    createAndLinkNewAttribute("introspection", "concentration");
     createAndLinkNewAttribute("introspection", "curiosity");
     createAndLinkNewAttribute("introspection", "observation");
-    createAndLinkNewAttribute("introspection", "integration");
     createAndLinkNewAttribute("introspection", "intellect");
     createAndLinkNewAttribute("introspection", "comfort");
-    createAndLinkNewAttribute("introspection", "peace");
 
-    createAndLinkNewAttribute("magic", "concentration");
-    createAndLinkNewAttribute("magic", "cycle");
-    createAndLinkNewAttribute("magic", "control");
-    createAndLinkNewAttribute("magic", "amplification");
-    createAndLinkNewAttribute("magic", "pulse");
-    createAndLinkNewAttribute("magic", "spark");
-    createAndLinkNewAttribute("magic", "vision");
-    createAndLinkNewAttribute("magic", "wizardry");
-    createAndLinkNewAttribute("magic", "spellcraft");
-    createAndLinkNewAttribute("magic", "archmagery");
+    createAndLinkNewAttribute("adventuring", "endurance");
+    createAndLinkNewAttribute("adventuring", "might");
+    createAndLinkNewAttribute("adventuring", "coordination");
+    createAndLinkNewAttribute("adventuring", "rhythm");
+    createAndLinkNewAttribute("adventuring", "reflex");
 
-//mettle = fight, grit, resolve, spirit
-    createAndLinkNewAttribute("physique", "endurance");
-    createAndLinkNewAttribute("physique", "might");
-    createAndLinkNewAttribute("physique", "flow");
-    createAndLinkNewAttribute("physique", "coordination");
-    createAndLinkNewAttribute("physique", "rhythm");
-    createAndLinkNewAttribute("physique", "reflex");
-
-    createAndLinkNewAttribute("adventuring", "energy");
     createAndLinkNewAttribute("adventuring", "navigation");
     createAndLinkNewAttribute("adventuring", "instinct");
     createAndLinkNewAttribute("adventuring", "initiative");
     createAndLinkNewAttribute("adventuring", "logistics");
     createAndLinkNewAttribute("adventuring", "valor");
 
+    createAndLinkNewAttribute("money", "energy");
     createAndLinkNewAttribute("money", "ambition");
     createAndLinkNewAttribute("money", "savvy");
     createAndLinkNewAttribute("money", "geared");
     createAndLinkNewAttribute("money", "cunning");
     createAndLinkNewAttribute("money", "leverage");
     createAndLinkNewAttribute("money", "adaptability");
+    createAndLinkNewAttribute("money", "vision");
 
     createAndLinkNewAttribute("socialization", "confidence");
     createAndLinkNewAttribute("socialization", "recognition");
@@ -319,12 +153,24 @@ function initializeData() {
     createAndLinkNewAttribute("socialization", "command");
     createAndLinkNewAttribute("socialization", "diplomacy");
 
+    createAndLinkNewAttribute("magic", "cycle");
+    createAndLinkNewAttribute("magic", "impedance");
+    createAndLinkNewAttribute("magic", "pulse");
+    createAndLinkNewAttribute("magic", "amplification");
+    createAndLinkNewAttribute("magic", "control");
+    createAndLinkNewAttribute("magic", "wizardry");
+    createAndLinkNewAttribute("magic", "spellcraft");
+    createAndLinkNewAttribute("magic", "archmagery");
+
+    createAndLinkNewAttribute("infusion", "flow");
+    createAndLinkNewAttribute("infusion", "continuity");
+    createAndLinkNewAttribute("infusion", "calm");
 
     //intro
     create("overclock", ["reflect", "bodyAwareness", "travelOnRoad", "makeMoney", "socialize"], 0, 0); //generateMana
-    create("reflect", ["distillInsight", "harnessOverflow", "takeNotes", "remember"], -1, -1);
-    create("distillInsight", [], -1.1, .5);
-    create("harnessOverflow", ["siftExcess"], -2, 0);
+    create("reflect", ["harnessOverflow", "distillInsight", "takeNotes", "remember"], -1, -1);
+    create("harnessOverflow", [], -1.1, .5);
+    create("distillInsight", ["siftExcess"], -2, 0);
     create("siftExcess", [], -1, .5);
     create("takeNotes", ["journal", "readBooks"], -1.1, -.5);
     create("bodyAwareness", ["meditate", "standStraighter"],-1, 0);
@@ -346,7 +192,7 @@ function initializeData() {
     create("buyBasicClothes", ["buyTravelersClothes", "buyMatchingClothes"], -1, -1.3);
     create("buyTravelersClothes", ["buyTravelersGear"], -1, -.2);
     create("buyMarketItems", ["buyShopItems"], 1, -1);
-    create("buyShopItems", ["invest", "buyUtilityItems"], 0, -1);
+    create("buyShopItems", ["invest", "buyShinyThings"], 0, -1);
     create("buyStreetFood", ["buyGoodFood"], -1.1, -.5);
     create("buyGoodFood", ["buyArtisanFood"], -1.2, -.2);
     create("buyMatchingClothes", ["buyStylishClothes"], -1, -1.2);
@@ -355,7 +201,7 @@ function initializeData() {
     create("buyComfyShoes", [], -1, .1);
     create("buyTravelersGear", [], -1, 0);
     create("buyArtisanFood", [], -1, .2);
-    create("buyUtilityItems", ["buyPotions", "buyTools"], -.1, -1);
+    create("buyShinyThings", ["buyPotions", "buyTools"], -.1, -1);
     create("buyPotions", [], .9, -1);
     create("buyTools", ["buyCart"], -.1, -1);
     create("buyCart", [], 1, -1);
@@ -432,15 +278,17 @@ function initializeData() {
     create("talkWithScott", ["talkWithJohn"], -1.2, -.5);
     create("talkWithJohn", [], -1.2, 0);
 
-    create("learnToListen", ["chatWithMerchants", "chatWithHermit", "learnToInquire"], -1.2, .5);
+    create("learnToListen", ["chatWithMerchants", "chatWithHermit", "learnToQuestion"], -1.2, .5);
     create("chatWithMerchants", ["listenToWoes", "askAboutStitching", "complimentTheChef"], -1.5, 0);
-    create("askAboutStitching", [], -1.2, 0);
+    create("askAboutStitching", ["tellAJoke"], -1.2, 0);
+    create("tellAJoke", [], -1, 0);
     create("complimentTheChef", [], -1.1, -1);
     create("listenToWoes", ["keyToTheBackroom"], -1.1, 1);
     create("keyToTheBackroom", [], -1, 0);
 
-    create("chatWithHermit", ["tellAJoke"], -1.1, 1);
-    create("tellAJoke", [], -1, 1);
+    create("chatWithHermit", ["discussLifeWithHermit", "discussMagicWithHermit"], -1.1, 1);
+    create("discussLifeWithHermit", [], -1.1, 1);
+    create("discussMagicWithHermit", [], 0, 1);
 
     create("joinCoffeeClub", ["gossipAroundCoffee"], 0, 1);
     create("gossipAroundCoffee", ["hearAboutTheLich"], 1, 0);
@@ -459,7 +307,9 @@ function initializeData() {
     create("visitShrineBehindWaterfall", [], .3, 1);
 
     create("travelToCrossroads", ["feelAGentleTug", "forgottenShrine"], 2, 0);
-    create("forgottenShrine", [], 2, -1);
+    create("forgottenShrine", ["clearTheLeaves"], 1.5, -1.5);
+    create("clearTheLeaves", ["humOldTune"], .5, 1);
+    create("humOldTune", [], .5, -1);
 
 
 //Notice board level 2 / Training & Shortcut pt 2
@@ -497,52 +347,90 @@ function initializeData() {
     create("journal", ["readTheWritten"], -1, -.5);
     create("readTheWritten", [], -1, -.5);
     create("standStraighter", ["walkAware"], -1, .5);
-    create("walkAware", [], -2, 0);
+    create("walkAware", ["projectConfidence"], -2, 0);
+    create("projectConfidence", ["mirrorPosture"], -1, 0);
+    create("mirrorPosture", [], -1, 0);
 
     create("feelAGentleTug", ["leaveTheOpenRoad"], 1.5, 1);
-    create("leaveTheOpenRoad", ["findOverlook", "discoverBurntTown"], 1, 1);
-    create("findOverlook", [], .5, 1);
-    create("discoverBurntTown", ["stepThroughAsh", "resonanceCompass", "feelTheDespair", "repairShatteredShrine"], 1, 0);
+    create("leaveTheOpenRoad", ["climbATallTree", "clearTheWreckage"], 1, 1);
+    create("climbATallTree", [], .5, 1);
+    create("clearTheWreckage", ["discoverBurntTown"], 1, .5);
+    create("discoverBurntTown", ["stepThroughAsh", "feelTheDespair", "repairShatteredShrine"], 1, 0);
     create("feelTheDespair", [], 0, 1);
     create("repairShatteredShrine", [], 0, -1);
-    create("stepThroughAsh", ["graspTheTragedy"], 1, .5);
-    create("graspTheTragedy", [], 1, 1);
-    create("findOverlook", [], 0, 1.5);
-    create("resonanceCompass", ["clearIvyWall"], 1, -.5);
-    create("clearIvyWall", ["scavengeForSupplies", "findPulsingShard"], 1, 0);
-    create("findPulsingShard", [], 0, 1);
-
-
-    create("scavengeForSupplies", ["skimAHeavyTome", "pryGemLoose", "examineTheArchitecture"], 1, 0);
-    create("pryGemLoose", [], 0, 1);
+    create("stepThroughAsh", ["graspTheTragedy", "resonanceCompass"], 1, .5);
+    create("graspTheTragedy", [], 0, 1);
+    create("climbATallTree", [], 0, 1.5);
+    create("resonanceCompass", ["clearIvyWall"], 0, -1);
+    create("clearIvyWall", ["scavengeForSupplies", "pullPulsingShard", "breakWeakenedWall"], .2, -1.1);
+    create("scavengeForSupplies", ["examineTheArchitecture"], -1, -.4);
     create("examineTheArchitecture", [], 0, -1);
-    create("skimAHeavyTome", ["clearRubble", "comprehendDifficultTexts", "clearTheDust"], 1, 0);
-    create("comprehendDifficultTexts", [], 0, -1);
-    create("clearTheDust", [], 0, 1);
-    create("clearRubble", ["readFadedMarkers", "dismantleShelves", "markTheLayout"], 1, 0);
-    create("dismantleShelves", [], 0, 1);
-    create("markTheLayout", [], 0, -1);
-    create("readFadedMarkers", ["findAFamiliarLanguage", "decipherOrganization", "mapOutTraps"], 1, 0);
-    create("decipherOrganization", [], 0, 1);
-    create("mapOutTraps", ["accessForbiddenArea"], 0, -1);
-    create("accessForbiddenArea", ["collectSpellBooks"], 0, -1);
-    create("collectSpellBooks", [], 1, 0);
-    create("findAFamiliarLanguage", ["searchForRelevantBooks", "recognizeRunicLanguages", "catalogUnknownLanguages"], 1, 0);
-    create("recognizeRunicLanguages", [], 0, -1);
-    create("catalogUnknownLanguages", [], 0, 1);
-    create("searchForRelevantBooks", ["collectInterestingBooks", "complainAboutDifficulty", "browseFantasyNovels"], 1, 0);
-    create("browseFantasyNovels", [], 0, -1);
-    create("complainAboutDifficulty", [], 0, 1);
-    create("collectInterestingBooks", ["collectHistoryBooks", "collectMathBooks"], 1, 0);
-    create("collectHistoryBooks", [], 0, 1);
-    create("collectMathBooks", [], 0, -1);
+    create("pullPulsingShard", ["pryGemLoose"], 0, -1);
+    create("pryGemLoose", [], 0, -1);
+
+    create("breakWeakenedWall", ["skimAHeavyTome", "clearTheDust"], 1.2, 0);
+    create("skimAHeavyTome", ["findAFamiliarLanguage", "decipherOrganization", "collectHistoryBooks"], 1.2, 0);
+    create("findAFamiliarLanguage", ["catalogUnknownLanguages"], 1.2, 0);
+    create("decipherOrganization", ["readFadedMarkers", "collectInterestingBooks"], 0, -1.2);
+    create("collectHistoryBooks", [], 0, 1.2);
+
+    create("readFadedMarkers", ["accessBasementPassage"], 1.2, 0);
+    create("accessBasementPassage", ["inspectAllCorners", "mapOutTraps", "accessForbiddenArea"], 1.2, 0);
+    create("inspectAllCorners", [], 0, 1.2);
+    create("mapOutTraps", [], 0, -1.2);
+    create("accessForbiddenArea", ["collectSpellBooks"], 1.2, 0);
+    create("collectSpellBooks", [], 0, 1.2);
+
+
+    create("clearTheDust", ["clearRubble"], 0, 1.2);
+    create("clearRubble", ["dismantleShelves", "discoverLuckyCache"], 0, 1.2);
+    create("dismantleShelves", [], 0, 1.2);
+    create("discoverLuckyCache", [], 1.2, 0);
+
+
+    create("collectInterestingBooks", ["browseFantasyNovels", "collectMathBooks", "comprehendDifficultTexts"], 0, -1.2);
+    create("browseFantasyNovels", [], 1.2, 0);
+    create("collectMathBooks", [], -1.2, 0);
+
+
+    create("comprehendDifficultTexts", ["complainAboutDifficulty", "collectPoeticBooks"], 0, -1);
+    create("complainAboutDifficulty", [], 1.2, 0);
+    create("collectPoeticBooks", [], -1.2, 0);
+
+
+    create("catalogUnknownLanguages", ["recognizeRunicLanguages"], 0, 1.2);
+    create("recognizeRunicLanguages", ["searchForRelevantBooks"], 1.2, 0);
+    create("searchForRelevantBooks", ["collectRunicBooks"], 0, 1.2);
+    create("collectRunicBooks", [], -1.2, 0);
+
+
+    // create("skimAHeavyTome", ["clearRubble", "comprehendDifficultTexts", "clearTheDust"], 1, 0);
+    // create("comprehendDifficultTexts", [], 0, -1);
+    // create("clearTheDust", [], 0, 1);
+    // create("clearRubble", ["readFadedMarkers", "dismantleShelves", "accessBasementPassage"], 1, 0);
+    // create("dismantleShelves", [], 0, 1);
+    // create("accessBasementPassage", [], 0, -1);
+    // create("readFadedMarkers", ["findAFamiliarLanguage", "decipherOrganization", "mapOutTraps"], 1, 0);
+    // create("decipherOrganization", [], 0, 1);
+    // create("mapOutTraps", ["accessForbiddenArea"], 0, -1);
+    // create("accessForbiddenArea", ["collectSpellBooks"], 0, -1);
+    // create("collectSpellBooks", [], 1, 0);
+    // create("findAFamiliarLanguage", ["searchForRelevantBooks", "recognizeRunicLanguages", "catalogUnknownLanguages"], 1, 0);
+    // create("recognizeRunicLanguages", [], 0, -1);
+    // create("catalogUnknownLanguages", [], 0, 1);
+    // create("searchForRelevantBooks", ["collectInterestingBooks", "complainAboutDifficulty", "browseFantasyNovels"], 1, 0);
+    // create("browseFantasyNovels", [], 0, -1);
+    // create("complainAboutDifficulty", [], 0, 1);
+    // create("collectInterestingBooks", ["collectHistoryBooks", "collectMathBooks"], 1, 0);
+    // create("collectHistoryBooks", [], 0, 1);
+    // create("collectMathBooks", [], 0, -1);
 
 
     create("readBooks", ["catalogNewBooks", "study"], -2, 0);
-    create("catalogNewBooks", ["buildPersonalLibrary"], -1, 0);
-    create("buildPersonalLibrary", ["expandPersonalLibrary"], -1, .5);
-    create("expandPersonalLibrary", [], -1, .5);
-    create("study", ["researchBySubject"], -1, -1);
+    create("catalogNewBooks", ["craftSpellShack"], -1, .5);
+    create("craftSpellShack", ["craftSturdyPracticeDen"], -1, .5);
+    create("craftSturdyPracticeDen", [], -1, .5);
+    create("study", ["researchBySubject"], -1.2, -.5);
     create("researchBySubject", ["studyHistory", "studyMath", "studyMagic"], -1, -1);
 
     create("studyHistory", ["readOldStories"], 1, -.5);
@@ -557,7 +445,9 @@ function initializeData() {
     create("studyCryptology", [], -.5, 1);
     create("studyArchitecture", [], .5, 1);
 
-    create("studyMagic", ["studySupportSpells"], -1, -.5);
+    create("studyMagic", ["studyMagicalExercises", "studySupportSpells"], -1, -.5);
+    create("studyMagicalExercises", [], -1, -.5);
+
     create("studySupportSpells", ["studyEarthMagic", "studyPracticalMagic"], -1, .5);
     create("studyEarthMagic", ["studyAdvancedEarthMagic"], -1, 0);
     create("studyAdvancedEarthMagic", [], -1, 0);
@@ -573,14 +463,34 @@ function initializeData() {
 
 
 
-    create("learnToInquire", ["talkToTheRecruiters"], -.1, 1);
-    create("talkToTheRecruiters", ["askAboutLocalWork", "askAboutArcaneCorps"], 1, .5);
-    create("askAboutLocalWork", [], 0, 1);
-    create("askAboutArcaneCorps", ["getTestedForKnowledge", "discussPlacement"], 1, .2);
-    create("getTestedForKnowledge", [], 0, 1);
-    create("discussPlacement", ["meetTheMages"], 1, -.1);
-    create("meetTheMages", ["trainWithTeam"], .3, -1);
-    create("trainWithTeam", [], 0, -1.2);
+    create("learnToQuestion", ["trackMarketMovement", "negotiate", "learnToConnect"], 0, 1.5);
+    create("trackMarketMovement", ["catalogueGoods"], 1, 0);
+    create("catalogueGoods", [], 1, 0);
+    create("negotiate", ["lowerCounteroffer"], 1, 1);
+    create("lowerCounteroffer", [], 1, 0);
+    create("learnToConnect", ["askAboutRelationships", "askAboutGoals"], 0, 2);
+    create("askAboutGoals", ["talkAboutPassions", "talkAboutFears"], -1.5, 0);
+    create("talkAboutPassions", [], -1.5, .5);
+    create("talkAboutFears", [], -1.5, -.5);
+    create("askAboutRelationships", ["talkToTheRecruiters", "learnOfSecretMeeting"], 1, 0);
+    create("talkToTheRecruiters", [], 1, 0);
+    create("learnOfSecretMeeting", ["getTestedForKnowledge", "joinWizardSociety"], 0, 1);
+    create("getTestedForKnowledge", [], 1, 0);
+    create("joinWizardSociety", ["misuseATerm", "showOffSpells", "askAboutHistory", "learnFromLegends"], 0, 1);
+    create("misuseATerm", ["eavesdropOnArguments"], -1, 1.2);
+    create("eavesdropOnArguments", [], 0, 1);
+    create("showOffSpells", ["hearCriticisms"], 0, 1);
+    create("hearCriticisms", [], 0, 1);
+    create("askAboutHistory", ["learnOfFamousMages"], 1, 1.2);
+    create("learnOfFamousMages", [], 0, 1);
+    create("learnFromLegends", ["talkToArcanistBalthazar", "talkToKeeperSimeon", "talkToWovenElara"], 1.5, 0);
+    create("talkToArcanistBalthazar", [], .8, 1);
+    create("talkToKeeperSimeon", [], 1.2, 0);
+    create("talkToWovenElara", [], .8, -1);
+
+
+
+    // create("trainWithTeam", [], 0, -1.2);
 
 
 
@@ -588,74 +498,97 @@ function initializeData() {
 
 
     //Plane 2
-    create("echoKindle", ["sparkMana"], 0, 0)
-    create("sparkMana", ["poolMana"], 0, 1);
-    create("poolMana", ["expelMana"], 0, 1);
-    create("expelMana", ["manaBasics", "prepareSpells", "auraControl",], 0, 1);
+    create("echoKindle", ["resonanceFurnace"], 0, 0)
+    create("resonanceFurnace", ["dissipation"], -1, 0)
+    create("dissipation", ["poolMana"], .5, 1);
+    create("poolMana", ["manaExperimentation", "threadArcana"], 0, 1);
 
-    create("auraControl", [], 0, 1);
+    create("manaExperimentation", ["expelMana", "spellResearch"], -1, 0);
+    create("expelMana", ["tightenAura", "stretchManaCapacity", "focusInwards"], -1, 1);
 
-    create("manaBasics", ["manaExperiments", "magicResearch"], -1, 0);
-    create("manaExperiments", ["feelYourMana", "manaObservations"], -.5, 1);
-    create("manaObservations", ["manaVisualizations"], 0, 1);
-    create("manaVisualizations", ["manaShaping"], -1, 0);
-    create("manaShaping", [], -1, 0);
-    create("feelYourMana", ["growMagicSenses"], -1, 0);
-    create("growMagicSenses", ["listenToTheMana"], -1, 0);
-    create("listenToTheMana", ["manaInstinct"], -1, 0);
-    create("manaInstinct", [], -1, 0);
-    create("magicResearch", ["infuseTheHide"], -.5, -1);
-    create("infuseTheHide", ["etchTheCircle"], -1, 0);
-    create("etchTheCircle", ["bindThePages"], -.5, 1);
-    create("bindThePages", ["awakenYourGrimoire"], -1, 0);
-    create("awakenYourGrimoire", [], .5, -1);
+    create("tightenAura", ["collectDischargedMotes", "condenseAura"], .5, 1);
+    create("collectDischargedMotes", [], 1, 0);
+    create("condenseAura", ["solidifyEdges", "modifyAuraDensity"], 0, 1);
+    create("solidifyEdges", [], 1, 0);
+    create("modifyAuraDensity", ["layerAura"], 0, 1);
+    create("layerAura", [], 1, 0);
 
-    create("prepareSpells", ["prepareInternalSpells", "prepareExternalSpells"], 1, 0);
-    create("prepareExternalSpells", ["supportSpells", "recoverSpells", "combatSpells"], .5, -1);
-    create("supportSpells", ["earthMagic", "divination", "practicalMagic"], 0, -1);
+    create("stretchManaCapacity", ["widenChannels"], -.5, 1);
+    create("widenChannels", ["condenseMana"], 0, 1);
+    create("condenseMana", ["spinMana"], 0, 1);
+    create("spinMana", ["accelerateManaFlow"], .5, 1);
+    create("accelerateManaFlow", ["loopTheCircuit"], .5, 1);
+    create("loopTheCircuit", [], .5, -1);
 
-    create("divination", ["identifyItem"], 1.5, -.5);
-    create("identifyItem", ["detectMagic"], 0, -1);
-    create("detectMagic", [], 0, -1);
-    create("practicalMagic", ["illuminate"], .5, -1);
-    create("illuminate", ["unblemish"], 0, -1);
-    create("unblemish", ["manaTransfer"], 0, -1);
-    create("manaTransfer", [], 0, -1);
+    create("focusInwards", ["createAVoid"], -1.5, .5);
+    create("createAVoid", ["hearThePulse"], -1.5, .7);
+    create("hearThePulse", ["findTheThread"], -.6, 1);
+    create("findTheThread", ["isolateRhythms"], .9, 1);
+    create("isolateRhythms", ["matchTempo"], 1.2, -.6);
+    create("matchTempo", [], -.5, -1);
 
-    create("recoverSpells", ["healingMagic"], 1, -.5);
-    create("earthMagic", ["moveEarth"], -.5, -1);
-    create("moveEarth", ["hardenEarth"], 0, -1);
-    create("hardenEarth", ["shapeEarth"], 0, -1);
-    create("shapeEarth", ["moveIron"], 0, -1);
-    create("moveIron", ["reinforceArmor"], 0, -1);
-    create("reinforceArmor", ["restoreEquipment"], 0, -1);
-    create("restoreEquipment", [], 0, -1);
+    create("practiceIncantations", ["practicePronunciation", "practiceGestures"], -1.3, -.5);
+    create("practicePronunciation", [], -1, .8);
+    create("practiceGestures", ["practiceVisualizations", "practiceTargeting"], -.8, -1);
+    create("practiceVisualizations", [], -1, .8);
+    create("practiceTargeting", ["practiceLayering"], -.8, -1);
+    create("practiceLayering", [], -1, .8);
 
-    create("healingMagic", ["singleTargetHealing", "massHeal"], 1.5, -.5);
-    create("singleTargetHealing", ["purifyPoison"], 0, -1);
-    create("purifyPoison", [], 0, -1);
-    create("massHeal", ["auraHealing", "healBurst"], 1, -1);
-    create("auraHealing", [], 0, -1);
-    create("healBurst", [], 1, -1);
+    create("spellResearch", ["grimoireResearch", "awakenYourGrimoire", "bindThePages"], -1, -1);
 
-    create("combatSpells", ["swarmSpells", "wardMagic", "duellingSpells"], 1, .5);
-    create("swarmSpells", ["fireball"], 1, 1.5);
-    create("fireball", [], 1, 0);
-    create("wardMagic", ["ward"], 1, .5);
-    create("ward", [], 1, 0);
-    create("duellingSpells", ["firebolt"], 1, -.5);
-    create("firebolt", [], 1, 0);
+    create("grimoireResearch", ["castToFail", "boldenLines"], -1.5, 0);
+    create("castToFail", ["locateWeakness", "practiceIncantations"], -1, .5);
+    create("locateWeakness", ["fixTheFormula"], .5, 1);
+    create("fixTheFormula", [], 1, -.5);
+    create("boldenLines", ["grindPigments", "chargeInk"], -1, -.5);
+    create("grindPigments", [], -.5, -1);
+    create("chargeInk", [], .5, -1);
 
+    create("awakenYourGrimoire", ["etchTheCircle"], -1, -1);
+    create("etchTheCircle", [], 0, -1);
+    create("bindThePages", ["infuseTheHide"], 0, -1);
+    create("infuseTheHide", [], 0, -1);
 
-    create("prepareInternalSpells", ["overcharge"], 0, 1);
-    create("overcharge", ["overboost"], 1, 0);
+    //arcana
+    create("threadArcana", ["prepareSpells"], 1, 0);
+    create("prepareSpells", ["castingExperience", "prepareInternalSpells", "prepareExternalSpells"], 1, 0);
+    create("castingExperience", [], 1.1, 0);
+
+    create("prepareInternalSpells", ["overcharge", "overwork", "overtalk"], 0, 1);
+    create("overcharge", ["overboost"], -1, 1);
     create("overboost", ["overponder"], 0, 1);
     create("overponder", [], 0, 1);
+    create("overwork", ["overproduce"], 0, 1);
+    create("overproduce", ["overdrive"], 0, 1);
+    create("overdrive", [], 0, 1);
+    create("overtalk", ["overhear"], 1, 1);
+    create("overhear", ["overhype"], 0, 1);
+    create("overhype", [], 0, 1);
+
+    create("prepareExternalSpells", ["prepareSupportSpells"], 0, -1);
+    create("prepareSupportSpells", ["castDirtMagic", "castIronMagic", "castRecoverMagic", "castPracticalMagic"], 0, -1);
+    create("castDirtMagic", ["createMounds"], -1.5, -1);
+    create("createMounds", ["hardenDirt"], 0, -1);
+    create("hardenDirt", ["shapeDefenses"], 0, -1);
+    create("shapeDefenses", [], 0, -1);
+    create("castIronMagic", ["mendSmallCracks"], -.5, -1);
+    create("mendSmallCracks", ["restoreEquipment"], 0, -1);
+    create("restoreEquipment", ["reinforceArmor"], 0, -1);
+    create("reinforceArmor", [], 0, -1);
+    create("castRecoverMagic", ["unblemish"], .5, -1);
+    create("unblemish", ["lightHeal"], 0, -1);
+    create("lightHeal", ["mendAllWounds"], 0, -1);
+    create("mendAllWounds", [], 0, -1);
+    create("castPracticalMagic", ["illuminate"], 1.5, -1);
+    create("illuminate", ["identifyItem"], 0, -1);
+    create("identifyItem", ["detectMagic"], 0, -1);
+    create("detectMagic", [], 0, -1);
+
     // create("", [], 0, 0);
 
     //KTL
-    create("worry", ["resolve"], 0, 0);
-    create("resolve", ["overclockTargetingTheLich"], 1.2, -.3);
+    create("worry", ["courage"], 0, 0);
+    create("courage", ["overclockTargetingTheLich"], 1.2, -.3);
     create("overclockTargetingTheLich", ["fightTheEvilForces"], -1, -.7);
     create("fightTheEvilForces", ["bridgeOfBone"], 1.5, -.2);
     create("bridgeOfBone", ["harvestGhostlyField"], 1, 0.5);
@@ -667,10 +600,10 @@ function initializeData() {
     create("protectTheSunstone", ["silenceDeathChanters"], -.5, 1);
     create("silenceDeathChanters", ["breakFleshBarricade"], -1, 1);
     create("breakFleshBarricade", ["conquerTheGatekeepers"], -1, .5);
-    create("conquerTheGatekeepers", ["unhookSacrificialCages"], -1, 0);
-    create("unhookSacrificialCages", ["purgeUnholyRelics"], -1, -.2);
-    create("purgeUnholyRelics", ["destroyWesternMonolith"], -1, -.5);
-    create("destroyWesternMonolith", ["destroyFleshGrowths"], -1, -.8);
+    create("conquerTheGatekeepers", ["destroyWesternMonolith"], -1, 0);
+    create("destroyWesternMonolith", ["unhookSacrificialCages"], -1, -.2);
+    create("unhookSacrificialCages", ["purgeUnholyRelics"], -1, -.5);
+    create("purgeUnholyRelics", ["destroyFleshGrowths"], -1, -.8);
     create("destroyFleshGrowths", ["crackCorruptedEggs"], -.5, -1);
     create("crackCorruptedEggs", ["kiteTheAbomination"], 0, -1);
     create("kiteTheAbomination", ["collapseCorpseTower"], .5, -1);
@@ -692,10 +625,23 @@ function initializeData() {
     create("shatterPhylactery", [], -2.1, -.5);
 
 
+
+
+
     //Plane 3
-    create("absorbStarseed", [], 0, 0)
+    create("reposeRebounded", ["turnTheWheel"], 0, 0)
+    create("turnTheWheel", ["tidalBurden", "dipInTheRiver"], .5, 1)
+    create("tidalBurden", [], 1, -.5)
+    create("dipInTheRiver", ["prepareInfusion"], .5, 1)
+    create("prepareInfusion", ["infuseBody", "infuseMind", "infuseImage", "infuseSenses", "infuseMagic"], 0, 1)
+    create("infuseBody", [], -1.6, 0.5)
+    create("infuseMind", [], -0.9, 1.3)
+    create("infuseImage", [], 0, 1.6)
+    create("infuseSenses", [], 0.9, 1.3)
+    create("infuseMagic", [], 1.6, 0.5)
 
 
+    // create("infuseImage", [], .5, 1.5)
 
 
 

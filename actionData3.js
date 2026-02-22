@@ -5,400 +5,367 @@ actionData = {
     ...actionData,
 
     worry: {
-        tier:0, plane:2, resourceName: "fear",
-        progressMaxBase:1, progressMaxIncrease:1,
-        expToLevelBase:1000, expToLevelIncrease:10,
-        actionPowerBase:1, actionPowerMult:1, actionPowerMultIncrease:1,
-        efficiencyBase:1, isKTL:true, purchased: true, generatorTarget:"worry",
-        unlockCost:0, visible:false, unlocked:false, isGenerator:true, generatorSpeed:2, hasUpstream: false,
+        tier:0, plane:2, resourceName:"fear", creationVersion: 6,
+        progressMaxBase:2, progressMaxIncrease:1,
+        expToLevelBase:1e4, expToLevelIncrease:10,
+        actionPowerBase:5, actionPowerMult:1, actionPowerMultIncrease:1.3,
+        efficiencyBase:.2, isKTL:true,
+        unlockCost:0, visible:false, unlocked:false, purchased: true, hasUpstream:false,
+        isGenerator:true, generatorTarget:"courage", generatorSpeed:1,
         onCompleteCustom: function() {
             let actionObj = data.actions.worry;
-            actionData.worry.updateMults();
+            this.updateMults();
 
-            addResourceTo(data.actions["resolve"], actionObj.resourceToAdd);
-            addResourceTo(data.actions["worry"], actionObj.resourceToAdd);
+            addResourceTo(data.actions[this.generatorTarget], actionObj.resourceToAdd);
 
+            views.scheduleUpdate('worryExpGained', intToString(actionObj.expToAdd, 2), "textContent")
             views.scheduleUpdate('worryResourceSent', intToString(actionObj.resourceToAdd, 2), "textContent")
-            views.scheduleUpdate('worryResourceTaken', intToString(actionObj.resourceToAdd, 2), "textContent")
         },
         updateMults: function () {
+            this.updateUpgradeMult();
             let actionObj = data.actions.worry;
             let dataObj = actionData.worry;
 
             actionObj.progressGain = dataObj.generatorSpeed * (actionObj.efficiency / 100);
             actionObj.actionPower = actionObj.actionPowerBase *
-                actionObj.actionPowerMult * (actionObj.efficiency/100);
-            let resourceTaken = actionObj.resource * actionObj.tierMult();
-            actionObj.resourceToAdd = dataObj.actionPowerFunction(resourceTaken) *
-                actionObj.actionPower * actionObj.upgradeMult;
-            data.actions.resolve.resourceIncrease = actionObj.resourceToAdd * actionObj.progressGain / actionObj.progressMax;
-            actionObj.expToAddBase = actionObj.resourceToAdd;
+                actionObj.actionPowerMult;
+            actionObj.resourceToAdd = actionObj.actionPower * actionObj.upgradeMult * (actionObj.efficiency/100);
+            actionObj.expToAddBase = actionObj.resource * (actionObj.efficiency/100);
             actionObj.expToAdd = actionObj.expToAddBase * actionObj.expToAddMult;
+            data.actions[this.generatorTarget].showResourceAdded = actionObj.resourceToAdd;
         },
-        actionPowerFunction: function(resource) {
-            return resource / 10;
+        updateUpgradeMult:function() {
+            let upgradeMult = 1;
+            // upgradeMult *= Math.pow(1.5, data.upgrades.glimpseTheWeave.upgradePower);
+            data.actions.worry.upgradeMult = upgradeMult;
         },
-        onCompleteText: {english:Raw.html`
-                +<span style="font-weight:bold;" id="worryResourceTaken">???</span> Fear to this action, and also <br>
-                +<span style="font-weight:bold;" id="worryResourceSent">???</span> Bravery, added to Resolve.<br>
-                `},
-        onLevelAtts:[["doom", 10]],
-        expAtts:[],
-        efficiencyAtts:[["doom", -1]],
-        extraInfo: {english:Raw.html`<br>Adds equal Fear and Bravery to this action and Resolve.<br> 
-                        Amount added = 10% of Fear * Speed per complete.<br>`},
-        actionTriggers: [
-            ["info", "text", "Generates Bravery, to counter the rising Doom."],
-        ]
-    },
-    resolve: {
-        tier:0, plane:2, resourceName: "bravery",
-        progressMaxBase:10, progressMaxIncrease:2,
-        expToLevelBase:5, expToLevelIncrease:1,
-        efficiencyBase:1, isKTL:true, purchased: true,
-        unlockCost:0, visible:false, unlocked:false, hasUpstream: false,
-        onLevelAtts:[["courage", 5]],
-        expAtts:[["courage", 1], ["valor", 1]],
-        efficiencyAtts:[["valor", .1], ["doom", -1]]
-    },
-    overclockTargetingTheLich: {
-        tier:0, plane:2, resourceName:"momentum",
-        progressMaxBase:5, progressMaxIncrease:1,
-        expToLevelBase:12, expToLevelIncrease:1,
-        efficiencyBase:1, isKTL:true, purchased: true,
-        actionPowerBase:1, actionPowerMult:1, actionPowerMultIncrease:1, generatorTarget:"fightTheEvilForces",
-        unlockCost:0, visible:false, unlocked:false, isGenerator:true, generatorSpeed:1,
-        hasUpstream: false, hideUpstreamLine: true,
-        onCompleteCustom: function() {
-            let actionObj = data.actions.overclockTargetingTheLich;
-            actionData.overclockTargetingTheLich.updateMults();
-            let resourceTaken = actionObj.resource/10;
-
-            if (actionObj.resourceToAdd > 0) {
-                actionObj.resource -= resourceTaken;
-                addResourceTo(data.actions[actionObj.generatorTarget], actionObj.resourceToAdd);
-            }
-
-            views.scheduleUpdate('overclockTargetingTheLichResourceSent', intToString(actionObj.resourceToAdd, 2), "textContent")
-            views.scheduleUpdate('overclockTargetingTheLichResourceTaken', intToString(resourceTaken, 2), "textContent")
-        },
-        updateMults: function () {
-            let actionObj = data.actions.overclockTargetingTheLich;
-            let dataObj = actionData.overclockTargetingTheLich;
-
-            actionObj.progressGain = dataObj.generatorSpeed;
-            let resourceTaken = actionObj.resource/10;
-            actionObj.resourceToAdd = dataObj.actionPowerFunction(resourceTaken) * actionObj.upgradeMult;
-        },
-        actionPowerFunction: function(resource) {
-            let fightMath = Math.sqrt(resource/1e24) * data.maxSpellPower;
-            if(data.actions.trainWithTeam.unlocked) {
-                let teamworkMult = Math.sqrt(data.actions.trainWithTeam.resource/1000);
-                if(teamworkMult < 1) {
-                    teamworkMult = 1;
-                }
-                fightMath *= teamworkMult;
-            }
-            return fightMath;
-        },
-        onCompleteText: {english:Raw.html`
-                -<span style="font-weight:bold;" id="overclockTargetingTheLichResourceTaken">???</span> Momentum was taken from this action, converted to <br>
-                +<span style="font-weight:bold;" id="overclockTargetingTheLichResourceSent">???</span> Fight, added to Fight The Evil Forces.<br>
-                `},
         onLevelAtts:[],
         expAtts:[],
-        efficiencyAtts:[],
-        extraInfo: {english:Raw.html`<br>Momentum Taken = 10% of current Momentum.<br>
-                        Fight gain = (Momentum Taken/1e24)^.5 * Spell Power * (Teamwork/1000)^.5.`},
+        efficiencyAtts:[["hope", 0]],
+        onCompleteText: {english:Raw.html`
+                +<span style="font-weight:bold;" id="worryExpGained">???</span> Exp on this action<br>
+                +<span style="font-weight:bold;" id="worryResourceSent">???</span> Bravery is added to Courage.<br>
+                `},
+        extraInfo: {english:Raw.html`Exp Gain = Fear * Speed.<br>
+        Bravery Gain = Action Power * Speed.`},
         actionTriggers: [
-            ["info", "text", "Generates Fight to gain Ancient Coins and Legacy as you get closer to killing the lich."],
+            ["info", "text", "Takes 1% of Mana and converts it to exp. Arcane is generated over time."]
+        ]
+    },
+
+    courage: {
+        tier:1, plane:2, resourceName: "bravery", creationVersion: 6,
+        progressMaxBase:100, progressMaxIncrease:4,
+        expToLevelBase:1, expToLevelIncrease:1,
+        efficiencyBase:.2, isKTL:true, purchased: true, showResourceAdded: true,
+        unlockCost:0, visible:false, unlocked:false, hasUpstream: false,
+        onLevelAtts:[["hope", 10]],
+        expAtts:[["valor", 1]],
+        efficiencyAtts:[["hope", 0]]
+    },
+    overclockTargetingTheLich: {
+        tier:0, plane:2, creationVersion: 6,
+        progressMaxBase:1e29, progressMaxIncrease:2,
+        expToLevelBase:1, expToLevelIncrease:1,
+        efficiencyBase:.01, isKTL:true,
+        unlockCost:0, visible:false, unlocked:false, purchased: true, showResourceAdded:true,
+        hideUpstreamLine: true, hasUpstream: false,
+        onUnlock: function() {
+            let actionObj = data.actions.overclockTargetingTheLich;
+            actionObj.resourceToAdd = Math.pow((1+(actionObj.level+1)/10), 3) * actionData.awakenYourGrimoire.manaQuality() * actionObj.upgradeMult;
+            actionObj.showResourceAdded = actionObj.resourceToAdd;
+        },
+        onLevelCustom: function() {
+            if(data.upgrades.rememberTheVictories.upgradePower > 0) {
+                data.legacyMultKTL *= 1.01;
+            }
+            let actionObj = data.actions.overclockTargetingTheLich;
+            let toAdd = Math.pow((1+actionObj.level/10), 3) * actionData.awakenYourGrimoire.manaQuality() * actionObj.upgradeMult;
+
+            addResourceTo(data.actions.fightTheEvilForces, toAdd);
+            actionObj.resourceToAdd = toAdd;
+            actionObj.showResourceAdded = toAdd;
+
+        },
+        onLevelAtts:[],
+        expAtts:[["resonance", 1]],
+        efficiencyAtts:[["resonance", 200]],
+        extraInfo: {english:Raw.html`When this action levels up, it generates Fight onto Fight the Evil Forces.<br>
+        Fight generated: (1 + level/10)^3 * Mana Quality`},
+        actionTriggers: [
+            ["info", "text", "On Level: Generates Fight (more in info)"],
         ]
     },
     fightTheEvilForces: {
-        tier:0, plane:2, resourceName:"fight",
+        tier:0, plane:2, resourceName:"fight", creationVersion: 6,
         progressMaxBase:10, progressMaxIncrease:1,
         expToLevelBase:1, expToLevelIncrease:1,
-        efficiencyBase:1, isKTL:true, purchased: true,
-        actionPowerBase:1, actionPowerMult:1, actionPowerMultIncrease:1,
+        efficiencyBase:1, isKTL:true, purchased: true, showResourceAdded:true, maxLevel:200,
         unlockCost:1, visible:false, unlocked:false, isGenerator:true, generatorSpeed:1, hasUpstream: false,
         onUnlock: function() {
             setSliderUI("fightTheEvilForces", "bridgeOfBone", 100);
         },
-        onLevelAtts:[["doom", 20]],
+        updateMults: function() {
+            data.actions.fightTheEvilForces.showResourceAdded = 1;
+        },
+        onLevelAtts:[["hope", -10]],
         expAtts:[],
         efficiencyAtts:[],
         actionTriggers: [
-            ["info", "text", "Doom approaches."],
+            ["info", "text", "Doom approaches. Hope is snuffed out."],
             ["unlock", "reveal", "bridgeOfBone"]
         ]
     },
     bridgeOfBone: {
-        tier:0, plane:2, resourceName:"fight",
-        progressMaxBase:10, progressMaxIncrease:3,
-        expToLevelBase:10, expToLevelIncrease:1,
-        efficiencyBase:.4, isKTL:true, purchased: true, maxLevel:10,
-        unlockCost:10, visible:false, unlocked:false,
+        tier:0, plane:2, resourceName:"fight", creationVersion: 6,
+        progressMaxBase:10, progressMaxIncrease:1.5,
+        expToLevelBase:5, expToLevelIncrease:1,
+        efficiencyBase:.1, isKTL:true, purchased: true, maxLevel:10,
+        unlockCost:5, visible:false, unlocked:false,
         onUnlock: function() {
             data.useAmuletButtonShowing = true;
         },
-        onLevelAtts:[["legacy", 4]],
-        expAtts:[["legacy", .1]],
-        efficiencyAtts:[["courage", 1], ["valor", .1], ["doom", -1]],
-        extraInfo:{english:"+4 * (1 + level/10) * Legacy Gain on complete."},
+        onLevelAtts:[["legacy", 1]],
+        expAtts:[],
+        efficiencyAtts:[["hope", 0]],
+        extraInfo:{english:"Gain Legacy = +1 * (1 + level/5) * Legacy Mult, on complete and level."},
         actionTriggers: [
-            ["unlock", "addAC", "", 5],
-            ["complete", "addLegacy", "bridgeOfBone", 4],
-            ["level_3", "reveal", "harvestGhostlyField"]
+            ["unlock", "addAC", "", 10],
+            ["unlock", "addAW", "", 10],
+            ["complete", "addLegacy", "bridgeOfBone", 1],
+            ["level_5", "reveal", "harvestGhostlyField"]
         ]
     },
     harvestGhostlyField: {
-        tier:0, plane:2, resourceName:"fight",
-        progressMaxBase:1000, progressMaxIncrease:4,
-        expToLevelBase:10, expToLevelIncrease:1,
-        efficiencyBase:.3, isKTL:true, purchased: true, maxLevel:12,
-        unlockCost:1000, visible:false, unlocked:false,
-        onLevelAtts:[["legacy", 7]],
-        expAtts:[["legacy", .1]],
-        efficiencyAtts:[["courage", 1], ["valor", .1], ["doom", -1]],
-        extraInfo:{english:"+7 * (1 + level/10) Legacy on complete."},
+        tier:0, plane:2, resourceName:"fight", creationVersion: 6,
+        progressMaxBase:50, progressMaxIncrease:1.5,
+        expToLevelBase:5, expToLevelIncrease:1,
+        efficiencyBase:.1, isKTL:true, purchased: true, maxLevel:10,
+        unlockCost:100, visible:false, unlocked:false,
+        onLevelAtts:[["legacy", 4]],
+        expAtts:[],
+        efficiencyAtts:[["hope", 0]],
+        extraInfo:{english:"Gain Legacy = +4 * (1 + level/5) * Legacy Mult, on complete and level."},
         actionTriggers: [
-            ["unlock", "addAC", "", 8],
-            ["complete", "addLegacy", "harvestGhostlyField", 7],
-            ["level_3", "reveal", "geyserFields"]
+            ["unlock", "addAC", "", 10],
+            ["unlock", "addAW", "", 10],
+            ["complete", "addLegacy", "harvestGhostlyField", 4],
+            ["level_4", "reveal", "geyserFields"]
         ]
     },
     geyserFields: {
-        tier:0, plane:2, resourceName:"fight", creationVersion:2,
-        progressMaxBase:1e6, progressMaxIncrease:4,
-        expToLevelBase:10, expToLevelIncrease:1,
-        efficiencyBase:.2, isKTL:true, purchased: true, maxLevel:14,
-        unlockCost:1e4, visible:false, unlocked:false,
-        onLevelAtts:[["legacy", 12]],
-        expAtts:[["legacy", .1]],
-        efficiencyAtts:[["courage", 1], ["valor", .1], ["doom", -1]],
-        extraInfo:{english:"+12 * (1 + level/10) Legacy on complete."},
+        tier:0, plane:2, resourceName:"fight", creationVersion: 6,
+        progressMaxBase:500, progressMaxIncrease:2,
+        expToLevelBase:5, expToLevelIncrease:1,
+        efficiencyBase:.1, isKTL:true, purchased: true, maxLevel:10,
+        unlockCost:1000, visible:false, unlocked:false,
+        onLevelAtts:[["legacy", 9]],
+        expAtts:[],
+        efficiencyAtts:[["hope", 0]],
+        extraInfo:{english:"Gain Legacy = +9 * (1 + level/5) * Legacy Mult, on complete and level."},
         actionTriggers: [
-            ["unlock", "addAC", "", 13],
-            ["complete", "addLegacy", "geyserFields", 12],
-            ["level_3", "reveal", "destroySiegeEngine"]
+            ["unlock", "addAC", "", 20],
+            ["unlock", "addAW", "", 20],
+            ["complete", "addLegacy", "geyserFields", 9],
+            ["level_6", "reveal", "destroySiegeEngine"]
         ]
     },
     destroySiegeEngine: {
-        tier:0, plane:2, resourceName:"fight", creationVersion:2,
-        progressMaxBase:1e9, progressMaxIncrease:4,
-        expToLevelBase:10, expToLevelIncrease:1,
-        efficiencyBase:.1, isKTL:true, purchased: true, maxLevel:16,
-        unlockCost:1e6, visible:false, unlocked:false,
-        onLevelAtts:[["legacy", 20]],
-        expAtts:[["legacy", .1]],
-        efficiencyAtts:[["courage", 1], ["valor", .1], ["doom", -1]],
-        extraInfo:{english:"+20 * (1 + level/10) Legacy on complete."},
+        tier:0, plane:2, resourceName:"fight", creationVersion: 6,
+        progressMaxBase:1e5, progressMaxIncrease:2,
+        expToLevelBase:5, expToLevelIncrease:1,
+        efficiencyBase:.1, isKTL:true, purchased: true, maxLevel:10,
+        unlockCost:2e5, visible:false, unlocked:false,
+        onLevelAtts:[["legacy", 30]],
+        expAtts:[],
+        efficiencyAtts:[["hope", 0]],
+        extraInfo:{english:"Gain Legacy = +30 * (1 + level/5) * Legacy Mult, on complete and level."},
         actionTriggers: [
-            ["unlock", "addAC", "", 21],
-            ["complete", "addLegacy", "destroySiegeEngine", 20],
-            ["level_3", "reveal", "destroyEasternMonolith"]
+            ["unlock", "addAC", "", 30],
+            ["unlock", "addAW", "", 80],
+            ["complete", "addLegacy", "destroySiegeEngine", 30],
+            ["level_5", "reveal", "destroyEasternMonolith"]
         ]
     },
     destroyEasternMonolith: {
-        tier:0, plane:2, resourceName:"fight", creationVersion:2,
-        progressMaxBase:1e11, progressMaxIncrease:10,
+        tier:1, plane:2, resourceName:"fight", creationVersion: 6, title:"Kill the Lich",
+        progressMaxBase:3e10, progressMaxIncrease:15,
         expToLevelBase:1, expToLevelIncrease:1,
-        efficiencyBase:.05, isKTL:true, purchased: true, maxLevel:3,
-        unlockCost:1e8, visible:false, unlocked:false,
+        efficiencyBase:.1, isKTL:true, purchased: true, maxLevel:1,
+        unlockCost:1e7, visible:false, unlocked:false,
         onUnlock: function() {
-            revealUpgrade('rememberWhatIDid')
-            revealUpgrade('stopBeingSoTense')
-            revealUpgrade('createABetterFoundation')
-            revealUpgrade('workHarder')
-            revealUpgrade('haveBetterConversations')
-            revealUpgrade('sparkMoreMana')
-            revealUpgrade('studyHarder')
         },
-        onLevelAtts:[["legacy", 1000]],
-        expAtts:[["legacy", .1]],
-        efficiencyAtts:[["courage", 1], ["valor", .1], ["doom", -1]],
-        extraInfo:{english:"+1000 * (1 + level/10) Legacy on complete."},
+        onLevelCustom: function() {
+            if(data.actions.destroyEasternMonolith.level === data.actions.destroyEasternMonolith.maxLevel) {
+                document.getElementById("legacySeveranceButton1").style.display = "";
+            }
+        },
+        onLevelAtts:[["legacy", 500]],
+        expAtts:[["resonance", 1]],
+        efficiencyAtts:[["hope", 0]],
+        extraInfo:{english:"Gain Legacy = +500 * (1 + level/5) * Legacy Mult, on level."},
         actionTriggers: [
             ["info", "text", "On Unlock: Show 7 more upgrades."],
             ["unlock", "addAC", "", 50],
-            ["complete", "addLegacy", "destroyEasternMonolith", 1000],
-            ["level_1", "reveal", "stopDarknessRitual"]
-        ]
+            ["unlock", "addAW", "", 480],
+            ["complete", "addLegacy", "destroyEasternMonolith", 500],
+            ["level_3", "reveal", "stopDarknessRitual"]
+        ],
+        extraButton: Raw.html`
+            <span class="button" id='legacySeveranceButton1' onclick="openLSMenu()"
+                style="display:none;padding:8px 13px;position:absolute;left:460px;top:20px;border: 2px solid #aa0000;border-radius: 5px;
+                background-color:#550000;text-shadow: 3px 3px 2px rgba(0, 0, 0, 0.8);color: #ffdddd;box-shadow:0 0 10px 6px rgba(255, 0, 0, 0.7);font-size:26px;" >
+            Legacy Severance</span>
+        `,
     },
     stopDarknessRitual: {
-        tier:0, plane:2, resourceName:"fight", creationVersion:2,
-        progressMaxBase:2e13, progressMaxIncrease:4,
-        expToLevelBase:10, expToLevelIncrease:1,
-        efficiencyBase:.04, isKTL:true, purchased: true, maxLevel:12,
+        tier:1, plane:2, resourceName:"fight", creationVersion: 6,
+        progressMaxBase:2e13, progressMaxIncrease:2,
+        expToLevelBase:5, expToLevelIncrease:1,
+        efficiencyBase:.1, isKTL:true, purchased: false, maxLevel:10,
         unlockCost:2e9, visible:false, unlocked:false,
         onLevelAtts:[["legacy", 60]],
-        expAtts:[["legacy", .1]],
-        efficiencyAtts:[["courage", 1], ["valor", .1], ["doom", -1]],
-        extraInfo:{english:"+60 * (1 + level/10) Legacy on complete."},
+        expAtts:[["resonance", 1]],
+        efficiencyAtts:[["hope", 0]],
+        extraInfo:{english:"Gain Legacy = +60 * (1 + level/5) * Legacy Mult, on complete and level."},
         actionTriggers: [
-            ["unlock", "addAC", "", 33],
+            ["unlock", "addAC", "", 80],
+            ["unlock", "addAW", "", 1000],
             ["complete", "addLegacy", "stopDarknessRitual", 60],
             ["level_3", "reveal", "protectTheSunstone"]
         ]
     },
     protectTheSunstone: {
-        tier:0, plane:2, resourceName:"fight", creationVersion:2,
-        progressMaxBase:2e15, progressMaxIncrease:4,
-        expToLevelBase:10, expToLevelIncrease:1,
-        efficiencyBase:.03, isKTL:true, purchased: true, maxLevel:15,
+        tier:1, plane:2, resourceName:"fight", creationVersion: 6,
+        progressMaxBase:2e14, progressMaxIncrease:2,
+        expToLevelBase:5, expToLevelIncrease:1,
+        efficiencyBase:.1, isKTL:true, purchased: true, maxLevel:10,
         unlockCost:2e10, visible:false, unlocked:false,
         onLevelAtts:[["legacy", 100]],
-        expAtts:[["legacy", .1]],
-        efficiencyAtts:[["courage", 1], ["valor", .1], ["doom", -1]],
-        extraInfo:{english:"+100 * (1 + level/10) Legacy on complete."},
+        expAtts:[["resonance", 1]],
+        efficiencyAtts:[["hope", 0]],
+        extraInfo:{english:"Gain Legacy = +100 * (1 + level/5) * Legacy Mult, on complete and level."},
         actionTriggers: [
-            ["unlock", "addAC", "", 54],
+            ["unlock", "addAC", "", 130],
+            ["unlock", "addAW", "", 1200],
             ["complete", "addLegacy", "protectTheSunstone", 100],
             ["level_3", "reveal", "silenceDeathChanters"]
         ]
     },
     silenceDeathChanters: {
-        tier:0, plane:2, resourceName:"fight",
-        progressMaxBase:2e17, progressMaxIncrease:4,
-        expToLevelBase:10, expToLevelIncrease:1,
-        efficiencyBase:.02, isKTL:true, purchased: true, maxLevel:18,
+        tier:1, plane:2, resourceName:"fight", creationVersion: 6,
+        progressMaxBase:2e16, progressMaxIncrease:2,
+        expToLevelBase:5, expToLevelIncrease:1,
+        efficiencyBase:.1, isKTL:true, purchased: true, maxLevel:10,
         unlockCost:2e11, visible:false, unlocked:false,
         onLevelAtts:[["legacy", 150]],
-        expAtts:[["legacy", .1]],
-        efficiencyAtts:[["courage", 1], ["valor", .1], ["doom", -1]],
-        extraInfo:{english:"+150 * (1 + level/10) Legacy on complete."},
+        expAtts:[["resonance", 1]],
+        efficiencyAtts:[["hope", 0]],
+        extraInfo:{english:"Gain Legacy = +150 * (1 + level/5) * Legacy Mult, on complete and level."},
         actionTriggers: [
-            ["unlock", "addAC", "", 87],
+            ["unlock", "addAC", "", 210],
+            ["unlock", "addAW", "", 1500],
             ["complete", "addLegacy", "silenceDeathChanters", 150],
-            // ["level_3", "reveal", "breakFleshBarricade"]
+            ["level_3", "reveal", "breakFleshBarricade"]
         ]
     },
     breakFleshBarricade: {
-        tier:0, plane:2, resourceName:"fight",
-        progressMaxBase:1e10, progressMaxIncrease:2,
-        expToLevelBase:10, expToLevelIncrease:1,
-        efficiencyBase:1, isKTL:true, purchased: true, maxLevel:10,
-        unlockCost:1e9, visible:false, unlocked:false,
-        onUnlock: function() {
-            data.ancientCoin += 1;
-
-        },
-        onCompleteCustom:function() {
-            data.legacy += 1;
-        },
-        onLevelCustom: function() {
-            revealAction('');
-        },
-        onLevelAtts:[],
-        expAtts:[],
-        efficiencyAtts:[],
-        extraInfo:{english:"1 Legacy per complete."},
-        unlockMessage:{english:"On unlock, +1 Ancient Coins."}
+        tier:1, plane:2, resourceName:"fight", creationVersion: 6,
+        progressMaxBase:2e17, progressMaxIncrease:2,
+        expToLevelBase:5, expToLevelIncrease:1,
+        efficiencyBase:.1, isKTL:true, purchased: true, maxLevel:10,
+        unlockCost:2e12, visible:false, unlocked:false,
+        onLevelAtts:[["legacy", 210]],
+        expAtts:[["resonance", 1]],
+        efficiencyAtts:[["hope", 0]],
+        extraInfo:{english:"Gain Legacy = +210 * (1 + level/5) * Legacy Mult, on complete and level."},
+        actionTriggers: [
+            ["unlock", "addAC", "", 340],
+            ["unlock", "addAW", "", 1800],
+            ["complete", "addLegacy", "silenceDeathChanters", 210],
+            ["level_3", "reveal", "conquerTheGatekeepers"]
+        ]
     },
     conquerTheGatekeepers: {
-        tier:0, plane:2, resourceName:"fight",
-        progressMaxBase:1e10, progressMaxIncrease:2,
-        expToLevelBase:10, expToLevelIncrease:1,
-        efficiencyBase:1, isKTL:true, purchased: true, maxLevel:10,
-        unlockCost:1e9, visible:false, unlocked:false,
-        onUnlock: function() {
-            data.ancientCoin += 1;
-
-        },
-        onCompleteCustom:function() {
-            data.legacy += 1;
-        },
-        onLevelCustom: function() {
-            revealAction('');
-        },
-        onLevelAtts:[],
-        expAtts:[],
-        efficiencyAtts:[],
-        extraInfo:{english:"1 Legacy per complete."},
-        unlockMessage:{english:"On unlock, +1 Ancient Coins."}
+        tier:1, plane:2, resourceName:"fight", creationVersion: 6,
+        progressMaxBase:2e18, progressMaxIncrease:2,
+        expToLevelBase:5, expToLevelIncrease:1,
+        efficiencyBase:.1, isKTL:true, purchased: true, maxLevel:10,
+        unlockCost:2e13, visible:false, unlocked:false,
+        onLevelAtts:[["legacy", 340]],
+        expAtts:[["resonance", 1]],
+        efficiencyAtts:[["hope", 0]],
+        extraInfo:{english:"Gain Legacy = +340 * (1 + level/5) * Legacy Mult, on complete and level."},
+        actionTriggers: [
+            ["unlock", "addAC", "", 550],
+            ["unlock", "addAW", "", 2200],
+            ["complete", "addLegacy", "silenceDeathChanters", 340],
+            ["level_3", "reveal", "unhookSacrificialCages"]
+        ]
     },
     unhookSacrificialCages: {
-        tier:0, plane:2, resourceName:"fight",
-        progressMaxBase:1e10, progressMaxIncrease:2,
-        expToLevelBase:10, expToLevelIncrease:1,
-        efficiencyBase:1, isKTL:true, purchased: true, maxLevel:10,
-        unlockCost:1e9, visible:false, unlocked:false,
-        onUnlock: function() {
-            data.ancientCoin += 1;
-
-        },
-        onCompleteCustom:function() {
-            data.legacy += 1;
-        },
-        onLevelCustom: function() {
-            revealAction('');
-        },
-        onLevelAtts:[],
-        expAtts:[],
-        efficiencyAtts:[],
-        extraInfo:{english:"1 Legacy per complete."},
-        unlockMessage:{english:"On unlock, +1 Ancient Coins."}
+        tier:1, plane:2, resourceName:"fight", creationVersion: 6,
+        progressMaxBase:2e19, progressMaxIncrease:2,
+        expToLevelBase:5, expToLevelIncrease:1,
+        efficiencyBase:.1, isKTL:true, purchased: true, maxLevel:10,
+        unlockCost:2e14, visible:false, unlocked:false,
+        onLevelAtts:[["legacy", 550]],
+        expAtts:[["resonance", 1]],
+        efficiencyAtts:[["hope", 0]],
+        extraInfo:{english:"Gain Legacy = +550 * (1 + level/5) * Legacy Mult, on complete and level."},
+        actionTriggers: [
+            ["unlock", "addAC", "", 890],
+            ["unlock", "addAW", "", 2600],
+            ["complete", "addLegacy", "silenceDeathChanters", 550],
+            ["level_3", "reveal", "purgeUnholyRelics"]
+        ]
     },
     purgeUnholyRelics: {
-        tier:0, plane:2, resourceName:"fight",
-        progressMaxBase:1e10, progressMaxIncrease:2,
-        expToLevelBase:10, expToLevelIncrease:1,
-        efficiencyBase:1, isKTL:true, purchased: true, maxLevel:10,
-        unlockCost:1e9, visible:false, unlocked:false,
-        onUnlock: function() {
-            data.ancientCoin += 1;
-
-        },
-        onCompleteCustom:function() {
-            data.legacy += 1;
-        },
-        onLevelCustom: function() {
-            revealAction('');
-        },
-        onLevelAtts:[],
-        expAtts:[],
-        efficiencyAtts:[],
-        extraInfo:{english:"1 Legacy per complete."},
-        unlockMessage:{english:"On unlock, +1 Ancient Coins."}
+        tier:1, plane:2, resourceName:"fight", creationVersion: 6,
+        progressMaxBase:2e20, progressMaxIncrease:2,
+        expToLevelBase:5, expToLevelIncrease:1,
+        efficiencyBase:.1, isKTL:true, purchased: true, maxLevel:10,
+        unlockCost:2e15, visible:false, unlocked:false,
+        onLevelAtts:[["legacy", 890]],
+        expAtts:[["resonance", 1]],
+        efficiencyAtts:[["hope", 0]],
+        extraInfo:{english:"Gain Legacy = +890 * (1 + level/5) * Legacy Mult, on complete and level."},
+        actionTriggers: [
+            ["unlock", "addAC", "", 1440],
+            ["unlock", "addAW", "", 3000],
+            ["complete", "addLegacy", "silenceDeathChanters", 890],
+            ["level_3", "reveal", "destroyWesternMonolith"]
+        ]
     },
     destroyWesternMonolith: {
-        tier:0, plane:2, resourceName:"fight",
-        progressMaxBase:1e10, progressMaxIncrease:2,
-        expToLevelBase:10, expToLevelIncrease:1,
-        efficiencyBase:1, isKTL:true, purchased: true, maxLevel:10,
-        unlockCost:1e9, visible:false, unlocked:false,
-        onUnlock: function() {
-            data.ancientCoin += 1;
-
-        },
-        onCompleteCustom:function() {
-            data.legacy += 1;
-        },
-        onLevelCustom: function() {
-            revealAction('');
-        },
-        onLevelAtts:[],
-        expAtts:[],
-        efficiencyAtts:[],
-        extraInfo:{english:"1 Legacy per complete."},
-        unlockMessage:{english:"On unlock, +1 Ancient Coins."}
+        tier:1, plane:2, resourceName:"fight", creationVersion: 6,
+        progressMaxBase:2e22, progressMaxIncrease:15,
+        expToLevelBase:1, expToLevelIncrease:1,
+        efficiencyBase:.1, isKTL:true, purchased: true, maxLevel:1,
+        unlockCost:2e16, visible:false, unlocked:false,
+        onLevelAtts:[["legacy", 10000]],
+        expAtts:[["resonance", 1]],
+        efficiencyAtts:[["hope", 0]],
+        extraInfo:{english:"Gain Legacy = +10000 * (1 + level/5) * Legacy Mult, on complete and level."},
+        actionTriggers: [
+            ["unlock", "addAC", "", 4000],
+            ["unlock", "addAW", "", 5000],
+            ["complete", "addLegacy", "silenceDeathChanters", 10000],
+            ["level_3", "reveal", "destroyFleshGrowths"]
+        ],
+        extraButton: Raw.html`
+            <span class="button" id='legacySeveranceButton1' onclick="openLSMenu()"
+                style="display:none;padding:8px 13px;position:absolute;left:460px;top:20px;border: 2px solid #aa0000;border-radius: 5px;
+                background-color:#550000;text-shadow: 3px 3px 2px rgba(0, 0, 0, 0.8);color: #ffdddd;box-shadow:0 0 10px 6px rgba(255, 0, 0, 0.7);font-size:26px;" >
+            Legacy Severance</span>
+        `,
     },
     destroyFleshGrowths: {
-        tier:0, plane:2, resourceName:"fight",
+        tier:0, plane:2, resourceName:"fight", creationVersion: 6,
         progressMaxBase:1e10, progressMaxIncrease:2,
         expToLevelBase:10, expToLevelIncrease:1,
-        efficiencyBase:1, isKTL:true, purchased: true, maxLevel:10,
+        efficiencyBase:1, isKTL:true, purchased: false, maxLevel:10,
         unlockCost:1e9, visible:false, unlocked:false,
-        onUnlock: function() {
-            data.ancientCoin += 1;
-
-        },
-        onCompleteCustom:function() {
-            data.legacy += 1;
-        },
-        onLevelCustom: function() {
-            revealAction('');
-        },
         onLevelAtts:[],
         expAtts:[],
         efficiencyAtts:[],
@@ -406,21 +373,11 @@ actionData = {
         unlockMessage:{english:"On unlock, +1 Ancient Coins."}
     },
     crackCorruptedEggs: {
-        tier:0, plane:2, resourceName:"fight",
+        tier:0, plane:2, resourceName:"fight", creationVersion: 6,
         progressMaxBase:1e10, progressMaxIncrease:2,
         expToLevelBase:10, expToLevelIncrease:1,
         efficiencyBase:1, isKTL:true, purchased: true, maxLevel:10,
         unlockCost:1e9, visible:false, unlocked:false,
-        onUnlock: function() {
-            data.ancientCoin += 1;
-
-        },
-        onCompleteCustom:function() {
-            data.legacy += 1;
-        },
-        onLevelCustom: function() {
-            revealAction('');
-        },
         onLevelAtts:[],
         expAtts:[],
         efficiencyAtts:[],
@@ -433,16 +390,6 @@ actionData = {
         expToLevelBase:10, expToLevelIncrease:1,
         efficiencyBase:1, isKTL:true, purchased: true, maxLevel:10,
         unlockCost:1e9, visible:false, unlocked:false,
-        onUnlock: function() {
-            data.ancientCoin += 1;
-
-        },
-        onCompleteCustom:function() {
-            data.legacy += 1;
-        },
-        onLevelCustom: function() {
-            revealAction('');
-        },
         onLevelAtts:[],
         expAtts:[],
         efficiencyAtts:[],
@@ -455,16 +402,6 @@ actionData = {
         expToLevelBase:10, expToLevelIncrease:1,
         efficiencyBase:1, isKTL:true, purchased: true, maxLevel:10,
         unlockCost:1e9, visible:false, unlocked:false,
-        onUnlock: function() {
-            data.ancientCoin += 1;
-
-        },
-        onCompleteCustom:function() {
-            data.legacy += 1;
-        },
-        onLevelCustom: function() {
-            revealAction('');
-        },
         onLevelAtts:[],
         expAtts:[],
         efficiencyAtts:[],
@@ -477,16 +414,6 @@ actionData = {
         expToLevelBase:10, expToLevelIncrease:1,
         efficiencyBase:1, isKTL:true, purchased: true, maxLevel:10,
         unlockCost:1e9, visible:false, unlocked:false,
-        onUnlock: function() {
-            data.ancientCoin += 1;
-
-        },
-        onCompleteCustom:function() {
-            data.legacy += 1;
-        },
-        onLevelCustom: function() {
-            revealAction('');
-        },
         onLevelAtts:[],
         expAtts:[],
         efficiencyAtts:[],
@@ -499,16 +426,6 @@ actionData = {
         expToLevelBase:10, expToLevelIncrease:1,
         efficiencyBase:1, isKTL:true, purchased: true, maxLevel:10,
         unlockCost:1e9, visible:false, unlocked:false,
-        onUnlock: function() {
-            data.ancientCoin += 1;
-
-        },
-        onCompleteCustom:function() {
-            data.legacy += 1;
-        },
-        onLevelCustom: function() {
-            revealAction('');
-        },
         onLevelAtts:[],
         expAtts:[],
         efficiencyAtts:[],
@@ -521,16 +438,6 @@ actionData = {
         expToLevelBase:10, expToLevelIncrease:1,
         efficiencyBase:1, isKTL:true, purchased: true, maxLevel:10,
         unlockCost:1e9, visible:false, unlocked:false,
-        onUnlock: function() {
-            data.ancientCoin += 1;
-
-        },
-        onCompleteCustom:function() {
-            data.legacy += 1;
-        },
-        onLevelCustom: function() {
-            revealAction('');
-        },
         onLevelAtts:[],
         expAtts:[],
         efficiencyAtts:[],
@@ -543,16 +450,6 @@ actionData = {
         expToLevelBase:10, expToLevelIncrease:1,
         efficiencyBase:1, isKTL:true, purchased: true, maxLevel:10,
         unlockCost:1e9, visible:false, unlocked:false,
-        onUnlock: function() {
-            data.ancientCoin += 1;
-
-        },
-        onCompleteCustom:function() {
-            data.legacy += 1;
-        },
-        onLevelCustom: function() {
-            revealAction('');
-        },
         onLevelAtts:[],
         expAtts:[],
         efficiencyAtts:[],
@@ -565,16 +462,6 @@ actionData = {
         expToLevelBase:10, expToLevelIncrease:1,
         efficiencyBase:1, isKTL:true, purchased: true, maxLevel:10,
         unlockCost:1e9, visible:false, unlocked:false,
-        onUnlock: function() {
-            data.ancientCoin += 1;
-
-        },
-        onCompleteCustom:function() {
-            data.legacy += 1;
-        },
-        onLevelCustom: function() {
-            revealAction('');
-        },
         onLevelAtts:[],
         expAtts:[],
         efficiencyAtts:[],
@@ -587,16 +474,6 @@ actionData = {
         expToLevelBase:10, expToLevelIncrease:1,
         efficiencyBase:1, isKTL:true, purchased: true, maxLevel:10,
         unlockCost:1e9, visible:false, unlocked:false,
-        onUnlock: function() {
-            data.ancientCoin += 1;
-
-        },
-        onCompleteCustom:function() {
-            data.legacy += 1;
-        },
-        onLevelCustom: function() {
-            revealAction('');
-        },
         onLevelAtts:[],
         expAtts:[],
         efficiencyAtts:[],
@@ -609,16 +486,6 @@ actionData = {
         expToLevelBase:10, expToLevelIncrease:1,
         efficiencyBase:1, isKTL:true, purchased: true, maxLevel:10,
         unlockCost:1e9, visible:false, unlocked:false,
-        onUnlock: function() {
-            data.ancientCoin += 1;
-
-        },
-        onCompleteCustom:function() {
-            data.legacy += 1;
-        },
-        onLevelCustom: function() {
-            revealAction('');
-        },
         onLevelAtts:[],
         expAtts:[],
         efficiencyAtts:[],
@@ -631,16 +498,6 @@ actionData = {
         expToLevelBase:10, expToLevelIncrease:1,
         efficiencyBase:1, isKTL:true, purchased: true, maxLevel:10,
         unlockCost:1e9, visible:false, unlocked:false,
-        onUnlock: function() {
-            data.ancientCoin += 1;
-
-        },
-        onCompleteCustom:function() {
-            data.legacy += 1;
-        },
-        onLevelCustom: function() {
-            revealAction('');
-        },
         onLevelAtts:[],
         expAtts:[],
         efficiencyAtts:[],
@@ -653,16 +510,6 @@ actionData = {
         expToLevelBase:10, expToLevelIncrease:1,
         efficiencyBase:1, isKTL:true, purchased: true, maxLevel:10,
         unlockCost:1e9, visible:false, unlocked:false,
-        onUnlock: function() {
-            data.ancientCoin += 1;
-
-        },
-        onCompleteCustom:function() {
-            data.legacy += 1;
-        },
-        onLevelCustom: function() {
-            revealAction('');
-        },
         onLevelAtts:[],
         expAtts:[],
         efficiencyAtts:[],
@@ -675,16 +522,6 @@ actionData = {
         expToLevelBase:10, expToLevelIncrease:1,
         efficiencyBase:1, isKTL:true, purchased: true, maxLevel:10,
         unlockCost:1e9, visible:false, unlocked:false,
-        onUnlock: function() {
-            data.ancientCoin += 1;
-
-        },
-        onCompleteCustom:function() {
-            data.legacy += 1;
-        },
-        onLevelCustom: function() {
-            revealAction('');
-        },
         onLevelAtts:[],
         expAtts:[],
         efficiencyAtts:[],
@@ -697,16 +534,6 @@ actionData = {
         expToLevelBase:10, expToLevelIncrease:1,
         efficiencyBase:1, isKTL:true, purchased: true, maxLevel:10,
         unlockCost:1e9, visible:false, unlocked:false,
-        onUnlock: function() {
-            data.ancientCoin += 1;
-
-        },
-        onCompleteCustom:function() {
-            data.legacy += 1;
-        },
-        onLevelCustom: function() {
-            revealAction('');
-        },
         onLevelAtts:[],
         expAtts:[],
         efficiencyAtts:[],
@@ -719,16 +546,6 @@ actionData = {
         expToLevelBase:10, expToLevelIncrease:1,
         efficiencyBase:1, isKTL:true, purchased: true, maxLevel:10,
         unlockCost:1e9, visible:false, unlocked:false,
-        onUnlock: function() {
-            data.ancientCoin += 1;
-
-        },
-        onCompleteCustom:function() {
-            data.legacy += 1;
-        },
-        onLevelCustom: function() {
-            revealAction('');
-        },
         onLevelAtts:[],
         expAtts:[],
         efficiencyAtts:[],
@@ -741,16 +558,6 @@ actionData = {
         expToLevelBase:10, expToLevelIncrease:1,
         efficiencyBase:1, isKTL:true, purchased: true, maxLevel:10,
         unlockCost:1e9, visible:false, unlocked:false,
-        onUnlock: function() {
-            data.ancientCoin += 1;
-
-        },
-        onCompleteCustom:function() {
-            data.legacy += 1;
-        },
-        onLevelCustom: function() {
-            revealAction('');
-        },
         onLevelAtts:[],
         expAtts:[],
         efficiencyAtts:[],
@@ -763,16 +570,6 @@ actionData = {
         expToLevelBase:10, expToLevelIncrease:1,
         efficiencyBase:1, isKTL:true, purchased: true, maxLevel:10,
         unlockCost:1e9, visible:false, unlocked:false,
-        onUnlock: function() {
-            data.ancientCoin += 1;
-
-        },
-        onCompleteCustom:function() {
-            data.legacy += 1;
-        },
-        onLevelCustom: function() {
-            revealAction('');
-        },
         onLevelAtts:[],
         expAtts:[],
         efficiencyAtts:[],
@@ -785,15 +582,6 @@ actionData = {
         expToLevelBase:10, expToLevelIncrease:1,
         efficiencyBase:1, isKTL:true, purchased: true, maxLevel:10,
         unlockCost:1e9, visible:false, unlocked:false,
-        onUnlock: function() {
-            data.ancientCoin += 1;
-        },
-        onCompleteCustom:function() {
-            data.legacy += 1;
-        },
-        onLevelCustom: function() {
-            revealAction('');
-        },
         onLevelAtts:[],
         expAtts:[],
         efficiencyAtts:[],

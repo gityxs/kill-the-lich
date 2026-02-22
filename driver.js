@@ -11,13 +11,13 @@ function setScreenSize() {
     screenSize = document.body.scrollHeight;
 }
 
-// --- Offline Time Calculation ---
 function checkOfflineProgress() {
     if (data.lastVisit) {
         const offlineMilliseconds = Date.now() - parseInt(data.lastVisit, 10);
         if (offlineMilliseconds > 5000) {
             data.currentGameState.bonusTime += offlineMilliseconds;
             console.log(`Welcome back! Gained ${(offlineMilliseconds / 1000).toFixed(1)}s of bonus time.`);
+            data.currentGameState.instantTimerCooldown -= offlineMilliseconds / 1000;
         }
     }
 }
@@ -25,31 +25,34 @@ function checkOfflineProgress() {
 // --- Visual Rendering Loop ---
 let lastAnimationTime = 0;
 let timeAccumulators = { view30: 0, view10: 0, view1: 0 };
+let debugDelta = Date.now();
+let timeSinceLastSave = 0;
 
 function animationTick(currentTime) {
-    requestAnimationFrame(animationTick);
-
-    if (data.gameSettings.stopAll) return;
+    if (data.gameSettings.stopAll) {
+        lastAnimationTime = currentTime;
+        return;
+    }
 
     if (lastAnimationTime === 0) lastAnimationTime = currentTime;
+
     const delta = currentTime - lastAnimationTime;
+    lastAnimationTime = currentTime;
 
     timeAccumulators.view30 += delta;
     timeAccumulators.view10 += delta;
     timeAccumulators.view1 += delta;
 
-    const interval30 = 1000 / data.gameSettings.fps;
+    const interval30 = 1000 / 20;
     if (timeAccumulators.view30 >= interval30) {
         timeAccumulators.view30 %= interval30;
         views.updateViewAtFrame();
-        lastAnimationTime = currentTime;
     }
 
-    const interval10 = data.gameSettings.fps < 10 ? interval30 : 100;
+    const interval10 = 100;
     if (timeAccumulators.view10 >= interval10) {
         timeAccumulators.view10 %= interval10;
         views.updateView();
-        lastAnimationTime = currentTime;
     }
 
     if (timeAccumulators.view1 >= 1000) {
@@ -60,10 +63,10 @@ function animationTick(currentTime) {
             save();
         }
         views.updateViewOnSecond();
-        lastAnimationTime = currentTime;
     }
+
+    requestAnimationFrame(animationTick);
 }
-let timeSinceLastSave = 0;
 
 function initTimingSystem() {
     checkOfflineProgress();
@@ -79,12 +82,31 @@ function initTimingSystem() {
 function secondPassed() {
     secondTick();
 
-    secondsPassed++;
+    data.currentGameState.secondsPassed++;
+    data.currentGameState.secondsThisLS++;
 }
 
+function tickTimerCooldown() {
+    if (data.currentGameState.instantTimerCooldown > 0) {
+        data.currentGameState.instantTimerCooldown --;
+    }
+    if(data.currentGameState.instantTimerCooldown < 0) {
+        data.currentGameState.instantTimerCooldown = 0;
+    }
+    updateConvertButtonUI();
+}
+
+function updateConvertButtonUI() {
+    if (data.currentGameState.instantTimerCooldown > 0) {
+        views.updateVal(`convertBtn`, "grey", "style.backgroundColor");
+        views.updateVal(`convertBtn`, "Use in " + secondsToTime(data.currentGameState.instantTimerCooldown), "innerText");
+    } else {
+        views.updateVal(`convertBtn`, "green", "style.backgroundColor");
+        views.updateVal(`convertBtn`, "Convert 2 hours", "innerText");
+    }
+}
 
 function gameTick() {
-    data.currentGameState.totalTicks++;
     data.gameSettings.ticksForSeconds++;
 
     for (let actionVar in data.actions) {
@@ -108,7 +130,14 @@ function gameTick() {
     for(let actionVar in data.actions) {
         let actionObj = data.actions[actionVar];
         let dataObj = actionData[actionVar];
-        checkLevelUp(actionObj, dataObj);
+        for(let i = 0; i < 1 / (data.gameSettings.ticksPerSecond / 20); i++) {
+            if (!checkLevelUp(actionObj, dataObj)) {
+                break;
+            }
+        }
+        //visual in case of level
+        actionObj.expToAddMult = calcUpgradeMultToExp(actionObj.actionVar);
+        actionObj.expToAdd = actionObj.expToAddBase * actionObj.expToAddMult;
     }
 
 
@@ -139,8 +168,9 @@ function calcDeltas() {
     // Aggregate all visual increases from persistent generator rates.
     for (let actionVar in data.actions) {
         let generatorObj = data.actions[actionVar];
-        if (generatorObj.isGenerator && generatorObj.resourceToAdd > 0) {
-            let targetVar = generatorObj.generatorTarget || actionVar;
+        let generatorDataObj = actionData[actionVar];
+        if (generatorDataObj.isGenerator && generatorObj.resourceToAdd > 0) {
+            let targetVar = generatorDataObj.generatorTarget || actionVar;
             let targetObj = data.actions[targetVar];
             if (targetObj) {
                 targetObj.resourceIncrease += generatorObj.resourceToAdd * generatorObj.progressGain / generatorObj.progressMax;
@@ -151,14 +181,15 @@ function calcDeltas() {
     // Calculate all resource decreases and the final delta.
     for (let actionVar in data.actions) {
         let actionObj = data.actions[actionVar];
+        let dataObj = actionData[actionVar];
 
         let totalDecrease = actionObj.totalSend || 0;
 
-        if (!actionObj.isGenerator) {
+        if (!dataObj.isGenerator) {
             totalDecrease += actionObj.progressGain;
         } else {
             if (["makeMoney", "socialize"].includes(actionVar)) {
-                totalDecrease += (actionObj.resource * actionObj.tierMult()) * actionObj.progressGain / actionObj.progressMax;
+                totalDecrease += (actionObj.resource * calcTierMult(dataObj.tier)) * actionObj.progressGain / actionObj.progressMax;
             }
         }
 
@@ -172,8 +203,9 @@ function calcDeltas() {
 function secondTick() {
     if(data.gameState !== "KTL") {
         data.secondsPerReset++;
+    } else {
+        data.NWSeconds++;
     }
-    data.currentGameState.KTLBonusTimer++;
     takeDataSnapshot(data.actions.overclock.resourceToAdd, data.secondsPerReset);
 }
 
@@ -190,8 +222,8 @@ function tickActionTimer(actionVar) {
     }
 }
 
-function getInstabilityReduction() {
-    return Math.pow(data.atts.control.attMult, .5);
+function getInstabilityReduction(instability) {
+    return Math.sqrt(data.atts.control.attMult) * Math.sqrt(instability/100)/100;
 }
 
 function calcInstabilityEffect(instability) {
@@ -207,9 +239,9 @@ function tickGameObject(actionVar) {
         return;
     }
 
-    let momentumMaxRate = actionObj.isGenerator ? dataObj.generatorSpeed / data.gameSettings.ticksPerSecond :
-        actionObj.resource * actionObj.tierMult() / data.gameSettings.ticksPerSecond;
-    if(actionObj.isGenerator && actionObj.isPaused) {
+    let momentumMaxRate = dataObj.isGenerator ? dataObj.generatorSpeed / data.gameSettings.ticksPerSecond :
+        actionObj.resource * calcTierMult(dataObj.tier) / data.gameSettings.ticksPerSecond;
+    if(dataObj.isGenerator && actionObj.isPaused) {
         momentumMaxRate = 0;
     }
     let isMaxLevel = actionObj.maxLevel !== undefined && actionObj.level >= actionObj.maxLevel;
@@ -225,12 +257,12 @@ function tickGameObject(actionVar) {
     actionObj.progressGain = resourceToAddInefficient * data.gameSettings.ticksPerSecond;
 
     // For non-generators, consume the resource used to generate progress.
-    if (!actionObj.isGenerator) {
+    if (!dataObj.isGenerator || dataObj.ignoreConsume) {
         actionObj.resource -= resourceToAddInefficient;
     }
 
     if(actionObj.instability > 0) {
-        actionObj.instability -= getInstabilityReduction() / data.gameSettings.ticksPerSecond;
+        actionObj.instability -= getInstabilityReduction(actionObj.instability) / data.gameSettings.ticksPerSecond;
         actionObj.progressMax = actionObj.progressMaxBase * actionObj.progressMaxMult * calcInstabilityEffect(actionObj.instability);
         if(actionObj.instability < 0) {
             actionObj.instability = 0;
@@ -238,7 +270,7 @@ function tickGameObject(actionVar) {
     }
 
     // Level up to 10 times per tick if progress is sufficient.
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 10 / (data.gameSettings.ticksPerSecond / 20); i++) {
         if (!checkProgressCompletion(actionObj, dataObj)) {
             break;
         }
@@ -249,7 +281,7 @@ function tickGameObject(actionVar) {
     //Calc resource retrieval
 	let resourceParentVar = actionData[actionObj.actionVar].parentVar;
     let isQuiet = actionObj.unlocked && isMaxLevel && actionObj.resourceIncrease === 0 && actionObj.totalSend === 0;
-    if(!isQuiet || !dataObj.hasUpstream || data.upgrades.retrieveMyUnusedResources.upgradePower === 0 || resourceHeads[actionObj.resourceName] === actionVar || data.gameState === "KTL" || actionVar === "reinvest") {
+    if(!isQuiet || !dataObj.hasUpstream || data.upgrades.retrieveMyUnusedResources.upgradePower === 0 || resourceHeads[dataObj.resourceName] === actionVar || data.gameState === "KTL" || actionVar === "reinvest") {
         actionObj.resourceRetrieved = 0;
     } else {
         actionObj.resourceRetrieved = (actionObj.resource/100 * [0, 1, 2, 5][data.upgrades.retrieveMyUnusedResources.upgradePower] + 10) / data.gameSettings.ticksPerSecond;
@@ -267,7 +299,7 @@ function tickGameObject(actionVar) {
 
 let resourceHeads = {
     "momentum":"overclock",
-    "gold":"spendMoney",
+    "coins":"spendMoney",
     "conversations":"meetPeople",
     "research":"researchBySubject",
     "fortune":"buildFortune",
@@ -278,7 +310,7 @@ let resourceHeads = {
 function calculateDownstreamResources(actionVar) {
     const actionObj = data.actions[actionVar];
     const dataObj = actionData[actionVar];
-    let tierMult = actionObj.tierMult() * (actionObj.efficiency / 100);
+    let tierMult = calcTierMult(dataObj.tier) * (actionObj.efficiency / 100);
     const calculatedRatios = {};
     let totalRatio = 0;
 
@@ -362,7 +394,13 @@ function checkProgressCompletion(actionObj, dataObj) {
         if(dataObj.onCompleteCustom) {
             dataObj.onCompleteCustom();
         }
-        actionAddExp(actionObj);
+        actionObj.expToAddMult = calcUpgradeMultToExp(actionObj.actionVar);
+        actionObj.expToAdd = actionObj.expToAddBase * actionObj.expToAddMult;
+        actionAddExp(actionObj, actionObj.expToAdd);
+
+        //visual in case of level
+        actionObj.expToAddMult = calcUpgradeMultToExp(actionObj.actionVar);
+        actionObj.expToAdd = actionObj.expToAddBase * actionObj.expToAddMult;
 		
 		//If we're at max level "refund" the remaining "paid" amount.  Realistically, this mostly matters for spells like Overclock
 		//This won't retroactivly refund nodes that overleveled in a previoius version, but that'll be fixed when the amulet

@@ -9,18 +9,14 @@ function clearSave() {
 //TODO also, only choose the vars you want to keep, rather than keeping bad data across saves
 function loadActionFromSave(actionObj, loadObj) {
     Object.assign(actionObj, loadObj);
-    //save corrections
-    if(loadObj.automationOnMax !== undefined) {
-        actionObj.automationCanDisable = loadObj.automationOnMax;
-    }
-    delete actionObj.automationOnMax;
 }
 
-function resetActionToBase(actionVar) {
-    actionSetBaseVariables(data.actions[actionVar], actionData[actionVar]);
+
+function loadUpgradeFromSave(actionObj, loadObj) {
+    Object.assign(actionObj, loadObj);
 }
 
-data.saveVersion = 5;
+data.saveVersion = 6;
 function load() {
     initializeData();
 
@@ -35,7 +31,7 @@ function load() {
                 try { //old save
                     toLoad = JSON.parse(decode(onLoadData));
                 } catch (e) {
-                    exportErrorFile(onLoadData);
+                    exportFile(onLoadData, "KTL_Error_File")
                 }
             }
         }
@@ -48,27 +44,37 @@ function load() {
                 try { //old save
                     toLoad = JSON.parse(decode(localStorage[saveName]));
                 } catch (e) {
-                    exportErrorFile(localStorage[saveName]);
+                    exportFile(localStorage[saveName], "KTL_Error_File")
                 }
             }
         }
     }
     if(!isLoadingEnabled) {
+        console.log('Save ignored.');
         toLoad = {};
     }
 
+    const saveVersionFromLoad = toLoad && toLoad.saveVersion !== undefined ? toLoad.saveVersion : data.saveVersion;
 
-    const saveVersionFromLoad = toLoad && toLoad.saveVersion ? toLoad.saveVersion : 0;
-    // const saveVersion = 1; //for debug only
     let queuedLogMessages = []; //Any info that needs to be told to the user
 
-    if(localStorage[saveName] && toLoad.actions) {
+    if((loadStaticSaveFile || localStorage[saveName]) && saveVersionFromLoad < 6) {
+        if(!loadStaticSaveFile) {
+            exportFile(localStorage[saveName], "KTL_v2_Backup") //just in case
+        }
+        handleV2Saves(toLoad) //set aside the data you need, show welcome back message
+        document.getElementById("welcomeBackMessage").style.display = "";
+    } else if(localStorage[saveName] && toLoad.actions) {
         //only go through the ones in toLoad and graft them on to existing data
         for(let actionVar in toLoad.actions) {
             let actionObj = data.actions[actionVar];
             let dataObj = actionData[actionVar];
             let loadObj = toLoad.actions[actionVar];
-            if(!dataObj || dataObj.creationVersion > saveVersionFromLoad) {
+            if(!dataObj) {
+                continue;
+            }
+            if(dataObj.creationVersion > saveVersionFromLoad) {
+                actionObj.automationOnReveal = loadObj.automationOnReveal;
                 // console.log("Skipped loading action " + actionVar + " from save.");
                 continue;
             }
@@ -85,12 +91,12 @@ function load() {
                 let toRefund = calcTotalSpentOnUpgrade(loadObj.initialCost, loadObj.costIncrease, loadObj.upgradesBought);
                 if(toRefund > 0) {
                     refundAmount += toRefund;
-                    queuedLogMessages.push(["Info: Refunded <b>"+refundAmount+"</b> AC for the upgrade: " + (loadObj.title || decamelizeWithSpace(upgradeVar)), "info"])
+                    queuedLogMessages.push(["Info: Refunded <b>"+toRefund+"</b> AC for the upgrade: " + (loadObj.title || decamelizeWithSpace(upgradeVar)), "info"])
                 }
                 // console.log("Skipped loading upgrade " + upgradeVar + " from save.");
                 continue;
             }
-            loadActionFromSave(upgradeObj, loadObj);
+            loadUpgradeFromSave(upgradeObj, loadObj);
         }
 
         // mergeExistingOnly(data, toLoad, "actions", ["x", "y", "realX", "realY"]); //use patch instead
@@ -106,12 +112,14 @@ function load() {
         data.planeTabSelected = toLoad.planeTabSelected ?? 0;
         data.totalMomentum = toLoad.totalMomentum ?? 0;
         data.ancientCoin = toLoad.ancientCoin ?? 0;
+        data.ancientWhisper = toLoad.ancientWhisper ?? 0;
         data.useAmuletButtonShowing = !!toLoad.useAmuletButtonShowing;
         data.secondsPerReset = toLoad.secondsPerReset ?? 0;
         data.currentJob = toLoad.currentJob ?? "helpScottWithChores";
         data.currentWage = toLoad.currentWage ?? 1;
         data.doneKTL = !!toLoad.doneKTL;
         data.doneAmulet = !!toLoad.doneAmulet;
+        data.doneLS = toLoad.doneLS ?? 0;
         data.displayJob = !!toLoad.displayJob;
         data.focusSelected = toLoad.focusSelected ?? [];
         data.resetLogs = toLoad.resetLogs ?? [];
@@ -122,21 +130,20 @@ function load() {
         data.currentPinned = toLoad.currentPinned ?? [];
         data.ancientCoinMultKTL = toLoad.ancientCoinMultKTL ?? 1;
         data.legacyMultKTL = toLoad.legacyMultKTL ?? 1;
-        data.chargedSpellPowers = toLoad.chargedSpellPowers ?? {};
-        data.totalSpellPower = toLoad.totalSpellPower ?? 0;
-        data.maxSpellPower = toLoad.maxSpellPower ?? 0;
         data.resetCount = toLoad.resetCount ?? 1;
         data.ancientCoinGained = toLoad.ancientCoinGained ?? 0;
+        data.ancientWhisperGained = toLoad.ancientWhisperGained ?? 0;
         data.queuedReveals = toLoad.queuedReveals ?? {};
+        data.legacy = toLoad.legacy ?? 0;
+        data.lichKills = toLoad.lichKills ?? 0;
+        data.lichCoins = toLoad.lichCoins ?? 0;
+        data.highestLegacy = toLoad.highestLegacy ?? 0;
 
         data.currentGameState = toLoad.currentGameState;
 
         //data correction
         if(toLoad.gameSettings.viewAdvancedSliders === undefined) { //defaults off on new saves
             data.gameSettings.viewAdvancedSliders = true;
-        }
-        if(toLoad.actions.poolMana.visible) {
-            actionData.poolMana.generatorSpeed = 6;
         }
 
 
@@ -145,6 +152,7 @@ function load() {
 
         data.ancientCoin += refundAmount;
         applyUpgradeEffects()
+        adjustMagicMaxLevels()
     }
 
     //update all generator's multiplier data
@@ -163,21 +171,22 @@ function load() {
     for(let queuedLogMessage of queuedLogMessages) {
         addLogMessage(queuedLogMessage[0], queuedLogMessage[1]);
     }
-    saveFileCorrectionAfterLoad(saveVersionFromLoad)
+    saveFileCorrectionAfterLoad(saveVersionFromLoad);
     debug(); //change game after all else, for easier debugging
 }
 
 function applyUpgradeEffects() {
     //bought upgrades need to be applied
-    data.actions.hearAboutTheLich.maxLevel = data.upgrades.learnedOfLichSigns.upgradePower + 2 + data.actions.trainWithTeam.level;
+    // data.actions.hearAboutTheLich.maxLevel = data.upgrades.learnedOfLichSigns.upgradePower + 2 + data.actions.trainWithTeam.level;
+    // data.actions.hearAboutTheLich.maxLevel = data.upgrades.learnedOfLichSigns.upgradePower + 2;
 
-    data.actions.trainWithTeam.maxLevel = data.upgrades.trainTogetherMore.upgradePower + 2;
-    if(data.upgrades.learnFromTheLibrary.upgradePower >= 3) {
-        data.actions.collectHistoryBooks.maxLevel = 7;
-    }
-    if(data.upgrades.learnFromTheLibrary.upgradePower >= 5) {
-        data.actions.collectMathBooks.maxLevel = 5;
-    }
+    // data.actions.trainWithTeam.maxLevel = data.upgrades.trainTogetherMore.upgradePower + 2;
+    // if(data.upgrades.exploreTheLibrary.upgradePower >= 3) {
+    //     data.actions.collectHistoryBooks.maxLevel = 7;
+    // }
+    // if(data.upgrades.exploreTheLibrary.upgradePower >= 5) {
+    //     data.actions.collectMathBooks.maxLevel = 5;
+    // }
 }
 
 function adjustUIAfterLoad(toLoad, saveVersionFromLoad) {
@@ -189,8 +198,7 @@ function adjustUIAfterLoad(toLoad, saveVersionFromLoad) {
         for(let downstreamVar of dataObj.downstreamVars) {
             if (!document.getElementById(actionVar + "NumInput" + downstreamVar)
                 || !toLoad.actions || !toLoad.actions[actionVar] ||
-                toLoad.actions[actionVar]["downstreamRate" + downstreamVar] === undefined ||
-                dataObj.creationVersion > saveVersionFromLoad) {
+                toLoad.actions[actionVar]["downstreamRate" + downstreamVar] === undefined) {
                 continue;
             }
             setSliderUI(actionVar, downstreamVar, toLoad.actions[actionVar]["downstreamRate" + downstreamVar]); //from save file
@@ -203,11 +211,17 @@ function adjustUIAfterLoad(toLoad, saveVersionFromLoad) {
         //correct old versions from boolean to number
         if(toLoad.actions && toLoad.actions[actionVar]) {
             if (dataObj.hasUpstream && (toLoad.actions[actionVar].automationOnReveal === true || toLoad.actions[actionVar].automationOnReveal === undefined)) {
-                setSliderUI(actionVar, "Automation", data.upgrades.stopLettingOpportunityWait.upgradePower * 50);
+                setSliderUI(actionVar, "Automation", data.upgrades.stopLettingOpportunityWait.upgradePower * 100);
             } else if (actionObj.automationOnReveal === false) {
                 actionObj.automationOnReveal = 0;
             }
         }
+
+        if(data.upgrades.shapeMyPath.upgradePower > 0) {
+            document.getElementById(`${actionVar}_addCustomTriggerButton`).style.display = "";
+        }
+        rebuildCustomTriggersUI(actionVar);
+        rebuildTriggerInfo(actionVar);
     }
 
     attachSliderListeners();
@@ -267,7 +281,10 @@ function updateUIOnLoad() {
     refreshResetLog()
     rebuildLog()
     rebuildPinned()
-    clickUpgradeTab("default");
+    clickUpgradeTab("unique");
+    checkActionTriggers()
+    checkGrimoireUnlocks()
+    displayLSStuff()
 
     document.getElementById('viewDeltasSwitch').firstElementChild.style.left = data.gameSettings.viewDeltas ? "50%" : "0";
     document.getElementById('numberTypeSwitch').firstElementChild.style.left = data.gameSettings.numberType==="numberSuffix" ? "66.666%" : (data.gameSettings.numberType==="scientific" ? "33.333%" : "0");
@@ -275,6 +292,7 @@ function updateUIOnLoad() {
     document.getElementById('viewTotalMomentumSwitch').firstElementChild.style.left = data.gameSettings.viewTotalMomentum ? "50%" : "0";
     document.getElementById('viewZeroButtonsSwitch').firstElementChild.style.left = data.gameSettings.viewAll0Buttons ? "50%" : "0";
     document.getElementById('viewAdvancedSlidersSwitch').firstElementChild.style.left = data.gameSettings.viewAdvancedSliders ? "50%" : "0";
+    document.getElementById('viewEstimatedTimesSwitch').firstElementChild.style.left = data.gameSettings.viewEstimatedTimes ? "50%" : "0";
     document.getElementById("showCompleteUpgrades").checked = data.gameSettings.showCompletedToggle;
     document.getElementById("showUnaffordableUpgrades").checked = data.gameSettings.showUnaffordable;
     document.getElementById("sortByCost").checked = data.gameSettings.sortByCost;
@@ -291,9 +309,9 @@ function updateUIOnLoad() {
         let actionObj = data.actions[actionVar];
         let dataObj = actionData[actionVar];
         if (data.gameState === "KTL") {
-            actionObj.isRunning = actionObj.plane === 2;
+            actionObj.isRunning = dataObj.plane === 2;
         } else {
-            actionObj.isRunning = actionObj.plane !== 2;
+            actionObj.isRunning = dataObj.plane !== 2;
         }
         let menuFromSave = actionObj.currentMenu;
         actionObj.currentMenu = "";
@@ -346,9 +364,9 @@ function updateUIOnLoad() {
             updatePauseActionVisuals(actionVar);
         }
         views.updateVal(`${actionVar}_storyMenuButton`, actionObj.readStory!==undefined?"":"#2196F3", "style.color");
-
-
     }
+    data.actions.reposeRebounded.isRunning = true;
+
     if (data.planeUnlocked[1] || data.planeUnlocked[2]) {
         for (let i = 0; i < data.planeUnlocked.length; i++) {
             if (data.planeUnlocked[i]) {
@@ -371,7 +389,10 @@ function updateUIOnLoad() {
     }
     if(data.doneKTL) {
         views.updateVal(`ancientCoinDisplay`, "", "style.display");
-        revealAtt("legacy");
+        views.updateVal(`ancientWhisperDisplay`, "", "style.display");
+        views.updateVal(`legacyDisplay`, "", "style.display");
+        views.updateVal(`legacyMultDisplay`, "", "style.display");
+        views.updateVal(`ancientCoinMultDisplay`, "", "style.display");
     }
     views.updateVal(`jobDisplay`, data.displayJob ? "" : "none", "style.display");
     changeJob(data.currentJob);
@@ -380,8 +401,8 @@ function updateUIOnLoad() {
         updateToastUI(i);
     }
 
-    updateSliderDisplay(data.gameSettings.ticksPerSecond);
-    document.getElementById("FPSSlider").value = data.gameSettings.ticksPerSecond;
+    // updateSliderDisplay(data.gameSettings.ticksPerSecond);
+    // document.getElementById("FPSSlider").value = data.gameSettings.ticksPerSecond;
 
     updatePreviousTipsMenu();
     reapplyAttentionSelected();
@@ -396,7 +417,8 @@ function updateUIOnLoad() {
         recalcAttMult(attVar)
     }
 
-    views.updateVal(`killTheLichMenuButton2`, !data.actions.trainWithTeam.unlocked ? "Fight the Lich's Forces!":"Fight the Lich's Forces, Together!");
+    // views.updateVal(`killTheLichMenuButton2`, !data.actions.trainWithTeam.unlocked ? "Fight the Lich's Forces!":"Fight the Lich's Forces, Together!");
+
 }
 
 function reapplyAttentionSelected() {
@@ -420,15 +442,12 @@ function exportSave() {
     document.getElementById("exportImportSave").value = "";
 }
 
-function exportErrorFile(data) {
+function exportFile(data, name) {
     const blob = new Blob([data], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
 
     const a = document.createElement("a");
     a.href = url;
-
-    const baseName = "KTL_Error_File";
-    const extension = 'txt';
 
     const now = new Date();
 
@@ -439,7 +458,7 @@ function exportErrorFile(data) {
     const minutes = String(now.getMinutes()).padStart(2, '0');
     const seconds = String(now.getSeconds()).padStart(2, '0');
 
-    a.download = `${baseName}_${year}-${month}-${day}_${hours}-${minutes}-${seconds}.${extension}`;
+    a.download = `${name}_${year}-${month}-${day}_${hours}-${minutes}-${seconds}.txt`;
 
     document.body.appendChild(a);
     a.click();
@@ -451,31 +470,7 @@ function exportErrorFile(data) {
 function exportSaveFile() {
     save();
     const data = window.localStorage[saveName];
-    const blob = new Blob([data], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
-
-    const a = document.createElement("a");
-    a.href = url;
-
-    const baseName = "KTL_Save";
-    const extension = 'txt';
-
-    const now = new Date();
-
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
-    const day = String(now.getDate()).padStart(2, '0');
-    const hours = String(now.getHours()).padStart(2, '0');
-    const minutes = String(now.getMinutes()).padStart(2, '0');
-    const seconds = String(now.getSeconds()).padStart(2, '0');
-
-    a.download = `${baseName}_${year}-${month}-${day}_${hours}-${minutes}-${seconds}.${extension}`;
-
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-
-    URL.revokeObjectURL(url);
+    exportFile(data, "KTL_Save")
 }
 
 function importSave() {
