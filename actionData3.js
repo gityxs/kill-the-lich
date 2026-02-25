@@ -49,7 +49,7 @@ actionData = {
         extraInfo: {english:Raw.html`Exp Gain = Fear * Speed.<br>
         Bravery Gain = Action Power * Speed.`},
         actionTriggers: [
-            ["info", "text", "Takes 1% of Mana and converts it to exp. Arcane is generated over time."]
+            ["info", "text", "Generates exp on this action and Bravery on Courage. See Info for details."]
         ]
     },
 
@@ -196,7 +196,8 @@ actionData = {
         onUnlock: function() {
         },
         onLevelCustom: function() {
-            if(data.actions.destroyEasternMonolith.level === data.actions.destroyEasternMonolith.maxLevel) {
+            if(data.actions.destroyEasternMonolith.level === data.actions.destroyEasternMonolith.maxLevel
+            && data.lichKills <= 2) {
                 document.getElementById("legacySeveranceButton1").style.display = "";
             }
         },
@@ -205,7 +206,6 @@ actionData = {
         efficiencyAtts:[["hope", 0]],
         extraInfo:{english:"Gain Legacy = +500 * (1 + level/5) * Legacy Mult, on level."},
         actionTriggers: [
-            ["info", "text", "On Unlock: Show 7 more upgrades."],
             ["unlock", "addAC", "", 50],
             ["unlock", "addAW", "", 480],
             ["complete", "addLegacy", "destroyEasternMonolith", 500],
