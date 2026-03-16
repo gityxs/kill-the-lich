@@ -9,14 +9,14 @@ actionData = {
         progressMaxBase:60, progressMaxIncrease:1,
         expToLevelBase:1440, expToLevelIncrease:1,
         actionPowerBase:1, actionPowerMult:1, actionPowerMultIncrease:1.02,
-        efficiencyBase:1,
+        efficiencyBase:1, ignoreExpUpgrade:true,
         unlockCost:0, visible:false, unlocked:false, purchased: true, hasUpstream:false,
         isGenerator:true, generatorTarget:"turnTheWheel", generatorSpeed:1,
         onCompleteCustom: function() {
             let actionObj = data.actions.reposeRebounded;
             this.updateMults();
 
-            actionAddExp(data.actions.turnTheWheel, actionObj.resourceToAdd)
+            actionAddExp(data.actions.turnTheWheel, actionObj.resourceToAdd * Math.pow(1.05, data.upgrades.extraGeneratorExp.upgradePower))
 
             views.scheduleUpdate('reposeReboundedResourceSent', intToString(actionObj.resourceToAdd, 2), "textContent")
         },
@@ -57,7 +57,7 @@ actionData = {
             this.updateMults();
 
             addResourceTo(actionObj, actionObj.resourceToAdd);
-            addResourceTo(data.actions.tidalBurden, (actionObj.efficiency / 100));
+            addResourceTo(data.actions.tidalBurden, (Math.min(actionObj.efficiency/100, 1)));
             addResourceTo(data.actions.dipInTheRiver, actionObj.resource / 10);
 
             views.scheduleUpdate('turnTheWheelResourceSent', intToString(actionObj.resourceToAdd, 2), "textContent")
@@ -71,7 +71,7 @@ actionData = {
             actionObj.resourceToAdd = actionObj.actionPower * actionObj.upgradeMult * (actionObj.efficiency / 100);
             actionObj.expToAddBase = 0;
             actionObj.showResourceAdded = actionObj.resourceToAdd;
-            data.actions.tidalBurden.showResourceAdded = actionObj.efficiency/100;
+            data.actions.tidalBurden.showResourceAdded = Math.min(actionObj.efficiency/100, 1);
             data.actions.dipInTheRiver.showResourceAdded = actionObj.resource/10;
         },
         onLevelAtts:[["flow", 5]],

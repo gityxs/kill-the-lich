@@ -28,7 +28,7 @@ actionData = {
             actionObj.resourceToAdd = this.actionPowerFunction(actionObj.resource) *
                 actionObj.actionPower * actionObj.upgradeMult * (actionObj.efficiency/100);
             actionObj.expToAddBase = actionObj.resourceToAdd;
-            actionObj.expToAdd = actionObj.expToAddBase * actionObj.expToAddMult;
+            actionObj.expToAdd = actionObj.expToAddBase * actionObj.expToAddMult * Math.pow(1.05, data.upgrades.extraGeneratorExp.upgradePower);
             data.actions[this.generatorTarget].showResourceAdded = actionObj.resourceToAdd;
         },
         actionPowerFunction: function(resource) {
@@ -72,7 +72,7 @@ actionData = {
             actionObj.resourceToAdd = dataObj.actionPowerFunction(actionObj.resource) *
                 actionObj.actionPower * actionObj.upgradeMult * (actionObj.efficiency/100);
             actionObj.expToAddBase = actionObj.resourceToAdd;
-            actionObj.expToAdd = actionObj.expToAddBase * actionObj.expToAddMult;
+            actionObj.expToAdd = actionObj.expToAddBase * actionObj.expToAddMult * Math.pow(1.05, data.upgrades.extraGeneratorExp.upgradePower);
             data.actions[this.generatorTarget].showResourceAdded = actionObj.resourceToAdd;
         },
         actionPowerFunction: function(resource) {
@@ -140,7 +140,7 @@ actionData = {
                 actionObj.actionPowerMult;
             actionObj.resourceToAdd = Math.sqrt(data.actions.dissipation.resource) * actionObj.actionPower * (actionObj.efficiency/100) * actionObj.upgradeMult;
             actionObj.expToAddBase = actionObj.resourceToAdd;
-            actionObj.expToAdd = actionObj.expToAddBase * actionObj.expToAddMult;
+            actionObj.expToAdd = actionObj.expToAddBase * actionObj.expToAddMult * Math.pow(1.05, data.upgrades.extraGeneratorExp.upgradePower);
             data.actions[this.generatorTarget].showResourceAdded = actionObj.resourceToAdd;
         },
         updateUpgradeMult:function() {
@@ -165,7 +165,7 @@ actionData = {
     threadArcana: {
         tier:0, plane:1, resourceName:"mana", creationVersion: 6,
         progressMaxBase:5, progressMaxIncrease:1,
-        expToLevelBase:1e9, expToLevelIncrease:10,
+        expToLevelBase:1e8, expToLevelIncrease:10,
         actionPowerBase:5, actionPowerMult:1, actionPowerMultIncrease:1.5,
         efficiencyBase:.2,
         unlockCost:1e4, visible:false, unlocked:false, purchased: true,
@@ -196,8 +196,8 @@ actionData = {
             actionObj.resourceToAdd = actionObj.actionPower * actionObj.upgradeMult * (actionObj.efficiency/100);
             let mqToUse = actionData.awakenYourGrimoire.manaQuality();
             mqToUse = mqToUse > 0 ? mqToUse : 1;
-            actionObj.expToAddBase = Math.pow(actionObj.resource, 2) * mqToUse * (actionObj.efficiency/100);
-            actionObj.expToAdd = actionObj.expToAddBase * actionObj.expToAddMult;
+            actionObj.expToAddBase = Math.pow(actionObj.resource/10, 2) * mqToUse * (actionObj.efficiency/100);
+            actionObj.expToAdd = actionObj.expToAddBase * actionObj.expToAddMult * Math.pow(1.05, data.upgrades.extraGeneratorExp.upgradePower);
             data.actions[this.generatorTarget].showResourceAdded = actionObj.resourceToAdd;
         },
         updateUpgradeMult:function() {
@@ -215,9 +215,9 @@ actionData = {
                 +<span style="font-weight:bold;" id="threadArcanaResourceSent">???</span> Arcana is added to Prepare Spells.<br>
                 `},
         extraInfo: {english:Raw.html`Exp gain = (10% of Mana)^2 * Speed * Mana Quality.<br>
-        Arcana gain = Action Power * Speed`},
+        Arcana gain = Action Power * Speed<br>Consumes 10% of Mana per tick`},
         actionTriggers: [
-            ["info", "text", "Takes 10% of Mana and converts it to exp. This is better with more Mana (see info)."],
+            ["info", "text", "Takes Mana and converts it to exp. This is better with more Mana (see info)."],
             ["info", "text", "Arcane is generated over time."]
         ]
     },
@@ -230,7 +230,7 @@ actionData = {
         unlockCost:0, visible:false, unlocked:false, purchased: true, hasUpstream:false,
         hideUpstreamLine: true,
         onLevelCustom: function () {
-            data.legacyMultKTL = Math.pow(1.04, data.actions.castingExperience.level);
+            data.legacyMultKTL = Math.pow(1.04, data.actions.castingExperience.level) * Math.pow(1.1, data.upgrades.extraLegacy.upgradePower);
         },
         onLevelAtts:[["archmagery", 2], ["spellcraft", 1], ["integration", 1]],
         expAtts:[["wizardry", 1], ["intellect", 1]],
